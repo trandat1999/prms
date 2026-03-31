@@ -1,8 +1,11 @@
 package com.tranhuudat.prms.repository;
 
+import com.tranhuudat.prms.entity.Task;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.UUID;
+
 @Repository
-public interface InvalidatedTokenRepository extends JpaRepository<InvalidatedToken, String> {
+public interface TaskRepository extends JpaRepository<Task, UUID> {
 }

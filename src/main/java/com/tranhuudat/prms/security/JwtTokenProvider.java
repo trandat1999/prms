@@ -4,7 +4,6 @@ import com.tranhuudat.prms.config.AppProperties;
 import com.tranhuudat.prms.exception.AppException;
 import com.tranhuudat.prms.exception.ErrorCode;
 import com.tranhuudat.prms.entity.User;
-import com.tranhuudat.prms.repository.InvalidatedTokenRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -29,7 +28,6 @@ import java.util.UUID;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class JwtTokenProvider {
     AppProperties appProperties;
-    InvalidatedTokenRepository invalidatedTokenRepository;
 
     private SecretKey getSigningKey() {
         return Keys.hmacShaKeyFor(appProperties.getSignerKey().getBytes(StandardCharsets.UTF_8));
@@ -65,10 +63,6 @@ public class JwtTokenProvider {
                     .parseSignedClaims(token)
                     .getPayload();
 
-            if (invalidatedTokenRepository.existsById(claims.getId())) {
-                throw new AppException(ErrorCode.UNAUTHENTICATED);
-            }
-
             Date expiryTime = (isRefresh)
                     ? new Date(claims.getIssuedAt().toInstant()
                         .plus(appProperties.getRefreshableDuration(), ChronoUnit.SECONDS).toEpochMilli())
@@ -83,5 +77,19 @@ public class JwtTokenProvider {
             log.error("Token verification failed", e);
             throw new AppException(ErrorCode.UNAUTHENTICATED);
         }
+    }
+
+    public String generateRefreshToken(User user) {
+        return Jwts.builder()
+                .subject(user.getUsername())
+                .issuer("tranhuudat.com")
+                .issuedAt(new Date())
+                .expiration(new Date(
+                        Instant.now().plus(appProperties.getRefreshableDuration(), ChronoUnit.SECONDS).toEpochMilli()
+                ))
+                .id(UUID.randomUUID().toString())
+                .claim("scope", buildScope(user))
+                .signWith(getSigningKey())
+                .compact();
     }
 }
