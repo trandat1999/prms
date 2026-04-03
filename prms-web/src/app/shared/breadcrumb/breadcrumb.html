@@ -1,0 +1,13 @@
+<nz-breadcrumb [nzAutoGenerate]="autoGenerate" [nzRouteLabel]="routeLabel"
+               [nzRouteLabelFn]="routeLabelFn" nzSeparator=">">
+  <nz-breadcrumb-item>
+    <a routerLink="/"><span nz-icon nzType="home"></span> {{ 'breadcrumb.home' | translate }}</a>
+  </nz-breadcrumb-item>
+  <ng-container *ngIf="!autoGenerate">
+    <nz-breadcrumb-item *ngFor="let item of items">
+      <a *ngIf="item.link" routerLink="{{item.link}}">{{ item.name }}</a>
+      <span *ngIf="!item.link">{{ item.name }}</span>
+    </nz-breadcrumb-item>
+  </ng-container>
+</nz-breadcrumb>
+

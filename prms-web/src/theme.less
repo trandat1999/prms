@@ -1,0 +1,131 @@
+@import "../node_modules/ng-zorro-antd/ng-zorro-antd.less";
+// View all variables: https://github.com/NG-ZORRO/ng-zorro-antd/blob/master/components/style/themes/default.less
+
+@primary-color: #4361ee;                         // primary color for all components
+@link-color: #1890ff;                            // link color
+@success-color: #4fe505;                         // success state color
+@warning-color: #faad14;                         // warning state color
+@error-color: #f5222d;                           // error state color
+@font-size-base: 14px;                           // major text font size
+@heading-color: rgba(0, 0, 0, .85);              // heading text color
+@text-color: rgba(0, 0, 0, .65);                 // major text color
+@text-color-secondary : rgba(0, 0, 0, .45);      // secondary text color
+@disabled-color : rgba(0, 0, 0, .25);            // disable state color
+@border-radius-base: 6px;                        // major border radius
+@border-radius-sm: 4px;                        // major border radius
+@border-color-base: #d9d9d9;                     // major border color
+@box-shadow-base: 0 2px 8px rgba(0, 0, 0, .15);  // major shadow for layers
+@breadcrumb-base-color: @link-color;
+@breadcrumb-last-item-color: @link-color;
+@breadcrumb-link-color: @link-color;
+@breadcrumb-link-color-hover: @link-color;
+@breadcrumb-separator-color: @link-color;
+@btn-font-weight: 600;
+@table-header-bg: #ebebeb;
+@table-header-color: @heading-color;
+@select-selection-item-bg: #e6e4e0;
+@table-footer-bg: #ebebeb;
+
+@message-notice-content-padding: 10px 16px;
+@success-bg: #f6ffed;
+@success-border: #b7eb8f;
+@success-color: #389e0d;
+
+@error-bg: #fff1f0;
+@error-border: #ffa39e;
+@error-color: #cf1322;
+
+@info-bg: #e6f7ff;
+@info-border: #91d5ff;
+@info-color: #096dd9;
+
+@warning-bg: #fffbe6;
+@warning-border: #ffe58f;
+@warning-color: #d48806;
+
+.ant-input-group > .ant-input:last-child:first-child{
+  border-radius: @border-radius-base;
+}
+.ant-input-group-addon,.ant-input-number-group-addon {
+  background-color:#ebebeb
+}
+.ant-table-footer{
+  background-color: #efefef
+}
+
+//message
+.ant-message-notice-content{
+  padding: 0;
+}
+.ant-message-success {
+  background-color: @success-bg !important;
+  border: 1px solid @success-border;
+  color: @success-color;
+  border-radius: @border-radius-base;
+  padding: @message-notice-content-padding;
+}
+.ant-message-error {
+  background-color: @error-bg !important;
+  border: 1px solid @error-border;
+  color: @error-color;
+  border-radius: @border-radius-base;
+  padding: @message-notice-content-padding;
+}
+.ant-message-info {
+  background-color: @info-bg !important;
+  border: 1px solid @info-border;
+  color: @info-color;
+  border-radius: @border-radius-base;
+  padding: @message-notice-content-padding;
+}
+.ant-message-warning {
+  background-color: @warning-bg !important;
+  border: 1px solid @warning-border;
+  color: @warning-color;
+  border-radius: @border-radius-base;
+  padding: @message-notice-content-padding;
+}
+
+.ant-notification-notice{
+  padding: 0;
+}
+
+.ant-notification-notice-with-icon{
+  padding: @message-notice-content-padding;
+  border-radius: @border-radius-base;
+}
+.ant-notification-notice-with-icon:has(.ant-notification-notice-icon-warning) {
+  background-color: @warning-bg !important;
+  border: 1px solid @warning-border;
+}
+.ant-notification-notice-with-icon:has(.ant-notification-notice-icon-error) {
+  background-color: @error-bg !important;
+  border: 1px solid @error-border;
+}
+.ant-notification-notice-with-icon:has(.ant-notification-notice-icon-success) {
+  background-color: @success-bg !important;
+  border: 1px solid @success-border;
+}
+.ant-notification-notice-with-icon:has(.ant-notification-notice-icon-info) {
+  background-color: @info-bg !important;
+  border: 1px solid @info-border;
+}
+.ant-notification-notice-icon-info ~ .ant-notification-notice-message {
+  color: @info-color;
+  font-weight: @btn-font-weight;
+}
+.ant-notification-notice-icon-success ~ .ant-notification-notice-message {
+  color: @success-color;
+  font-weight: @btn-font-weight;
+}
+.ant-notification-notice-icon-error ~ .ant-notification-notice-message {
+  color: @error-color;
+  font-weight: @btn-font-weight;
+}
+.ant-notification-notice-icon-warning ~ .ant-notification-notice-message {
+  color: @warning-color;
+  font-weight: @btn-font-weight;
+}
+.ant-form-horizontal .ant-form-item {
+  display: flex;
+}
