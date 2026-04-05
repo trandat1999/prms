@@ -1,1 +1,273 @@
-<p>input works!</p>
+<nz-form-item [ngClass]="{'mb-0':offMb}" class="w-100" id="{{id}}">
+  @if (showLabel) {
+    <nz-form-label [nzRequired]="isRequired" [nzTooltipTitle]="tooltipTitle" [nzSpan]="labelSpan"
+                   [nzLabelWrap]="isWrapLabel">{{ label }}
+    </nz-form-label>
+  }
+  <nz-form-control [nzSpan]="inputSpan" [nzWarningTip]="warningText" [nzValidatingTip]="hint"
+                   [nzErrorTip]="errorText" [nzHasFeedback]="hasFeedback">
+    @switch (type) {
+      @default {
+        @if (isSearch){
+          <nz-input-search>
+            @if (addOnBefore || addOnBeforeIcon) {
+              <span nzInputAddonBefore>
+              @if (addOnBeforeIcon) {
+                <nz-icon [nzType]="addOnBeforeIcon"></nz-icon>
+              }
+                @if (isTemplateRef(addOnBefore)) {
+                  <ng-container *ngTemplateOutlet="addOnBefore"></ng-container>
+                } @else {
+                  @if (addOnBefore) {
+                    <span>{{ addOnBefore }}</span>
+                  }
+                }
+            </span>
+            }
+            @if (prefix) {
+              <span nzInputPrefix>
+              @if (isTemplateRef(prefix)){
+                <ng-container *ngTemplateOutlet="prefix"></ng-container>
+              } @else {
+                <span>{{ prefix }}</span>
+              }
+            </span>
+            }
+            <input [style.width.%]="100" [placeholder]="placeHolder" [nzSize]="size" #inputElements="ngModel"
+                   [disabled]="isDisabled || ngControl?.disabled" (blur)="onBlur()"
+                   [(ngModel)]="value" nz-input type="{{type}}"/>
+            @if (addOnAfter || addOnAfterIcon){
+              <span nzInputAddonAfter>
+              @if (isTemplateRef(addOnAfter)){
+                <ng-container *ngTemplateOutlet="addOnAfter"></ng-container>
+              } @else {
+                @if (addOnAfter){
+                  <span>{{ addOnAfter }}</span>
+                }
+              }
+                @if (addOnAfterIcon){
+                  <nz-icon [nzType]="addOnAfterIcon"></nz-icon>
+                }
+            </span>
+            }
+            @if (suffix) {
+              <span nzInputSuffix>
+              @if (isTemplateRef(suffix)){
+                <ng-container *ngTemplateOutlet="suffix"></ng-container>
+              } @else {
+                <span>{{ suffix }}</span>
+              }
+            </span>
+            }
+          </nz-input-search>
+        } @else if (inputPassword){
+          <nz-input-password>
+            @if (addOnBefore || addOnBeforeIcon) {
+              <span nzInputAddonBefore>
+              @if (addOnBeforeIcon) {
+                <nz-icon [nzType]="addOnBeforeIcon"></nz-icon>
+              }
+                @if (isTemplateRef(addOnBefore)) {
+                  <ng-container *ngTemplateOutlet="addOnBefore"></ng-container>
+                } @else {
+                  @if (addOnBefore) {
+                    <span>{{ addOnBefore }}</span>
+                  }
+                }
+            </span>
+            }
+            @if (prefix) {
+              <span nzInputPrefix>
+              @if (isTemplateRef(prefix)){
+                <ng-container *ngTemplateOutlet="prefix"></ng-container>
+              } @else {
+                <span>{{ prefix }}</span>
+              }
+            </span>
+            }
+            @if (prefixIcon) {
+              <span nzInputPrefix nz-icon [nzType]="prefixIcon"></span>
+            }
+            <input [style.width.%]="100" [placeholder]="placeHolder" [nzSize]="size" #inputElements="ngModel"
+                   [disabled]="isDisabled || ngControl?.disabled" (blur)="onBlur()"
+                   [(ngModel)]="value" nz-input type="{{type}}"/>
+            @if (addOnAfter || addOnAfterIcon){
+              <span nzInputAddonAfter>
+              @if (isTemplateRef(addOnAfter)){
+                <ng-container *ngTemplateOutlet="addOnAfter"></ng-container>
+              } @else {
+                @if (addOnAfter){
+                  <span>{{ addOnAfter }}</span>
+                }
+              }
+                @if (addOnAfterIcon){
+                  <nz-icon [nzType]="addOnAfterIcon"></nz-icon>
+                }
+            </span>
+            }
+            @if (suffix) {
+              <span nzInputSuffix>
+              @if (isTemplateRef(suffix)){
+                <ng-container *ngTemplateOutlet="suffix"></ng-container>
+              } @else {
+                <span>{{ suffix }}</span>
+              }
+            </span>
+            }
+            @if (suffixIcon) {
+              <span nzInputSuffix nz-icon [nzType]="prefixIcon"></span>
+            }
+          </nz-input-password>
+        } @else {
+          <nz-input-wrapper>
+            @if (addOnBefore || addOnBeforeIcon) {
+              <span nzInputAddonBefore>
+              @if (addOnBeforeIcon) {
+                <nz-icon [nzType]="addOnBeforeIcon"></nz-icon>
+              }
+                @if (isTemplateRef(addOnBefore)) {
+                  <ng-container *ngTemplateOutlet="addOnBefore"></ng-container>
+                } @else {
+                  @if (addOnBefore) {
+                    <span>{{ addOnBefore }}</span>
+                  }
+                }
+            </span>
+            }
+            @if (prefix) {
+              <span nzInputPrefix>
+              @if (isTemplateRef(prefix)){
+                <ng-container *ngTemplateOutlet="prefix"></ng-container>
+              } @else {
+                <span>{{ prefix }}</span>
+              }
+              </span>
+            }
+            @if (prefixIcon) {
+              <span nzInputPrefix nz-icon [nzType]="prefixIcon"></span>
+            }
+            <input [style.width.%]="100" [placeholder]="placeHolder" [nzSize]="size" #inputElements="ngModel"
+                   [disabled]="isDisabled || ngControl?.disabled" (blur)="onBlur()"
+                   [(ngModel)]="value" nz-input type="{{type}}"/>
+            @if (addOnAfter || addOnAfterIcon){
+              <span nzInputAddonAfter>
+              @if (isTemplateRef(addOnAfter)){
+                <ng-container *ngTemplateOutlet="addOnAfter"></ng-container>
+              } @else {
+                @if (addOnAfter){
+                  <span>{{ addOnAfter }}</span>
+                }
+              }
+                @if (addOnAfterIcon){
+                  <nz-icon [nzType]="addOnAfterIcon"></nz-icon>
+                }
+            </span>
+            }
+            @if (suffix) {
+              <span nzInputSuffix>
+              @if (isTemplateRef(suffix)){
+                <ng-container *ngTemplateOutlet="suffix"></ng-container>
+              } @else {
+                <span>{{ suffix }}</span>
+              }
+            </span>
+            }
+            @if (suffixIcon) {
+              <span nzInputSuffix nz-icon [nzType]="prefixIcon"></span>
+            }
+          </nz-input-wrapper>
+
+        }
+      }
+      @case ('select') {
+        <nz-select [nzPlaceHolder]="placeHolder" [nzMode]="selectMode"
+                   [nzShowSearch]="allowSearch" (nzBlur)="onBlur()"
+                   [nzSize]="size" [nzAllowClear]="allowClear" [compareWith]="compareFn"
+                   [nzServerSearch]="isServerSearch"
+                   [nzLoading]="isLoading"
+                   #inputElements="ngModel" [disabled]="isDisabled || ngControl?.disabled"
+                   [nzAutoClearSearchValue]="autoClearSearchValue"
+                   [(ngModel)]="value" (nzOnSearch)="onSearch($event)" (nzScrollToBottom)="loadMore()"
+                   [nzDropdownRender]="renderTemplate">
+          @for (item of items; track $index) {
+            @if (!isLoading) {
+              <nz-option [nzValue]="bindValue?item[bindValue]:item"
+                         [nzLabel]="isTranslation?(bindLabel?translate.instant(item[bindLabel]):translate.instant(item)):(bindLabel?item[bindLabel]:item)">
+              </nz-option>
+            }
+          }
+          <ng-template #renderTemplate>
+            @if (isLoadingMore) {
+              <nz-spin></nz-spin>
+            }
+          </ng-template>
+          @if (isLoading) {
+            <nz-option nzDisabled nzCustomContent>
+              <span nz-icon nzType="loading" class="loading-icon"></span>
+              {{ 'common.loadingData'|translate }}...
+            </nz-option>
+          }
+        </nz-select>
+      }
+      @case ('date') {
+        <nz-date-picker class="w-100" [nzPlaceHolder]="placeHolder" [nzDisabled]="isDisabled || ngControl?.disabled"
+                        #inputElements="ngModel" [nzShowTime]="showTime" [nzShowNow]="showNow"
+                        [nzShowToday]="showToday" [nzFormat]="dateTimeFormat" [nzDisabledDate]="disabledDate"
+                        [(ngModel)]="value" [nzSize]="size" (blur)="onBlur()"></nz-date-picker>
+      }
+      @case ('number') {
+        <nz-input-number class="w-100" [nzPlaceHolder]="placeHolder"
+                         [nzDisabled]="isDisabled || ngControl?.disabled" (nzBlur)="onBlur()"
+                         [style.width.%]="100" #inputElements="ngModel" [nzMin]="min" [nzMax]="max"
+                         [(ngModel)]="value" [nzStep]="step" [nzSize]="size">
+          @if (addOnBefore || addOnBeforeIcon) {
+            <span nzInputAddonBefore>
+              @if (addOnBeforeIcon) {
+                <nz-icon [nzType]="addOnBeforeIcon"></nz-icon>
+              }
+              @if (isTemplateRef(addOnBefore)) {
+                <ng-container *ngTemplateOutlet="addOnBefore"></ng-container>
+              } @else {
+                @if (addOnBefore) {
+                  <span>{{ addOnBefore }}</span>
+                }
+              }
+            </span>
+          }
+          @if (addOnAfter || addOnAfterIcon){
+            <span nzInputAddonAfter>
+              @if (isTemplateRef(addOnAfter)){
+                <ng-container *ngTemplateOutlet="addOnAfter"></ng-container>
+              } @else {
+                @if (addOnAfter){
+                  <span>{{ addOnAfter }}</span>
+                }
+              }
+              @if (addOnAfterIcon){
+                <nz-icon [nzType]="addOnAfterIcon"></nz-icon>
+              }
+            </span>
+          }
+          @if (prefix) {
+            <span nzInputPrefix>
+              @if (isTemplateRef(prefix)){
+                <ng-container *ngTemplateOutlet="prefix"></ng-container>
+              } @else {
+                <span>{{ prefix }}</span>
+              }
+            </span>
+          }
+          @if (suffix) {
+            <span nzInputSuffix>
+              @if (isTemplateRef(suffix)){
+                <ng-container *ngTemplateOutlet="suffix"></ng-container>
+              } @else {
+                <span>{{ suffix }}</span>
+              }
+            </span>
+          }
+        </nz-input-number>
+      }
+    }
+  </nz-form-control>
+</nz-form-item>

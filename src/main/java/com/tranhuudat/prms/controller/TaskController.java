@@ -51,8 +51,8 @@ public class TaskController {
     }
 
     @PostMapping("/search")
-    public ApiResponse<PageResponse<TaskResponse>> getAll(@RequestBody TaskSearchRequest request) {
-        return ApiResponse.<PageResponse<TaskResponse>>builder()
+    public ApiResponse<PageResponse> getAll(@RequestBody TaskSearchRequest request) {
+        return ApiResponse.<PageResponse>builder()
                 .result(taskService.getAll(request))
                 .build();
     }

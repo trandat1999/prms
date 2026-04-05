@@ -1,5 +1,6 @@
 package com.tranhuudat.prms.dto.request.search;
 
+import com.tranhuudat.prms.dto.SearchRequest;
 import com.tranhuudat.prms.enums.ProjectStatusEnum;
 import lombok.AccessLevel;
 import lombok.Data;

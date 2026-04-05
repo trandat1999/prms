@@ -11,12 +11,12 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class PageResponse<T> {
+public class PageResponse {
     int currentPage;
     int totalPages;
     int pageSize;
     long totalElements;
 
     @Builder.Default
-    List<T> data = Collections.emptyList();
+    List data = Collections.emptyList();
 }

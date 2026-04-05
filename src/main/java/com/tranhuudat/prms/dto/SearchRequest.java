@@ -1,4 +1,4 @@
-package com.tranhuudat.prms.dto.request.search;
+package com.tranhuudat.prms.dto;
 
 import lombok.AccessLevel;
 import lombok.Data;
@@ -12,9 +12,8 @@ import lombok.experimental.FieldDefaults;
 @Data
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class SearchRequest {
-    Integer pageIndex = 1;
-    Integer pageSize = 10;
-    String keyword;
-    String sortBy = "name";
-    String direction = "ASC";
+    protected Boolean voided;
+    protected String keyword;
+    protected Integer pageSize;
+    protected Integer pageIndex;
 }

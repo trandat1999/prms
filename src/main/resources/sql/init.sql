@@ -1,5 +1,5 @@
 -- Bảng sys_role (từ entity Role và BaseInformation)
-CREATE TABLE sys_role (
+CREATE TABLE tbl_role (
     id UUID PRIMARY KEY,
     created_by VARCHAR(255),
     created_date TIMESTAMP,
@@ -13,7 +13,7 @@ CREATE TABLE sys_role (
 );
 
 -- Bảng sys_user (từ entity User)
-CREATE TABLE sys_user (
+CREATE TABLE tbl_user (
     id UUID PRIMARY KEY,
     created_by VARCHAR(255),
     created_date TIMESTAMP,
@@ -35,9 +35,7 @@ CREATE TABLE sys_user (
 CREATE TABLE tbl_user_role (
     user_id UUID NOT NULL,
     role_id UUID NOT NULL,
-    PRIMARY KEY (user_id, role_id),
-    CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES sys_user(id) ON DELETE CASCADE,
-    CONSTRAINT fk_role FOREIGN KEY (role_id) REFERENCES sys_role(id) ON DELETE CASCADE
+    PRIMARY KEY (user_id, role_id)
 );
 
 -- Bảng tbl_token (từ entity Token)
@@ -56,7 +54,7 @@ CREATE TABLE tbl_token (
 );
 
 -- Bảng refresh_token (từ entity RefreshToken)
-CREATE TABLE refresh_token (
+CREATE TABLE tbl_refresh_token (
     id UUID PRIMARY KEY,
     created_by VARCHAR(255),
     created_date TIMESTAMP,
@@ -92,8 +90,7 @@ CREATE TABLE tbl_project (
     status VARCHAR(50),
     progress_percentage DOUBLE PRECISION,
     start_date DATE,
-    end_date DATE,
-    CONSTRAINT fk_project_manager FOREIGN KEY (manager_id) REFERENCES sys_user(id)
+    end_date DATE
 );
 
 -- Bảng tbl_task (từ entity Task)
@@ -118,10 +115,8 @@ CREATE TABLE tbl_task (
 );
 
 -- Bảng liên kết task_assignment
-CREATE TABLE task_assignment (
+CREATE TABLE tbl_task_assignment (
     task_id UUID NOT NULL,
     user_id UUID NOT NULL,
-    PRIMARY KEY (task_id, user_id),
-    CONSTRAINT fk_assignment_task FOREIGN KEY (task_id) REFERENCES tbl_task(id) ON DELETE CASCADE,
-    CONSTRAINT fk_assignment_user FOREIGN KEY (user_id) REFERENCES sys_user(id) ON DELETE CASCADE
+    PRIMARY KEY (task_id, user_id)
 );

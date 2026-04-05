@@ -2,6 +2,8 @@ import {Component, Input} from '@angular/core';
 import {NzBreadCrumbComponent, NzBreadCrumbItemComponent} from 'ng-zorro-antd/breadcrumb';
 import {RouterLink} from '@angular/router';
 import {NgForOf, NgIf} from '@angular/common';
+import {NzIconDirective} from 'ng-zorro-antd/icon';
+import {TranslatePipe} from '@ngx-translate/core';
 
 export interface BreadcrumbItem {
   link?: string;
@@ -14,8 +16,8 @@ export interface BreadcrumbItem {
     NzBreadCrumbComponent,
     NzBreadCrumbItemComponent,
     RouterLink,
-    NgIf,
-    NgForOf
+    NzIconDirective,
+    TranslatePipe
   ],
   templateUrl: './breadcrumb.html',
   styleUrl: './breadcrumb.scss',

@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-public class ProjectService extends BaseService<Project, UUID> {
+public class ProjectService extends BaseService {
     ProjectRepository projectRepository;
     UserRepository userRepository;
 
@@ -93,14 +93,8 @@ public class ProjectService extends BaseService<Project, UUID> {
         projectRepository.save(project);
     }
 
-    public PageResponse<ProjectResponse> getAll(ProjectSearchRequest request) {
-        Pageable pageable = getPageable(
-                request.getPageIndex(), 
-                request.getPageSize(), 
-                request.getSortBy(), 
-                request.getDirection());
-        
-        Page<Project> pageData = projectRepository.findAll(pageable);
+    public PageResponse getAll(ProjectSearchRequest request) {
+        Page<Project> pageData = projectRepository.findAll(getPageable(request));
         
         return toPageResponse(pageData, pageData.getContent().stream()
                 .map(this::mapToResponse)

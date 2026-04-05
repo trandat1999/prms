@@ -54,6 +54,8 @@
               }
             ],
             "styles": [
+              "node_modules/ngx-spinner/animations/ball-spin-clockwise.css",
+              "public/assets/css/bootstrap.min.css",
               "src/theme.less",
               "src/styles.scss"
             ]

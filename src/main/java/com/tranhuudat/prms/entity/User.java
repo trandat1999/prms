@@ -18,7 +18,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Entity
-@Table(name = "sys_user")
+@Table(name = "tbl_user")
 @Getter
 @Setter
 @NoArgsConstructor

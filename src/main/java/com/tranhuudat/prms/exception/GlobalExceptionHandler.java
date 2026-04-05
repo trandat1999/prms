@@ -1,90 +1,113 @@
 package com.tranhuudat.prms.exception;
 
-import com.tranhuudat.prms.dto.response.ApiResponse;
-import jakarta.validation.ConstraintViolation;
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
+import com.tranhuudat.prms.dto.BaseResponse;
+import com.tranhuudat.prms.util.SystemMessage;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.security.SignatureException;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.security.authentication.*;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
+import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 @ControllerAdvice
 @Slf4j
-public class GlobalExceptionHandler {
+@RequiredArgsConstructor
+public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
+    private final MessageSource messageSource;
 
-    private static final String MIN_ATTRIBUTE = "min";
-
-    @ExceptionHandler(value = Exception.class)
-    ResponseEntity<ApiResponse<?>> handlingRuntimeException(RuntimeException exception) {
-        log.error("Exception: ", exception);
-        ApiResponse<?> apiResponse = new ApiResponse<>();
-
-        apiResponse.setCode(ErrorCode.UNCATEGORIZED_EXCEPTION.getCode());
-        apiResponse.setMessage(ErrorCode.UNCATEGORIZED_EXCEPTION.getMessage());
-
-        return ResponseEntity.badRequest().body(apiResponse);
-    }
-
-    @ExceptionHandler(value = AppException.class)
-    ResponseEntity<ApiResponse<?>> handlingAppException(AppException exception) {
-        ErrorCode errorCode = exception.getErrorCode();
-        ApiResponse<?> apiResponse = new ApiResponse<>();
-
-        apiResponse.setCode(errorCode.getCode());
-        apiResponse.setMessage(errorCode.getMessage());
-
-        return ResponseEntity.status(errorCode.getStatusCode()).body(apiResponse);
-    }
-
-    @ExceptionHandler(value = AccessDeniedException.class)
-    ResponseEntity<ApiResponse<?>> handlingAccessDeniedException(AccessDeniedException exception) {
-        ErrorCode errorCode = ErrorCode.UNAUTHORIZED;
-
-        return ResponseEntity.status(errorCode.getStatusCode())
-                .body(ApiResponse.builder()
-                        .code(errorCode.getCode())
-                        .message(errorCode.getMessage())
-                        .build());
-    }
-
-    @ExceptionHandler(value = MethodArgumentNotValidException.class)
-    ResponseEntity<ApiResponse<?>> handlingValidation(MethodArgumentNotValidException exception) {
-        String enumKey = exception.getFieldError().getDefaultMessage();
-
-        ErrorCode errorCode = ErrorCode.INVALID_KEY;
-        Map<String, Object> attributes = null;
-        try {
-            errorCode = ErrorCode.valueOf(enumKey);
-
-            var constraintViolation =
-                    exception.getBindingResult().getAllErrors().get(0).unwrap(ConstraintViolation.class);
-
-            attributes = constraintViolation.getConstraintDescriptor().getAttributes();
-
-            log.info(attributes.toString());
-
-        } catch (IllegalArgumentException e) {
-            log.error("Validation error key not found: {}", enumKey);
+    @ExceptionHandler({CredentialsExpiredException.class, BadCredentialsException.class,
+            AccessDeniedException.class, AuthenticationException.class,
+            UsernameNotFoundException.class, SignatureException.class, ExpiredJwtException.class})
+    public ResponseEntity<BaseResponse> handleSecurityException(Exception exception) {
+        BaseResponse errorDetail = BaseResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .build();
+        HttpStatus httpStatus = HttpStatus.UNAUTHORIZED;
+        log.error(exception.getMessage());
+        if (exception instanceof CredentialsExpiredException) {
+            errorDetail.setMessage(messageSource.getMessage(SystemMessage.USER_CREDENTIALS_IS_EXPIRED, null, LocaleContextHolder.getLocale()));
         }
-
-        ApiResponse<?> apiResponse = new ApiResponse<>();
-
-        apiResponse.setCode(errorCode.getCode());
-        apiResponse.setMessage(
-                Objects.nonNull(attributes)
-                        ? mapAttribute(errorCode.getMessage(), attributes)
-                        : errorCode.getMessage());
-
-        return ResponseEntity.status(errorCode.getStatusCode()).body(apiResponse);
+        if (exception instanceof LockedException) {
+            errorDetail.setMessage(messageSource.getMessage(SystemMessage.USER_IS_LOCKED, null, LocaleContextHolder.getLocale()));
+        }
+        if (exception instanceof AccountExpiredException) {
+            errorDetail.setMessage(messageSource.getMessage(SystemMessage.USER_IS_EXPIRED, null, LocaleContextHolder.getLocale()));
+        }
+        if (exception instanceof DisabledException) {
+            errorDetail.setMessage(messageSource.getMessage(SystemMessage.USER_IS_DISABLE, null, LocaleContextHolder.getLocale()));
+        }
+        if (exception instanceof BadCredentialsException) {
+            httpStatus = HttpStatus.BAD_REQUEST;
+            errorDetail.setMessage(messageSource.getMessage(SystemMessage.USER_BAD_CREDENTIALS, null, LocaleContextHolder.getLocale()));
+        }
+        if (exception instanceof AccessDeniedException) {
+            httpStatus = HttpStatus.FORBIDDEN;
+            errorDetail.setMessage(messageSource.getMessage(SystemMessage.ACCESS_DENIED, null, LocaleContextHolder.getLocale()));
+        }
+        if (exception instanceof ExpiredJwtException) {
+            errorDetail.setMessage(messageSource.getMessage(SystemMessage.JWT_IS_EXPIRED, null, LocaleContextHolder.getLocale()));
+        }
+        if (exception instanceof SignatureException) {
+            errorDetail.setMessage(messageSource.getMessage(SystemMessage.TOKEN_INVALID, null, LocaleContextHolder.getLocale()));
+        }
+        errorDetail.setCode(httpStatus.value());
+        errorDetail.setStatus(httpStatus.name());
+        return ResponseEntity.status(httpStatus).body(errorDetail);
     }
 
-    private String mapAttribute(String message, Map<String, Object> attributes) {
-        String minValue = String.valueOf(attributes.get(MIN_ATTRIBUTE));
+    @Override
+    protected ResponseEntity<Object> handleHttpMessageNotReadable(HttpMessageNotReadableException ex, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
+        BaseResponse errorDetail = BaseResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .build();
+        HttpStatus httpStatus = HttpStatus.BAD_REQUEST;
+        errorDetail.setCode(httpStatus.value());
+        errorDetail.setStatus(httpStatus.name());
+        errorDetail.setBody("Invalid value. Please provide one of the valid values.");;
+        if (ex.getCause() instanceof InvalidFormatException cause) {
+            Class<?> targetType = cause.getTargetType();
+            if (targetType.isEnum()) {
+                Map<String,String> rs = new HashMap<>();
+                String[] validValues = Arrays.stream(targetType.getEnumConstants())
+                        .map(Object::toString)
+                        .toArray(String[]::new);
+                rs.put(cause.getPath().get(0).getFieldName(),String.format("Invalid value for field '%s'. Allowed values are: %s",
+                        cause.getPath().get(0).getFieldName(),
+                        String.join(", ", validValues)));
+                errorDetail.setBody(rs);
+            }
+        }
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorDetail);
+    }
 
-        return message.replace("{" + MIN_ATTRIBUTE + "}", minValue);
+    @ExceptionHandler({Exception.class,AppException.class})
+    public final ResponseEntity<BaseResponse> handleAllExceptions(Exception ex, WebRequest request) {
+        log.error(ex.getMessage(),ex);
+        BaseResponse error = BaseResponse.builder()
+                .message(ex.getMessage())
+                .timestamp(LocalDateTime.now())
+                .code(HttpStatus.INTERNAL_SERVER_ERROR.value())
+                .status(HttpStatus.INTERNAL_SERVER_ERROR.name())
+                .build();
+        return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

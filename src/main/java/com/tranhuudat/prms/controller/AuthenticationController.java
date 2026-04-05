@@ -1,55 +1,61 @@
 package com.tranhuudat.prms.controller;
 
-import com.tranhuudat.prms.dto.request.IntrospectRequest;
-import com.tranhuudat.prms.dto.request.LoginRequest;
-import com.tranhuudat.prms.dto.request.LogoutRequest;
-import com.tranhuudat.prms.dto.request.RefreshRequest;
-import com.tranhuudat.prms.dto.response.ApiResponse;
-import com.tranhuudat.prms.dto.response.IntrospectResponse;
-import com.tranhuudat.prms.dto.response.TokenResponse;
+import com.tranhuudat.prms.dto.BaseResponse;
+import com.tranhuudat.prms.dto.authentication.AuthRequest;
+import com.tranhuudat.prms.dto.authentication.ForgotPasswordRequest;
+import com.tranhuudat.prms.dto.authentication.OAuthRequest;
+import com.tranhuudat.prms.dto.authentication.RegisterRequest;
 import com.tranhuudat.prms.service.AuthenticationService;
-import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
-@RestController
-@RequestMapping("/auth")
+import java.io.IOException;
+import java.security.GeneralSecurityException;
+
 @RequiredArgsConstructor
+@RestController
+@RequestMapping("/api/v1/auth")
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class AuthenticationController {
     AuthenticationService authenticationService;
 
     @PostMapping("/login")
-    public ApiResponse<TokenResponse> login(@RequestBody @Valid LoginRequest request) {
-        return ApiResponse.<TokenResponse>builder()
-                .result(authenticationService.login(request))
-                .build();
+    public ResponseEntity<BaseResponse> login(@RequestBody AuthRequest request){
+        return ResponseEntity.ok(authenticationService.login(request));
     }
-
-    @PostMapping("/introspect")
-    public ApiResponse<IntrospectResponse> introspect(@RequestBody IntrospectRequest request) {
-        return ApiResponse.<IntrospectResponse>builder()
-                .result(authenticationService.introspect(request))
-                .build();
+    @PostMapping("/register")
+    public ResponseEntity<BaseResponse> register(@RequestBody RegisterRequest request){
+        return ResponseEntity.ok(authenticationService.register(request));
     }
-
-    @PostMapping("/refresh")
-    public ApiResponse<TokenResponse> refresh(@RequestBody RefreshRequest request) {
-        return ApiResponse.<TokenResponse>builder()
-                .result(authenticationService.refreshToken(request))
-                .build();
+    @GetMapping("/verification/{token}")
+    public ResponseEntity<BaseResponse> verifyAccount(@PathVariable("token") String token){
+        return ResponseEntity.ok(authenticationService.verifyAccount(token));
     }
-
-    @PostMapping("/logout")
-    public ApiResponse<Void> logout(@RequestBody LogoutRequest request) {
-        authenticationService.logout(request);
-        return ApiResponse.<Void>builder()
-                .message("Logged out successfully")
-                .build();
+    @GetMapping("/generation-active-token/{username}")
+    public ResponseEntity<BaseResponse> generateActiveToken(@PathVariable("username") String username){
+        return ResponseEntity.ok(authenticationService.generateActiveToken(username));
+    }
+    @PostMapping("/forgot-password")
+    public ResponseEntity<BaseResponse> register(@RequestBody ForgotPasswordRequest request){
+        return ResponseEntity.ok(authenticationService.forgotPassword(request));
+    }
+    @GetMapping("/forgot-password/{token}")
+    public ResponseEntity<BaseResponse> activePassword(@PathVariable("token") String token) {
+        return ResponseEntity.ok(authenticationService.activeNewPassword(token));
+    }
+    @GetMapping("/forgot-password/new-token/{token}")
+    public ResponseEntity<BaseResponse> generateNewToken(@PathVariable("token") String token) {
+        return ResponseEntity.ok(authenticationService.generateNewToken(token));
+    }
+    @GetMapping("/refresh-token/{token}")
+    public ResponseEntity<BaseResponse> refreshToken(@PathVariable("token") String token) {
+        return ResponseEntity.ok(authenticationService.refreshToken(token));
+    }
+    @PostMapping("/login-google")
+    public BaseResponse loginWithGoogle(@RequestBody OAuthRequest request) throws GeneralSecurityException, IOException {
+        return authenticationService.loginGoogle(request);
     }
 }

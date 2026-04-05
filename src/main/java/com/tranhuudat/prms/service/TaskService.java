@@ -16,7 +16,6 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,7 +27,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-public class TaskService extends BaseService<Task, UUID> {
+public class TaskService extends BaseService {
     TaskRepository taskRepository;
     ProjectRepository projectRepository;
     UserRepository userRepository;
@@ -110,14 +109,8 @@ public class TaskService extends BaseService<Task, UUID> {
         taskRepository.save(task);
     }
 
-    public PageResponse<TaskResponse> getAll(TaskSearchRequest request) {
-        Pageable pageable = getPageable(
-                request.getPageIndex(),
-                request.getPageSize(),
-                request.getSortBy(),
-                request.getDirection());
-
-        Page<Task> pageData = taskRepository.findAll(pageable);
+    public PageResponse getAll(TaskSearchRequest request) {
+        Page<Task> pageData = taskRepository.findAll(getPageable(request));
 
         return toPageResponse(pageData, pageData.getContent().stream()
                 .map(this::mapToResponse)

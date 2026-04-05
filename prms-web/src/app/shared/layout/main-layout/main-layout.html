@@ -1,1 +1,97 @@
-<p>main-layout works!</p>
+<nz-layout class="app-layout">
+  <nz-sider class="menu-sidebar"
+            nzCollapsible
+            nzBreakpoint="md"
+            nzWidth="220px"
+            [(nzCollapsed)]="isCollapsed"
+            [nzTrigger]="null">
+    <div class="sidebar-logo">
+      <a href="https://ng.ant.design/" target="_blank">
+        <img src="https://ng.ant.design/assets/img/logo.svg" alt="logo">
+        <h1>PRMS</h1>
+      </a>
+    </div>
+    <ul nz-menu nzTheme="dark" nzMode="inline" >
+      @for (item of navigation; track $index) {
+        @if (!item.children) {
+          <li nz-menu-item nzMatchRouter>
+            <a [routerLink]="item.link">
+              <nz-icon [nzType]="item.iconType || ''">
+                @if (item.iconClass){
+                  <i class="{{item.iconClass}}"></i>
+                }
+                @if (item.iconLink) {
+                  <img ngSrc="{{item.iconLink}}" alt="logo" fill/>
+                }
+              </nz-icon>
+              <span>{{ item.translateKey? (item.translateKey | translate): item.name }}</span>
+            </a>
+          </li>
+        }
+        @if (item.children) {
+          <li [nzOpen]="isOpen(item)" nz-submenu [nzTitle]="title">
+            <ng-template #title>
+            <span nz-icon  [nzType]="item.iconType || ''">
+               @if (item.iconClass){
+                 <i class="{{item.iconClass}}"></i>
+               }
+              @if (item.iconLink) {
+                <img ngSrc="{{item.iconLink}}" alt="logo"/>
+              }
+            </span>
+              <span>{{ item.translateKey? (item.translateKey | translate): item.name }}</span>
+            </ng-template>
+            <ul>
+              @for (child of item.children; track $index) {
+                <li  nz-menu-item nzMatchRouter>
+                  <a routerLinkActive="ant-menu-item-selected" #subItem="routerLinkActive" routerLink="{{child.link}}">
+                    {{ child.translateKey? (child.translateKey | translate): child.name }}</a>
+                </li>
+              }
+            </ul>
+          </li>
+        }
+      }
+    </ul>
+  </nz-sider>
+  <nz-layout>
+    <nz-header>
+      <div class="app-header d-flex justify-content-between">
+        <span class="header-trigger" (click)="isCollapsed = !isCollapsed">
+            <span nz-icon [nzType]="isCollapsed ? 'menu-unfold' : 'menu-fold'"></span>
+        </span>
+        <div class="header-trigger">
+          <nz-select [nzCustomTemplate]="defaultTemplate" (ngModelChange)="changeLanguage($event)"
+                     class="me-3" [(ngModel)]="currentLanguage">
+            <nz-option nzValue="en" nzLabel="{{'layout.english' |translate}}"></nz-option>
+            <nz-option nzValue="vi" nzLabel="{{'layout.vietnamese' |translate}}"></nz-option>
+          </nz-select>
+          <ng-template #defaultTemplate let-selected>
+            <span  nz-icon style="vertical-align:0;font-size: large">
+              <i class="fa fa-globe fa-2xl" aria-hidden="true"></i>
+            </span>
+            {{ selected.nzLabel }}
+          </ng-template>
+          <nz-avatar nz-dropdown [nzDropdownMenu]="menu" nzPlacement="bottomLeft"
+                     nzSize="large" nzIcon="user" [nzSrc]="currentUser.photoUrl"></nz-avatar>
+          <nz-dropdown-menu #menu="nzDropdownMenu">
+            <ul nz-menu>
+              <li nz-menu-item><span nz-icon nzType="user"  nzTheme="outline"></span>&nbsp;&nbsp;{{'layout.profile' |translate}}</li>
+              <li nz-menu-item (click)="logout()"><span nz-icon nzType="logout" nzTheme="outline"></span>&nbsp;&nbsp;{{'layout.logout' |translate}}</li>
+            </ul>
+          </nz-dropdown-menu>
+        </div>
+      </div>
+    </nz-header>
+    <nz-content>
+      @if (isVisible$ | async){
+        <app-breadcrumb [lang]="currentLanguage" [routeLabelFn]="translateFn"  [autoGenerate]="true"></app-breadcrumb>
+      } @else {
+        <app-breadcrumb [lang]="currentLanguage" [routeLabelFn]="translateFn"  [autoGenerate]="true"></app-breadcrumb>
+      }
+      <div class="card card-body inner-content mt-2">
+        <router-outlet></router-outlet>
+      </div>
+    </nz-content>
+  </nz-layout>
+</nz-layout>

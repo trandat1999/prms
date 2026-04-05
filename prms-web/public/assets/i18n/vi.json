@@ -1,0 +1,48 @@
+{
+  "common": {
+    "button": {
+      "submit": "Submit",
+      "cancel": "Cancel",
+      "back": "Back",
+      "action": "Action",
+      "edit": "Edit",
+      "delete": "Delete",
+      "done": "Done",
+      "close": "Close",
+      "create": "Create",
+      "update": "Update"
+    }
+  },
+  "breadcrumb": {
+    "home": "Home",
+    "none": ""
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "category": "Category",
+    "profile": "Profile",
+    "settings": "Settings",
+    "manage": "Manage",
+    "users": "Users",
+    "roles": "Role",
+    "country": "Country",
+    "attribute": "Attribute",
+    "supplier" : "Supplier",
+    "productImport": "Product Import",
+    "product": "Product",
+    "inventoryImport": "Inventory import",
+    "administrativeUnit": "Administrative Unit",
+    "management": "Management",
+    "warehouse": "Warehouse",
+    "sale": "Sales",
+    "saleInvoice": "Sales Invoice",
+    "directSale": "Direct Sale",
+    "productShow": "Product show"
+  },
+  "layout": {
+    "english": "English",
+    "vietnamese": "Vietnamese",
+    "profile": "Profile",
+    "logout": "Logout"
+  }
+}

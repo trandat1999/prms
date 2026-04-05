@@ -1,0 +1,74 @@
+{
+  "common": {
+    "button": {
+      "submit": "Submit",
+      "cancel": "Cancel",
+      "back": "Back",
+      "action": "Action",
+      "edit": "Edit",
+      "delete": "Delete",
+      "done": "Done",
+      "close": "Close",
+      "create": "Create",
+      "update": "Update"
+    },
+    "loading": "Loading",
+    "commonError": "An error occurred, please try again later",
+    "error": "Error"
+  },
+  "breadcrumb": {
+    "home": "Home",
+    "none": ""
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "category": "Category",
+    "profile": "Profile",
+    "settings": "Settings",
+    "manage": "Manage",
+    "users": "Users",
+    "roles": "Role",
+    "country": "Country",
+    "attribute": "Attribute",
+    "supplier" : "Supplier",
+    "productImport": "Product Import",
+    "product": "Product",
+    "inventoryImport": "Inventory import",
+    "administrativeUnit": "Administrative Unit",
+    "management": "Management",
+    "warehouse": "Warehouse",
+    "sale": "Sales",
+    "saleInvoice": "Sales Invoice",
+    "directSale": "Direct Sale",
+    "productShow": "Product show",
+    "projectRequest": "Project request"
+  },
+  "validation": {
+    "required": "{{label}} is required",
+    "maxlength": "{{label}} must be at most {{requiredLength}} characters",
+    "minlength": "{{label}} must be at most {{requiredLength}} characters",
+    "maxValue": "{{label}} maximum value is {{max}}",
+    "max": "{{label}} maximum value is {{max}}",
+    "min": "{{label}} minimum value is {{min}}",
+    "email": "{{label}} must be a valid email address",
+    "greaterValue": "{{label}} must be greater than {{greaterValue}}",
+    "phoneNumber": "{{label}} is invalid"
+  },
+  "layout": {
+    "english": "English",
+    "vietnamese": "Vietnamese",
+    "profile": "Profile",
+    "logout": "Logout"
+  },
+  "auth": {
+    "username": "Username",
+    "password": "Password",
+    "login": "Login",
+    "forgotPassword": "Forgot password",
+    "loginWelcomeBack": "Welcome back to prms! Please enter your details below to sign in",
+    "rememberMe": "Remember me",
+    "signIn": "Sign in",
+    "dontHaveAccount": "Don't have an account? ",
+    "signUpNow": "Sign up now"
+  }
+}

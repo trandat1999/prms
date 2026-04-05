@@ -51,8 +51,8 @@ public class ProjectController {
     }
 
     @PostMapping("/search")
-    public ApiResponse<PageResponse<ProjectResponse>> getAll(@RequestBody ProjectSearchRequest request) {
-        return ApiResponse.<PageResponse<ProjectResponse>>builder()
+    public ApiResponse<PageResponse> getAll(@RequestBody ProjectSearchRequest request) {
+        return ApiResponse.<PageResponse>builder()
                 .result(projectService.getAll(request))
                 .build();
     }

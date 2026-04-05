@@ -2,16 +2,37 @@ spring:
   datasource:
     url: ${DATASOURCE_URL:jdbc:postgresql://localhost:5432/prms}
     username: ${DATASOURCE_USERNAME:postgres}
-    password: ${DATASOURCE_PASSWORD:postgres}
+    password: ${DATASOURCE_PASSWORD:123456}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: none
     show-sql: true
     properties:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            scope:
+              - profile
+              - email
+            redirect-uri: http://localhost:8080/api/v1/auth/login-google
+            authorization-grant-type: authorization_code
+        provider:
+          google:
+            authorization-uri: https://accounts.google.com/o/oauth2/auth
+            token-uri: https://oauth2.googleapis.com/token
+            user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
+            user-name-attribute: sub
+  messages:
+    basename: i18n/messages
+    encoding: UTF-8
 
 server:
   port: 8080
@@ -26,7 +47,8 @@ logging:
   file:
     name: logs/prms.log
 
-jwt:
-  signer-key: "your-very-strong-secret-key-should-be-at-least-32-chars-long"
-  valid-duration: 3600 # in seconds
-  refreshable-duration: 86400 # in seconds
+app:
+  jwt:
+    secret-key: amFzaGRmc2hnZmpza2Fmc2hkZnljem5iY2FzZ2R3cWZzbmFzZGFkZnNhc2Rm
+    expiration-access-token: 604800000
+    expiration-refresh-token: 604800000

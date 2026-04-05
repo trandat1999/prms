@@ -1,1 +1,35 @@
+svg { vertical-align: baseline; }
+::-webkit-scrollbar {
+  padding: 1px;
+  width: 11px;
+  height: 11px;
+}
+::-webkit-scrollbar-track {
+  background-color: rgba(0, 0, 0, 0.05);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: gray;
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  border: 0;
+}
+nz-form-label{
+  font-weight:600!important
+}
+.antd-col {
+  box-sizing: border-box;
+}
+a{
+  text-decoration: auto;
+}
+.ant-form-item-label{
+  padding: 0 !important;
+}
+span:has(i) {
+  vertical-align:0 !important;
+}
 /* You can add global styles to this file, and also import other style files */
