@@ -20,6 +20,7 @@ public enum ErrorCode {
     TASK_NOT_FOUND(1012, "Task not found", HttpStatus.NOT_FOUND),
     NAME_INVALID(1010, "Name cannot be blank", HttpStatus.BAD_REQUEST),
     CODE_INVALID(1011, "Code cannot be blank", HttpStatus.BAD_REQUEST),
+    PROJECT_CODE_EXISTS(1014, "Project code already exists", HttpStatus.BAD_REQUEST),
     ;
 
     ErrorCode(int code, String message, HttpStatusCode statusCode) {
