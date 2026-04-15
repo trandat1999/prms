@@ -1,4 +1,4 @@
-package com.tranhuudat.prms.dto.response;
+package com.tranhuudat.prms.dto.authentication;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -8,6 +8,6 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class IntrospectResponse {
-    boolean valid;
+public class RefreshRequest {
+    String token;
 }

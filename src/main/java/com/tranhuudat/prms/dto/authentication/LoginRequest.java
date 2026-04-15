@@ -1,4 +1,4 @@
-package com.tranhuudat.prms.dto.request;
+package com.tranhuudat.prms.dto.authentication;
 
 import jakarta.validation.constraints.Size;
 import lombok.*;

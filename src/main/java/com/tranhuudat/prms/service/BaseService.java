@@ -2,14 +2,12 @@ package com.tranhuudat.prms.service;
 
 import com.tranhuudat.prms.dto.BaseResponse;
 import com.tranhuudat.prms.dto.SearchRequest;
-import com.tranhuudat.prms.dto.response.PageResponse;
 import com.tranhuudat.prms.util.SystemMessage;
 import jakarta.annotation.Resource;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -17,7 +15,6 @@ import org.springframework.util.ObjectUtils;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Set;
 
 public abstract class BaseService{
@@ -124,15 +121,5 @@ public abstract class BaseService{
             }
         }
         return rs;
-    }
-
-    protected  PageResponse toPageResponse(Page<?> pageData, List<?> content) {
-        return PageResponse.builder()
-                .currentPage(pageData.getNumber() + 1)
-                .pageSize(pageData.getSize())
-                .totalPages(pageData.getTotalPages())
-                .totalElements(pageData.getTotalElements())
-                .data(content)
-                .build();
     }
 }

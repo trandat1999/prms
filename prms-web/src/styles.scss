@@ -32,4 +32,21 @@ a{
 span:has(i) {
   vertical-align:0 !important;
 }
+
+/* NG-ZORRO table: center header text globally */
+.ant-table-thead > tr > th {
+  text-align: center;
+}
+
+.ant-table-thead > tr > th .ant-table-column-title {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+/* ngx-spinner: avoid overlay blocking clicks after fade-out */
+.ngx-spinner-overlay.fade-out {
+  pointer-events: none !important;
+}
 /* You can add global styles to this file, and also import other style files */

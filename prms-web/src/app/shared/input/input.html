@@ -192,7 +192,7 @@
           @for (item of items; track $index) {
             @if (!isLoading) {
               <nz-option [nzValue]="bindValue?item[bindValue]:item"
-                         [nzLabel]="isTranslation?(bindLabel?translate.instant(item[bindLabel]):translate.instant(item)):(bindLabel?item[bindLabel]:item)">
+                         [nzLabel]="selectOptionLabel(item)">
               </nz-option>
             }
           }
@@ -213,6 +213,7 @@
         <nz-date-picker class="w-100" [nzPlaceHolder]="placeHolder" [nzDisabled]="isDisabled || ngControl?.disabled"
                         #inputElements="ngModel" [nzShowTime]="showTime" [nzShowNow]="showNow"
                         [nzShowToday]="showToday" [nzFormat]="dateTimeFormat" [nzDisabledDate]="disabledDate"
+                        [nzMode]="dateMode"
                         [(ngModel)]="value" [nzSize]="size" (blur)="onBlur()"></nz-date-picker>
       }
       @case ('number') {
@@ -267,6 +268,19 @@
             </span>
           }
         </nz-input-number>
+      }
+      @case ('textarea') {
+        <textarea
+          nz-input
+          class="w-100"
+          [attr.rows]="textareaRows"
+          [placeholder]="placeHolder"
+          [nzSize]="size"
+          [disabled]="isDisabled || ngControl?.disabled"
+          #inputElements="ngModel"
+          [(ngModel)]="value"
+          (blur)="onBlur()"
+        ></textarea>
       }
     }
   </nz-form-control>

@@ -101,15 +101,13 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(AppException.class)
     public ResponseEntity<BaseResponse> handleAppException(AppException ex) {
-        ErrorCode errorCode = ex.getErrorCode();
-        HttpStatusCode statusCode = errorCode.getStatusCode();
         BaseResponse error = BaseResponse.builder()
-                .message(errorCode.getMessage())
+                .message(ex.getMessage())
                 .timestamp(LocalDateTime.now())
-                .code(statusCode.value())
-                .status(statusCode instanceof HttpStatus hs ? hs.name() : String.valueOf(statusCode.value()))
+                .code(HttpStatus.BAD_REQUEST.value())
+                .status(HttpStatus.BAD_REQUEST.name())
                 .build();
-        return new ResponseEntity<>(error, statusCode);
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(Exception.class)

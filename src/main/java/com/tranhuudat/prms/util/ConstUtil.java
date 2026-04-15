@@ -65,4 +65,13 @@ public class ConstUtil {
     public static final String KAFKA_GROUP_ORDER = "Order";
     public static final String KAFKA_TOPIC_UPDATE_WAREHOUSE = "update_warehouse";
 
+    public static final String[] NON_UPDATABLE_FIELDS = {
+        "id",
+        "createdDate",
+        "createdBy",
+        "lastModifiedDate",
+        "lastModifiedBy",
+        "voided"
+    };
+
 }

@@ -85,9 +85,13 @@ export class InputCommon {
   @Input() hint: string = '';
   @Input() tooltipTitle: string = null;
   @Input() placeHolder: string = '';
-  @Input() type: 'text' | 'number' | 'email' | 'password' | 'date' | 'select' | 'editor' = 'text';
+  @Input() type: 'text' | 'number' | 'email' | 'password' | 'date' | 'select' | 'editor' | 'textarea' =
+    'text';
+  @Input() textareaRows = 3;
   @Input() items: any[] = [];
   @Input() bindLabel: string = null;
+  /** Chuỗi key phụ, cách nhau bởi dấu phẩy (vd: `username,email`) — dùng khi bindLabel rỗng. */
+  @Input() bindLabelFallback: string | null = null;
   @Input() bindValue: string = null;
   @Input() allowSearch: boolean = true;
   @Input() isTranslation: boolean = false;
@@ -101,6 +105,7 @@ export class InputCommon {
   @Input() showNow: boolean = true;
   @Input() showToday: boolean = true;
   @Input() dateTimeFormat: string = "dd/MM/yyyy";
+  @Input() dateMode: 'date' | 'week' | 'month' | 'quarter' | 'year' = 'date';
   @Input() showLabel: boolean = true;
   @Input() prefixIcon: string;
   @Input() suffixIcon: string;
@@ -127,8 +132,9 @@ export class InputCommon {
   searchObject: any = {
     pageIndex: 0,
     pageSize: 20,
-    keyword: ""
-  }
+    keyword: '',
+    voided: false,
+  };
 
   onSearch(value: string): void {
     if (this.isServerSearch) {
@@ -142,10 +148,10 @@ export class InputCommon {
     if (this.isServerSearch) {
       this.isLoadingMore = true;
       this.searchObject.pageIndex = this.searchObject.pageIndex + 1;
-      this.service.post(this.urlSearch, {...this.searchObject}).subscribe(data => {
+      this.service.post(this.urlSearch, { ...this.searchObject }).subscribe((data) => {
         this.isLoadingMore = false;
-        let temp = data.body?.content || [];
-        this.items = [...this.items, ...temp]
+        const temp = this.normalizeServerSearchBody(data);
+        this.items = [...this.items, ...temp];
       });
     }
   }
@@ -233,12 +239,13 @@ export class InputCommon {
     if (this.isServerSearch) {
       const getDataSelect = (name: string): Observable<any> => {
         this.searchObject.pageIndex = 0;
-        return this.service.post(this.urlSearch, {...this.searchObject, keyword: name})
+        return this.service
+          .post(this.urlSearch, { ...this.searchObject, keyword: name })
           .pipe(
-            catchError(() => of({results: []})),
-            map((res: any) => res.body?.content || [])
-          )
-      }
+            catchError(() => of({ body: [] })),
+            map((res: any) => this.normalizeServerSearchBody(res))
+          );
+      };
       const optionList$: Observable<any[]> = this.searchChange$
         .asObservable()
         .pipe(debounceTime(500))
@@ -258,6 +265,49 @@ export class InputCommon {
     this.hint = changes['hint']?.currentValue ? changes['hint']?.currentValue : this.hint;
     const errors = this.ngControl?.control?.errors;
     this.inputElement?.control?.setErrors(errors ? errors : null);
+  }
+
+  /** API trả về mảng trực tiếp trong body hoặc Page với content. */
+  private normalizeServerSearchBody(res: any): any[] {
+    const b = res?.body;
+    if (Array.isArray(b)) {
+      return b;
+    }
+    const content = b?.content;
+    return Array.isArray(content) ? content : [];
+  }
+
+  selectOptionLabel(item: any): string {
+    if (item == null) {
+      return '';
+    }
+    if (this.isTranslation) {
+      if (this.bindLabel) {
+        return this.translate.instant(item[this.bindLabel]);
+      }
+      return this.translate.instant(item);
+    }
+    if (this.bindLabel) {
+      const primary = item[this.bindLabel];
+      if (primary != null && String(primary).trim() !== '') {
+        return String(primary);
+      }
+    }
+    if (this.bindLabelFallback) {
+      for (const key of this.bindLabelFallback
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean)) {
+        const v = item[key];
+        if (v != null && String(v).trim() !== '') {
+          return String(v);
+        }
+      }
+    }
+    if (this.bindValue != null && item[this.bindValue] != null) {
+      return String(item[this.bindValue]);
+    }
+    return String(item);
   }
 
   compareFn = (o1: any, o2: any): boolean => {

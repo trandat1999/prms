@@ -17,7 +17,7 @@ public class SystemVariable {
     public static final String CODE = "code";
     public static final String MODULE = "module";
 
-    public static final String CATEGORY_PARENT = "parent category";
+    public static final String PROJECT = "app.variable.project";
     public static final String CATEGORY = "app.variable.category";
     public static final String COUNTRY = "app.variable.country";
     public static final String SUPPLIER = "app.variable.supplier";

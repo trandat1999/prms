@@ -1,4 +1,4 @@
-package com.tranhuudat.prms.dto.request;
+package com.tranhuudat.prms.dto.authentication;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;

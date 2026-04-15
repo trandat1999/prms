@@ -1,0 +1,34 @@
+:host {
+  display: block;
+}
+
+/* Ưu tiên dùng Bootstrap/NG-ZORRO; CSS riêng chỉ cho case cần thiết */
+.filter-item {
+  width: 260px;
+  max-width: 100%;
+}
+
+.name {
+  max-width: 420px;
+}
+
+.code {
+  cursor: pointer;
+}
+
+.progress__text {
+  min-width: 34px;
+  text-align: right;
+  color: rgba(0, 0, 0, 0.65);
+}
+
+/* Override bên trong NG-ZORRO phải scope để không leak */
+:host ::ng-deep .ant-progress {
+  margin-bottom: 0;
+  width: 110px;
+}
+
+.project-create-modal {
+  padding-top: 4px;
+}
+

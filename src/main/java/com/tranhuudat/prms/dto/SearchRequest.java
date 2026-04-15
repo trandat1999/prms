@@ -1,5 +1,9 @@
 package com.tranhuudat.prms.dto;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.experimental.FieldDefaults;
@@ -16,4 +20,5 @@ public class SearchRequest {
     protected String keyword;
     protected Integer pageSize;
     protected Integer pageIndex;
+    protected List<UUID> ids = new ArrayList<>();
 }

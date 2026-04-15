@@ -1,10 +1,9 @@
 package com.tranhuudat.prms.controller;
 
 import com.tranhuudat.prms.dto.BaseResponse;
-import com.tranhuudat.prms.dto.request.ProjectRequest;
-import com.tranhuudat.prms.dto.request.search.ProjectSearchRequest;
+import com.tranhuudat.prms.dto.project.ProjectDTO;
+import com.tranhuudat.prms.dto.project.ProjectSearchRequest;
 import com.tranhuudat.prms.service.ProjectService;
-import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -30,14 +29,12 @@ public class ProjectController {
     ProjectService projectService;
 
     @PostMapping
-    public ResponseEntity<BaseResponse> create(@Valid @RequestBody ProjectRequest request) {
+    public ResponseEntity<BaseResponse> create(@RequestBody ProjectDTO request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(projectService.create(request));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<BaseResponse> update(
-            @PathVariable UUID id,
-            @Valid @RequestBody ProjectRequest request) {
+    public ResponseEntity<BaseResponse> update(@PathVariable UUID id, @RequestBody ProjectDTO request) {
         return ResponseEntity.ok(projectService.update(id, request));
     }
 

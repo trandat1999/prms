@@ -3,7 +3,7 @@ import {HttpClient} from '@angular/common/http';
 import {TranslateService} from '@ngx-translate/core';
 import {NgxSpinnerService} from 'ngx-spinner';
 import {NzNotificationService} from 'ng-zorro-antd/notification';
-import {catchError, map, of} from 'rxjs';
+import {catchError, finalize, map, of, throwError} from 'rxjs';
 import {ApiResponse} from '../../shared/utils/api-response';
 import {AppConfigService} from './app-config-service';
 
@@ -26,58 +26,58 @@ export class BaseService {
     this.loading.show();
     return this.http.get(this.serverUrl+url).pipe(
       map(value => {
-        this.loading.hide();
         return value as ApiResponse;
-      }),catchError(error => {
-        this.loading.hide();
+      }),
+      catchError(error => {
         this.notification.error(this.translate.instant("common.error") +(error?.error?.code? " "+error?.error?.code:""),
           error?.error?.message? error?.error?.message : this.translate.instant("common.commonError"));
-        return of(error)
-      })
+        return throwError(() => error);
+      }),
+      finalize(() => this.loading.hide())
     );
   }
   delete(url: string){
     this.loading.show();
     return this.http.delete(this.serverUrl+url).pipe(
       map(value => {
-        this.loading.hide();
         return value as ApiResponse;
-      }),catchError(error => {
-        this.loading.hide();
+      }),
+      catchError(error => {
         this.notification.error(this.translate.instant("common.error") +(error?.error?.code? " "+error?.error?.code:""),
           error?.error?.message? error?.error?.message : this.translate.instant("common.commonError"));
-        return of(error)
-      })
+        return throwError(() => error);
+      }),
+      finalize(() => this.loading.hide())
     );
   }
   put(url : string,request :any ){
     this.loading.show();
     return this.http.put(this.serverUrl+url, request).pipe(
       map(value => {
-        this.loading.hide().then();
         return value as ApiResponse;
-      }),catchError(error => {
-        this.loading.hide();
+      }),
+      catchError(error => {
         this.notification.error(this.translate.instant("common.error") +(error?.error?.code? " "+error?.error?.code:""),
           error?.error?.message? error?.error?.message : this.translate.instant("common.commonError"));
-        return of(error)
-      })
+        return throwError(() => error);
+      }),
+      finalize(() => this.loading.hide())
     );
   }
 
   post(url : string,request :any ){
-    this.loading.show().then();
+    this.loading.show();
     return this.http.post(this.serverUrl+url, request).pipe(
       map(value => {
-        this.loading.hide().then();
         return value as ApiResponse;
-      }),catchError(error => {
+      }),
+      catchError(error => {
         console.log(error);
-        this.loading.hide().then();
         this.notification.error(this.translate.instant("common.error") +(error?.error?.code? " "+error?.error?.code:""),
           error?.error?.message? error?.error?.message : this.translate.instant("common.commonError"));
-        return of(error)
-      })
+        return throwError(() => error);
+      }),
+      finalize(() => this.loading.hide())
     );
   }
 }

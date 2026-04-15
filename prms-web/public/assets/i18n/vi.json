@@ -15,7 +15,8 @@
   },
   "breadcrumb": {
     "home": "Home",
-    "none": ""
+    "none": "",
+    "project": "Project"
   },
   "navigation": {
     "dashboard": "Dashboard",
