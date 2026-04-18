@@ -1,0 +1,87 @@
+<div class="kanban">
+  <div class="kanban__header">
+    <div class="kanban__title">
+      <div class="kanban__titleText">{{ 'kanban.title' | translate }}</div>
+      <div class="kanban__subtitle">{{ 'kanban.subtitle' | translate }}</div>
+    </div>
+
+    <div class="kanban__controls">
+      <app-input
+        class="kanban__project"
+        [type]="'select'"
+        [showLabel]="false"
+        [placeHolder]="'kanban.projectPlaceholder' | translate"
+        [isServerSearch]="true"
+        [urlSearch]="projectAutocompleteUrl"
+        [bindValue]="'id'"
+        [bindLabelFallback]="'code,name'"
+        [(ngModel)]="projectId"
+        (valueChange)="onLoad()"
+      ></app-input>
+
+      <button nz-button nzType="primary" (click)="onLoad()">
+        <span nz-icon nzType="search"></span>
+        {{ 'kanban.load' | translate }}
+      </button>
+    </div>
+  </div>
+
+  @if (saving) {
+    <div class="kanban__saving">
+      <nz-spin nzSize="small"></nz-spin>
+      <span>{{ 'kanban.saving' | translate }}</span>
+    </div>
+  }
+
+  @if (!loading) {
+    <div class="kanban__board" cdkDropListGroup>
+      @for (col of columns; track col.status) {
+        <div class="kanban__column" [class.is-drop-hover]="hoverStatus === col.status">
+          <div class="kanban__columnHeader">
+            <div class="kanban__columnTitle">{{ col.name }}</div>
+            <div class="kanban__columnCount">{{ col.tasks?.length ?? 0 }}</div>
+          </div>
+
+          <div
+            class="kanban__list"
+            cdkDropList
+            [id]="listId(col.status)"
+            [cdkDropListConnectedTo]="connectedListIds()"
+            [cdkDropListData]="col.tasks"
+            (cdkDropListEntered)="onListEntered(col.status)"
+            (cdkDropListExited)="onListExited(col.status)"
+            (cdkDropListDropped)="drop($event, col.status)"
+          >
+            @for (t of col.tasks; track t.id) {
+              <div
+                class="kanban__card"
+                cdkDrag
+                (cdkDragStarted)="onDragStarted(col.status)"
+                (cdkDragEnded)="onDragEnded()"
+              >
+                <div class="kanban__cardTop">
+                  <div class="kanban__cardTitle">{{ t.name || t.code }}</div>
+                  <nz-tag [nzColor]="priorityColor(t.priority)">{{ t.priority || '—' }}</nz-tag>
+                </div>
+
+                <div class="kanban__cardMeta">
+                  <div class="kanban__assignee">
+                    <div class="kanban__avatar">{{ initials(t.assignedDisplay) }}</div>
+                    <div class="kanban__assigneeText">{{ t.assignedDisplay || '—' }}</div>
+                  </div>
+                  @if (t.estimatedHours !== null && t.estimatedHours !== undefined) {
+                    <div class="kanban__hours">{{ t.estimatedHours }}h</div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  } @else {
+    <div class="kanban__loading">
+      <nz-spin></nz-spin>
+    </div>
+  }
+</div>

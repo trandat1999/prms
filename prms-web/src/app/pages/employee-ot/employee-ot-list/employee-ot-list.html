@@ -1,0 +1,367 @@
+<div class="eo-page">
+  <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+    <div class="d-flex flex-wrap align-items-center gap-2 flex-grow-1">
+      <app-input
+        class="filter-item"
+        [showLabel]="false"
+        [offMb]="true"
+        [placeHolder]="'employeeOt.list.searchPlaceholder' | translate"
+        [(ngModel)]="keyword"
+      ></app-input>
+
+      <app-input
+        class="filter-item filter-item--md"
+        [showLabel]="false"
+        [offMb]="true"
+        type="select"
+        [isServerSearch]="true"
+        [urlSearch]="userAutocompleteUrl"
+        bindLabel="fullName"
+        bindLabelFallback="username,email"
+        bindValue="id"
+        [allowClear]="true"
+        [placeHolder]="'employeeOt.list.userPlaceholder' | translate"
+        [(ngModel)]="filterUserId"
+      ></app-input>
+
+      <app-input
+        class="filter-item filter-item--md"
+        [showLabel]="false"
+        [offMb]="true"
+        type="select"
+        [isServerSearch]="true"
+        [urlSearch]="projectAutocompleteUrl"
+        bindLabel="code"
+        bindLabelFallback="code"
+        bindValue="id"
+        [allowClear]="true"
+        [placeHolder]="'employeeOt.list.projectPlaceholder' | translate"
+        [(ngModel)]="filterProjectId"
+      ></app-input>
+
+      <app-input
+        class="filter-item filter-item--sm"
+        [showLabel]="false"
+        [offMb]="true"
+        type="select"
+        [items]="statusFilterItems"
+        [isTranslation]="true"
+        bindLabel="nameKey"
+        bindValue="id"
+        [allowClear]="true"
+        [placeHolder]="'employeeOt.list.statusPlaceholder' | translate"
+        [(ngModel)]="filterStatus"
+      ></app-input>
+
+      <app-input
+        class="filter-item filter-item--sm"
+        [showLabel]="false"
+        [offMb]="true"
+        type="select"
+        [items]="otTypeFilterItems"
+        [isTranslation]="true"
+        bindLabel="nameKey"
+        bindValue="id"
+        [allowClear]="true"
+        [placeHolder]="'employeeOt.list.otTypePlaceholder' | translate"
+        [(ngModel)]="filterOtType"
+      ></app-input>
+
+      <app-input
+        class="filter-item filter-item--xs"
+        [showLabel]="false"
+        [offMb]="true"
+        type="date"
+        [allowClear]="true"
+        [placeHolder]="'employeeOt.list.otDateFromPlaceholder' | translate"
+        [(ngModel)]="filterOtDateFrom"
+      ></app-input>
+
+      <app-input
+        class="filter-item filter-item--xs"
+        [showLabel]="false"
+        [offMb]="true"
+        type="date"
+        [allowClear]="true"
+        [placeHolder]="'employeeOt.list.otDateToPlaceholder' | translate"
+        [(ngModel)]="filterOtDateTo"
+      ></app-input>
+    </div>
+
+    <div class="d-flex align-items-center gap-2 justify-content-end">
+      <app-input
+        class="filter-item filter-item--xs"
+        [showLabel]="false"
+        [offMb]="true"
+        type="date"
+        dateMode="month"
+        [allowClear]="true"
+        [placeHolder]="'employeeOt.list.reportMonthPlaceholder' | translate"
+        [(ngModel)]="reportMonth"
+      ></app-input>
+      <button nz-button (click)="onExportMonthlyReport()">
+        <span nz-icon nzType="download"></span>
+        {{ 'employeeOt.list.exportMonthlyButton' | translate }}
+      </button>
+      <button nz-button nzType="primary" (click)="onCreate()">
+        <span nz-icon nzType="plus"></span>
+        {{ 'common.button.create' | translate }}
+      </button>
+      <button nz-button (click)="onSearch()">
+        <span nz-icon nzType="search"></span>
+        {{ 'employeeOt.list.searchButton' | translate }}
+      </button>
+    </div>
+  </div>
+
+  <nz-table
+    #table
+    [nzData]="rows"
+    [nzFrontPagination]="false"
+    nzSize="small"
+    [nzTotal]="page?.totalElements || 0"
+    [nzPageIndex]="pageIndex"
+    [nzPageSize]="pageSize"
+    [nzShowSizeChanger]="true"
+    (nzPageIndexChange)="onPageIndexChange($event)"
+    (nzPageSizeChange)="onPageSizeChange($event)"
+  >
+    <thead>
+      <tr>
+        <th>{{ 'employeeOt.fields.user' | translate }}</th>
+        <th>{{ 'employeeOt.fields.project' | translate }}</th>
+        <th>{{ 'employeeOt.fields.otDate' | translate }}</th>
+        <th>{{ 'employeeOt.fields.otType' | translate }}</th>
+        <th class="text-end">{{ 'employeeOt.fields.coefficient' | translate }}</th>
+        <th class="text-end">{{ 'employeeOt.fields.otHours' | translate }}</th>
+        <th class="text-end">{{ 'employeeOt.fields.weightedOtHours' | translate }}</th>
+        <th>{{ 'employeeOt.fields.status' | translate }}</th>
+        <th class="text-center">{{ 'common.button.action' | translate }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (item of table.data; track item.id) {
+        <tr>
+          <td class="text-nowrap">{{ item.userDisplay || '—' }}</td>
+          <td class="text-nowrap">{{ item.projectDisplay || '—' }}</td>
+          <td class="text-nowrap">{{ item.otDate | date: 'dd/MM/yyyy' }}</td>
+          <td class="text-nowrap">{{ ('employeeOt.otType.' + item.otType) | translate }}</td>
+          <td class="text-end text-nowrap">
+            {{ item.otTypeCoefficient ?? coefficientFor(item.otType) ?? '—' }}
+          </td>
+          <td class="text-end text-nowrap">{{ item.otHours ?? '—' }}</td>
+          <td class="text-end text-nowrap">{{ item.weightedOtHours ?? '—' }}</td>
+          <td class="text-nowrap">{{ ('employeeOt.status.' + item.status) | translate }}</td>
+          <td class="text-center">
+            <button nz-button nzType="text" (click)="onView(item)" [title]="'employeeOt.actions.view' | translate">
+              <span nz-icon nzType="eye"></span>
+            </button>
+            @if (item.status !== 'APPROVED') {
+              <button nz-button nzType="text" (click)="onEdit(item)" [title]="'common.button.edit' | translate">
+                <span nz-icon nzType="edit"></span>
+              </button>
+            }
+            <button nz-button nzType="text" (click)="onDelete(item)" [title]="'common.button.delete' | translate">
+              <span nz-icon nzType="delete"></span>
+            </button>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </nz-table>
+</div>
+
+<nz-modal
+  [(nzVisible)]="formVisible"
+  [nzTitle]="formTitle"
+  [nzWidth]="760"
+  (nzOnCancel)="closeModal()"
+  [nzMaskClosable]="!submitting && !loading"
+>
+  <div *nzModalContent class="eo-form-modal">
+    @if (formMode === 'edit' && loading) {
+      <div class="text-center py-5">
+        <nz-spin nzSimple></nz-spin>
+      </div>
+    } @else {
+      <div class="row g-3">
+        @if (formCoreDisabled) {
+          <div class="col-12">
+            <div class="alert alert-info py-2 mb-0" role="status">
+              {{ 'employeeOt.form.approvalHint' | translate }}
+            </div>
+          </div>
+        }
+        <div class="col-md-12">
+          <app-input
+            label="{{ 'employeeOt.fields.user' | translate }}"
+            [labelSpan]="24"
+            [inputSpan]="24"
+            type="select"
+            [isServerSearch]="true"
+            [urlSearch]="userAutocompleteUrl"
+            bindLabel="fullName"
+            bindLabelFallback="username,email"
+            bindValue="id"
+            [allowClear]="true"
+            [isDisabled]="formCoreDisabled"
+            [placeHolder]="'employeeOt.form.userPlaceholder' | translate"
+            [(ngModel)]="form.userId"
+          ></app-input>
+        </div>
+        <div class="col-md-12">
+          <app-input
+            label="{{ 'employeeOt.fields.project' | translate }}"
+            [labelSpan]="24"
+            [inputSpan]="24"
+            type="select"
+            [isServerSearch]="true"
+            [urlSearch]="projectAutocompleteUrl"
+            bindLabel="code"
+            bindLabelFallback="code"
+            bindValue="id"
+            [allowClear]="true"
+            [isDisabled]="formCoreDisabled"
+            [placeHolder]="'employeeOt.form.projectPlaceholder' | translate"
+            [(ngModel)]="form.projectId"
+          ></app-input>
+        </div>
+        <div class="col-md-4">
+          <app-input
+            label="{{ 'employeeOt.fields.otDate' | translate }}"
+            [labelSpan]="24"
+            [inputSpan]="24"
+            type="date"
+            [isDisabled]="formCoreDisabled"
+            [(ngModel)]="form.otDate"
+          ></app-input>
+        </div>
+        <div class="col-md-4">
+          <app-input
+            label="{{ 'employeeOt.fields.startTime' | translate }}"
+            [labelSpan]="24"
+            [inputSpan]="24"
+            dateTimeFormat="dd/MM/yyyy HH:mm"
+            type="date"
+            [showTime]="true"
+            [isDisabled]="formCoreDisabled"
+            [allowClear]="true"
+            [(ngModel)]="form.startTime"
+          ></app-input>
+        </div>
+        <div class="col-md-4">
+          <app-input
+            label="{{ 'employeeOt.fields.endTime' | translate }}"
+            [labelSpan]="24"
+            [inputSpan]="24"
+            dateTimeFormat="dd/MM/yyyy HH:mm"
+            type="date"
+            [showTime]="true"
+            [isDisabled]="formCoreDisabled"
+            [allowClear]="true"
+            [(ngModel)]="form.endTime"
+          ></app-input>
+        </div>
+        <div class="col-md-4">
+          <app-input
+            label="{{ 'employeeOt.fields.otHours' | translate }}"
+            [labelSpan]="24"
+            [inputSpan]="24"
+            type="number"
+            [min]="0"
+            [step]="0.25"
+            [isDisabled]="formCoreDisabled"
+            [allowClear]="true"
+            [placeHolder]="'employeeOt.form.otHoursPlaceholder' | translate"
+            [(ngModel)]="form.otHours"
+          ></app-input>
+        </div>
+        <div class="col-md-4">
+          <app-input
+            label="{{ 'employeeOt.fields.otType' | translate }}"
+            [labelSpan]="24"
+            [inputSpan]="24"
+            type="select"
+            [items]="formOtTypeItems"
+            [isTranslation]="true"
+            bindLabel="nameKey"
+            bindValue="id"
+            [isDisabled]="formCoreDisabled"
+            [(ngModel)]="form.otType"
+          ></app-input>
+        </div>
+        <div class="col-md-4">
+          <app-input
+            label="{{ 'employeeOt.fields.status' | translate }}"
+            [labelSpan]="24"
+            [inputSpan]="24"
+            type="select"
+            [items]="formStatusItems"
+            [isTranslation]="true"
+            bindLabel="nameKey"
+            bindValue="id"
+            [(ngModel)]="form.status"
+          ></app-input>
+        </div>
+        <div class="col-12">
+          <app-input
+            label="{{ 'employeeOt.fields.reason' | translate }}"
+            [labelSpan]="24"
+            [inputSpan]="24"
+            type="textarea"
+            [isDisabled]="formCoreDisabled"
+            [placeHolder]="'employeeOt.form.reasonPlaceholder' | translate"
+            [(ngModel)]="form.reason"
+          ></app-input>
+        </div>
+      </div>
+    }
+  </div>
+  <ng-container *nzModalFooter>
+    <button nz-button (click)="closeModal()" [disabled]="submitting">{{ 'common.button.cancel' | translate }}</button>
+    <button nz-button nzType="primary" (click)="save()" [nzLoading]="submitting" [disabled]="loading">
+      {{ 'common.button.submit' | translate }}
+    </button>
+  </ng-container>
+</nz-modal>
+
+<nz-modal
+  [(nzVisible)]="viewVisible"
+  [nzTitle]="'employeeOt.view.title' | translate"
+  [nzWidth]="640"
+  (nzOnCancel)="closeView()"
+  [nzFooter]="null"
+>
+  <div *nzModalContent>
+    @if (viewLoading) {
+      <div class="text-center py-5">
+        <nz-spin nzSimple></nz-spin>
+      </div>
+    } @else if (viewDetail) {
+      <dl class="row eo-view-dl mb-0">
+        <dt class="col-sm-4">{{ 'employeeOt.fields.user' | translate }}</dt>
+        <dd class="col-sm-8">{{ viewDetail.userDisplay || '—' }}</dd>
+        <dt class="col-sm-4">{{ 'employeeOt.fields.project' | translate }}</dt>
+        <dd class="col-sm-8">{{ viewDetail.projectDisplay || '—' }}</dd>
+        <dt class="col-sm-4">{{ 'employeeOt.fields.otDate' | translate }}</dt>
+        <dd class="col-sm-8">{{ viewDetail.otDate | date: 'dd/MM/yyyy' }}</dd>
+        <dt class="col-sm-4">{{ 'employeeOt.fields.otType' | translate }}</dt>
+        <dd class="col-sm-8">{{ ('employeeOt.otType.' + viewDetail.otType) | translate }}</dd>
+        <dt class="col-sm-4">{{ 'employeeOt.fields.coefficient' | translate }}</dt>
+        <dd class="col-sm-8">{{ viewDetail.otTypeCoefficient ?? coefficientFor(viewDetail.otType) ?? '—' }}</dd>
+        <dt class="col-sm-4">{{ 'employeeOt.fields.otHours' | translate }}</dt>
+        <dd class="col-sm-8">{{ viewDetail.otHours ?? '—' }}</dd>
+        <dt class="col-sm-4">{{ 'employeeOt.fields.weightedOtHours' | translate }}</dt>
+        <dd class="col-sm-8">{{ viewDetail.weightedOtHours ?? '—' }}</dd>
+        <dt class="col-sm-4">{{ 'employeeOt.fields.reason' | translate }}</dt>
+        <dd class="col-sm-8">{{ viewDetail.reason || '—' }}</dd>
+        <dt class="col-sm-4">{{ 'employeeOt.fields.status' | translate }}</dt>
+        <dd class="col-sm-8">{{ ('employeeOt.status.' + viewDetail.status) | translate }}</dd>
+        <dt class="col-sm-4">{{ 'employeeOt.fields.approvedBy' | translate }}</dt>
+        <dd class="col-sm-8">{{ viewDetail.approvedByDisplay || '—' }}</dd>
+        <dt class="col-sm-4">{{ 'employeeOt.fields.approvedDate' | translate }}</dt>
+        <dd class="col-sm-8">{{ viewDetail.approvedDate ? (viewDetail.approvedDate | date: 'dd/MM/yyyy HH:mm') : '—' }}</dd>
+      </dl>
+    }
+  </div>
+</nz-modal>

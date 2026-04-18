@@ -1,0 +1,132 @@
+<div class="report-page px-3 py-3">
+  <h2 class="report-title mb-3">{{ 'report.title' | translate }}</h2>
+
+  <div class="d-flex flex-wrap align-items-end gap-3 mb-3">
+    <app-input
+      [label]="'report.filter.period' | translate"
+      type="select"
+      [value]="filter.periodType"
+      (valueChange)="onPeriodChange($event)"
+      [items]="periodItems"
+      bindLabel="label"
+      bindValue="value"
+      [isTranslation]="true"
+    ></app-input>
+    <app-input
+      [label]="'report.filter.year' | translate"
+      type="date"
+      dateMode="year"
+      [value]="yearDate"
+      dateTimeFormat="yyyy"
+      (valueChange)="onYearDateChange($event)"
+    ></app-input>
+    <button nz-button nzType="primary" (click)="reload()">{{ 'report.actions.load' | translate }}</button>
+  </div>
+
+  @if (loadError) {
+    <nz-empty nzNotFoundContent="{{ 'report.loadError' | translate }}"></nz-empty>
+  } @else if (data) {
+    <p class="text-muted small mb-3">
+      {{
+        'report.costUnitHint'
+          | translate: { scale: (data.laborMmPerFullFteMonth | number: '1.0-4'), unit: data.valueUnit || 'MM' }
+      }}
+    </p>
+
+    <nz-card class="mb-3" nzTitle="{{ 'report.sections.costRevenue' | translate }}">
+      <div echarts [options]="chartCostRevenue" class="chart mb-3"></div>
+      <nz-table #tCost [nzData]="data.costVsRevenue" nzSize="small" [nzShowPagination]="false">
+        <thead>
+          <tr>
+            <th>{{ 'report.table.period' | translate }}</th>
+            <th class="text-end">{{ 'report.table.resourceCost' | translate }}</th>
+            <th class="text-end">{{ 'report.table.pycRevenue' | translate }}</th>
+            <th class="text-end">{{ 'report.table.profit' | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of tCost.data; track row.periodLabel) {
+            <tr>
+              <td>{{ row.periodLabel }}</td>
+              <td class="text-end">{{ fmtMm(row.resourceCost) }}</td>
+              <td class="text-end">{{ fmtMm(row.pycRevenue) }}</td>
+              <td class="text-end" [class.text-danger]="row.profit < 0">
+                {{ fmtMm(row.profit) }}
+              </td>
+            </tr>
+          }
+        </tbody>
+      </nz-table>
+    </nz-card>
+
+    <nz-divider></nz-divider>
+
+    <nz-card class="mb-3" nzTitle="{{ 'report.sections.allocation' | translate }}">
+      <div echarts [options]="chartAllocationStack" class="chart chart--tall"></div>
+    </nz-card>
+
+    <nz-divider></nz-divider>
+
+    <nz-card class="mb-3" nzTitle="{{ 'report.sections.personnel' | translate }}">
+      <nz-table #tPerf [nzData]="data.personnelPerformance" nzSize="small" [nzShowPagination]="false">
+        <thead>
+          <tr>
+            <th>{{ 'report.table.user' | translate }}</th>
+            <th class="text-end">{{ 'report.table.tasksDone' | translate }}</th>
+            <th class="text-end">{{ 'report.table.otHours' | translate }}</th>
+            <th class="text-end">{{ 'report.table.laborMm' | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of tPerf.data; track row.userLabel) {
+            <tr>
+              <td>{{ row.userLabel }}</td>
+              <td class="text-end">{{ row.tasksDone }}</td>
+              <td class="text-end">{{ row.otHours | number: '1.0-2' }}</td>
+              <td class="text-end">{{ fmtMm(row.laborMm) }}</td>
+            </tr>
+          }
+        </tbody>
+      </nz-table>
+    </nz-card>
+
+    <nz-divider></nz-divider>
+
+    <nz-card class="mb-3" nzTitle="{{ 'report.sections.ot' | translate }}">
+      <div echarts [options]="chartOt" class="chart chart--tall"></div>
+    </nz-card>
+
+    <nz-divider></nz-divider>
+
+    <nz-card class="mb-3" nzTitle="{{ 'report.sections.project' | translate }}">
+      <nz-table #tProj [nzData]="data.projectPerformance" nzSize="small" [nzShowPagination]="false">
+        <thead>
+          <tr>
+            <th>{{ 'report.table.pyc' | translate }}</th>
+            <th>{{ 'report.table.projectName' | translate }}</th>
+            <th class="text-end">{{ 'report.table.tasksDone' | translate }}</th>
+            <th class="text-end">{{ 'report.table.resourceShare' | translate }}</th>
+            <th class="text-end">{{ 'report.table.otHours' | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of tProj.data; track row.projectCode) {
+            <tr>
+              <td>{{ row.projectCode }}</td>
+              <td>{{ row.projectName }}</td>
+              <td class="text-end">{{ row.tasksDone }}</td>
+              <td class="text-end">{{ row.resourceSharePercent | number: '1.0-1' }}%</td>
+              <td class="text-end">{{ row.otHours | number: '1.0-2' }}</td>
+            </tr>
+          }
+        </tbody>
+      </nz-table>
+    </nz-card>
+
+    <nz-divider></nz-divider>
+
+    <nz-card nzTitle="{{ 'report.sections.taskTrend' | translate }}">
+      <div echarts [options]="chartTaskTrend" class="chart"></div>
+    </nz-card>
+  }
+</div>

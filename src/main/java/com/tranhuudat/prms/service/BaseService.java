@@ -43,7 +43,7 @@ public abstract class BaseService{
     }
 
     protected BaseResponse getResponse200(Object object) {
-        return getResponse200(object, SystemMessage.SUCCESS);
+        return getResponse200(object, getMessage(SystemMessage.SUCCESS));
     }
 
     protected BaseResponse getResponse204(Object object, String message) {

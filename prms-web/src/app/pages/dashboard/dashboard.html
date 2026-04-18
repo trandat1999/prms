@@ -1,0 +1,124 @@
+<div class="dashboard-page px-3 py-3">
+  <h2 class="dashboard-title mb-3">{{ 'dashboard.title' | translate }}</h2>
+
+  @if (loadError) {
+    <nz-empty nzNotFoundContent="{{ 'dashboard.loadError' | translate }}"></nz-empty>
+  } @else if (overview) {
+    <nz-row [nzGutter]="[16, 16]" class="mb-3">
+      <nz-col [nzXs]="24" [nzSm]="12" [nzMd]="8" [nzLg]="4">
+        <nz-card class="summary-card" [nzBodyStyle]="{ padding: '16px' }">
+          <nz-statistic
+            [nzTitle]="'dashboard.summary.totalPyc' | translate"
+            [nzValue]="overview.summary.totalPyc"
+          ></nz-statistic>
+        </nz-card>
+      </nz-col>
+      <nz-col [nzXs]="24" [nzSm]="12" [nzMd]="8" [nzLg]="4">
+        <nz-card class="summary-card" [nzBodyStyle]="{ padding: '16px' }">
+          <nz-statistic
+            [nzTitle]="'dashboard.summary.activePyc' | translate"
+            [nzValue]="overview.summary.activePyc"
+          ></nz-statistic>
+        </nz-card>
+      </nz-col>
+      <nz-col [nzXs]="24" [nzSm]="12" [nzMd]="8" [nzLg]="4">
+        <nz-card class="summary-card" [nzBodyStyle]="{ padding: '16px' }">
+          <nz-statistic
+            [nzTitle]="'dashboard.summary.totalTask' | translate"
+            [nzValue]="overview.summary.totalTask"
+          ></nz-statistic>
+        </nz-card>
+      </nz-col>
+      <nz-col [nzXs]="24" [nzSm]="12" [nzMd]="8" [nzLg]="4">
+        <nz-card class="summary-card" [nzBodyStyle]="{ padding: '16px' }">
+          <nz-statistic
+            [nzTitle]="'dashboard.summary.taskDone' | translate"
+            [nzValue]="overview.summary.taskDone"
+          ></nz-statistic>
+        </nz-card>
+      </nz-col>
+      <nz-col [nzXs]="24" [nzSm]="12" [nzMd]="8" [nzLg]="4">
+        <nz-card class="summary-card" [nzBodyStyle]="{ padding: '16px' }">
+          <nz-statistic
+            [nzTitle]="'dashboard.summary.otMonth' | translate"
+            [nzValue]="overview.summary.otHoursMonth"
+            [nzSuffix]="'h'"
+          ></nz-statistic>
+        </nz-card>
+      </nz-col>
+      <nz-col [nzXs]="24" [nzSm]="12" [nzMd]="8" [nzLg]="4">
+        <nz-card class="summary-card" [nzBodyStyle]="{ padding: '16px' }">
+          <nz-statistic
+            [nzTitle]="'dashboard.summary.resourceUsage' | translate"
+            [nzValue]="overview.summary.resourceUsagePercent"
+            [nzSuffix]="'%'"
+          ></nz-statistic>
+        </nz-card>
+      </nz-col>
+    </nz-row>
+
+    <nz-card class="mb-3 chart-card" [nzBodyStyle]="{ padding: '12px 16px 8px' }">
+      <div echarts [options]="chartResource" class="chart chart--wide"></div>
+    </nz-card>
+
+    <nz-row [nzGutter]="[16, 16]" class="mb-3">
+      <nz-col [nzXs]="24" [nzLg]="12">
+        <nz-card class="chart-card" [nzBodyStyle]="{ padding: '12px 16px 8px' }">
+          <div echarts [options]="chartTaskPie" class="chart"></div>
+        </nz-card>
+      </nz-col>
+      <nz-col [nzXs]="24" [nzLg]="12">
+        <nz-card class="chart-card" [nzBodyStyle]="{ padding: '12px 16px 8px' }">
+          <div echarts [options]="chartOtByProject" class="chart"></div>
+        </nz-card>
+      </nz-col>
+    </nz-row>
+
+    <nz-row [nzGutter]="[16, 16]" class="mb-3">
+      <nz-col [nzXs]="24" [nzLg]="12">
+        <nz-card class="chart-card" [nzBodyStyle]="{ padding: '12px 16px 8px' }">
+          @if (overview.topPycByResource.length) {
+            <div echarts [options]="chartTopPyc" class="chart"></div>
+          } @else {
+            <div class="chart chart--empty d-flex align-items-center justify-content-center">
+              <nz-empty [nzNotFoundContent]="'dashboard.charts.topPycEmpty' | translate"></nz-empty>
+            </div>
+          }
+        </nz-card>
+      </nz-col>
+      <nz-col [nzXs]="24" [nzLg]="12">
+        <nz-card class="chart-card" [nzBodyStyle]="{ padding: '12px 16px 8px' }">
+          @if (overview.employeeWorkload.length) {
+            <div echarts [options]="chartWorkload" class="chart"></div>
+          } @else {
+            <div class="chart chart--empty d-flex align-items-center justify-content-center">
+              <nz-empty [nzNotFoundContent]="'dashboard.charts.workloadEmpty' | translate"></nz-empty>
+            </div>
+          }
+        </nz-card>
+      </nz-col>
+    </nz-row>
+
+    <nz-card nzTitle="{{ 'dashboard.pycProgress' | translate }}">
+      @if (overview.pycProgress.length) {
+        <div class="progress-list">
+          @for (p of overview.pycProgress; track p.code) {
+            <div class="progress-row mb-3">
+              <div class="d-flex justify-content-between small text-muted mb-1">
+                <span class="fw-semibold text-body">{{ p.code }}</span>
+                <span>{{ p.progressPercent | number: '1.0-1' }}%</span>
+              </div>
+              <nz-progress
+                [nzPercent]="p.progressPercent > 100 ? 100 : p.progressPercent"
+                [nzShowInfo]="false"
+              ></nz-progress>
+              <div class="small text-muted text-truncate">{{ p.name }}</div>
+            </div>
+          }
+        </div>
+      } @else {
+        <nz-empty nzNotFoundContent="{{ 'dashboard.pycProgressEmpty' | translate }}"></nz-empty>
+      }
+    </nz-card>
+  }
+</div>

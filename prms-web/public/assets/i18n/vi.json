@@ -11,15 +11,95 @@
       "close": "Close",
       "create": "Create",
       "update": "Update"
-    }
+    },
+    "loading": "Loading",
+    "loadingData": "Loading data",
+    "commonError": "An error occurred, please try again later",
+    "error": "Error"
   },
   "breadcrumb": {
     "home": "Home",
+    "dashboard": "Dashboard",
     "none": "",
-    "project": "Project"
+    "project": "Dự án",
+    "management": "Quản lý",
+    "users": "Người dùng",
+    "appParams": "Tham số hệ thống",
+    "tasks": "Công việc",
+    "resourceAllocation": "Phân bổ nguồn lực",
+    "employeeOt": "Đăng ký OT",
+    "kanban": "Kanban",
+    "report": "Báo cáo"
+  },
+  "dashboard": {
+    "title": "Dashboard PRMS",
+    "loadError": "Không tải được dữ liệu dashboard.",
+    "summary": {
+      "totalPyc": "Tổng PYC",
+      "activePyc": "PYC đang chạy",
+      "totalTask": "Tổng task",
+      "taskDone": "Task hoàn thành",
+      "otMonth": "OT tháng này",
+      "resourceUsage": "Sử dụng NL (%)"
+    },
+    "charts": {
+      "resourceUtilization": "Mức sử dụng nguồn lực theo tháng",
+      "utilization": "Tỷ lệ",
+      "taskStatus": "Phân bổ trạng thái task",
+      "otByProjectY": "OT theo dự án (tháng hiện tại)",
+      "topPyc": "PYC dùng nhiều nhân sự nhất (task chưa Done)",
+      "topPycEmpty": "Chưa đủ dữ liệu (cần ít nhất 2 PYC có nhân sự được gán task chưa Done).",
+      "workload": "Workload nhân sự (% phân bổ tháng hiện tại)",
+      "workloadEmpty": "Chưa có phân bổ nguồn lực cho tháng hiện tại."
+    },
+    "taskStatus": {
+      "TODO": "Todo",
+      "IN_PROGRESS": "Đang làm",
+      "REVIEW": "Review",
+      "DONE": "Hoàn thành"
+    },
+    "pycProgress": "Tiến độ PYC",
+    "pycProgressEmpty": "Không có dự án để hiển thị."
+  },
+  "report": {
+    "title": "Báo cáo PRMS",
+    "loadError": "Không tải được dữ liệu báo cáo.",
+    "actions": { "load": "Xem báo cáo" },
+    "filter": { "period": "Chu kỳ", "year": "Năm" },
+    "period": { "month": "Theo tháng", "quarter": "Theo quý", "year": "Theo năm" },
+    "costUnitHint": "Toàn bộ số liệu theo đơn vị {{unit}}. Doanh thu PYC = Σ(project_value) trong kỳ (theo created_date). Chi phí nhân lực (MM) = với mỗi dòng phân bổ: (số ngày làm T2–T6 nằm trong giao start_date–end_date của tháng) ÷ (tổng ngày T2–T6 của cả tháng) × (% phân bổ ÷ 100) × hệ số {{scale}}. Hệ số lấy App param nhóm REPORT, tên REPORT_LABOR_MM_PER_FULL_FTE_MONTH (mặc định 1). Nếu không có start_date/end_date thì tính trên cả tháng.",
+    "sections": {
+      "costRevenue": "Báo cáo 1 — Chi phí NL vs doanh thu PYC",
+      "allocation": "Báo cáo 2 — Giá trị nhân lực MM theo user (stacked)",
+      "personnel": "Báo cáo 3 — Hiệu suất nhân sự",
+      "ot": "Báo cáo 4 — OT theo user & tháng",
+      "project": "Báo cáo 5 — Hiệu suất dự án",
+      "taskTrend": "Báo cáo 6 — Xu hướng hoàn thành task (12 tuần)"
+    },
+    "table": {
+      "period": "Kỳ",
+      "resourceCost": "Chi phí NL (MM)",
+      "pycRevenue": "Doanh thu PYC (MM)",
+      "profit": "Lợi nhuận (MM)",
+      "user": "Nhân sự",
+      "tasksDone": "Task done",
+      "otHours": "Giờ OT (đã duyệt)",
+      "laborMm": "Giá trị NL (MM)",
+      "pyc": "PYC",
+      "projectName": "Dự án",
+      "resourceShare": "Tỷ trọng NL (giờ ước lượng)"
+    },
+    "charts": {
+      "costVsRevenue": "Chi phí vs doanh thu vs lợi nhuận",
+      "allocationStacked": "Nhân lực MM theo user (stacked)",
+      "otReport": "Giờ OT (user / tháng, top 24)",
+      "taskTrend": "Số task chuyển Done theo tuần (nhật ký)"
+    },
+    "empty": { "allocation": "Không có dữ liệu nhân lực MM trong năm này." }
   },
   "navigation": {
     "dashboard": "Dashboard",
+    "report": "Báo cáo",
     "category": "Category",
     "profile": "Profile",
     "settings": "Settings",
@@ -38,12 +118,317 @@
     "sale": "Sales",
     "saleInvoice": "Sales Invoice",
     "directSale": "Direct Sale",
-    "productShow": "Product show"
+    "productShow": "Product show",
+    "appParams": "Tham số hệ thống",
+    "tasks": "Công việc",
+    "resourceAllocation": "Phân bổ nguồn lực",
+    "employeeOt": "Đăng ký OT",
+    "projectRequest": "Dự án",
+    "kanban": "Kanban"
   },
   "layout": {
     "english": "English",
     "vietnamese": "Vietnamese",
     "profile": "Profile",
     "logout": "Logout"
+  },
+  "project": {
+    "list": {
+      "searchPlaceholder": "Tìm kiếm (mã/tên/người sở hữu)",
+      "monthPlaceholder": "Tháng bắt đầu",
+      "searchButton": "Tìm kiếm"
+    },
+    "fields": {
+      "code": "Mã dự án",
+      "name": "Tên dự án",
+      "manager": "Người quản lý",
+      "projectValue": "Giá trị dự án (MM)",
+      "priority": "Ưu tiên",
+      "startDate": "Ngày bắt đầu",
+      "endDate": "Ngày kết thúc",
+      "status": "Trạng thái",
+      "progress": "Tiến độ",
+      "shortDescription": "Mô tả ngắn",
+      "description": "Mô tả"
+    },
+    "actions": {
+      "view": "Xem",
+      "tasks": "Công việc"
+    },
+    "tasks": {
+      "title": "Công việc",
+      "forProject": "Dự án"
+    },
+    "view": {
+      "title": "Chi tiết dự án"
+    }
+  },
+  "user": {
+    "list": {
+      "searchPlaceholder": "Tìm kiếm (username/email/họ tên)",
+      "statusPlaceholder": "Trạng thái",
+      "searchButton": "Tìm kiếm"
+    },
+    "fields": {
+      "username": "Username",
+      "fullName": "Họ tên",
+      "email": "Email",
+      "roles": "Roles",
+      "status": "Trạng thái",
+      "lastLogin": "Lần đăng nhập cuối",
+      "accountNonLocked": "Account non-locked",
+      "accountNonExpired": "Account non-expired",
+      "credentialsNonExpired": "Credentials non-expired"
+    },
+    "actions": {
+      "view": "Xem",
+      "changePassword": "Cập nhật mật khẩu"
+    },
+    "form": {
+      "rolesPlaceholder": "Chọn role"
+    },
+    "password": {
+      "title": "Cập nhật mật khẩu",
+      "forUser": "Người dùng",
+      "newPassword": "Mật khẩu mới",
+      "newPasswordPlaceholder": "Nhập mật khẩu mới"
+    },
+    "view": {
+      "title": "Chi tiết người dùng"
+    }
+  }
+  ,
+  "appParam": {
+    "list": {
+      "searchPlaceholder": "Tìm kiếm (tên/giá trị/mô tả)",
+      "groupPlaceholder": "Nhóm",
+      "typePlaceholder": "Loại",
+      "searchButton": "Tìm kiếm"
+    },
+    "fields": {
+      "paramGroup": "Nhóm",
+      "paramName": "Tên tham số",
+      "paramValue": "Giá trị",
+      "paramType": "Loại",
+      "description": "Mô tả"
+    },
+    "form": {
+      "createTitle": "Thêm tham số",
+      "editTitle": "Sửa tham số",
+      "groupPlaceholder": "Nhập nhóm",
+      "typePlaceholder": "Nhập loại",
+      "namePlaceholder": "Nhập tên tham số",
+      "valuePlaceholder": "Nhập giá trị",
+      "descriptionPlaceholder": "Nhập mô tả"
+    },
+    "messages": {
+      "missingId": "Thiếu mã tham số.",
+      "loadFailed": "Không tải được tham số.",
+      "confirmDeleteTitle": "Xác nhận xoá",
+      "confirmDeleteContent": "Bạn có chắc muốn xoá \"{{label}}\"?",
+      "deleted": "Đã xoá.",
+      "deleteFailed": "Không xoá được.",
+      "created": "Đã tạo.",
+      "updated": "Đã cập nhật.",
+      "invalidTitle": "Không hợp lệ",
+      "groupRequired": "Vui lòng nhập nhóm.",
+      "nameRequired": "Vui lòng nhập tên tham số.",
+      "invalidFallback": "Vui lòng kiểm tra dữ liệu.",
+      "actionFailed": "Thao tác thất bại."
+    }
+  }
+  ,
+  "task": {
+    "list": {
+      "searchPlaceholder": "Tìm kiếm (mã/tên/dự án/người phụ trách)",
+      "statusPlaceholder": "Trạng thái",
+      "typePlaceholder": "Loại",
+      "searchButton": "Tìm kiếm"
+    },
+    "fields": {
+      "code": "Mã",
+      "name": "Tên công việc",
+      "project": "Dự án",
+      "assigned": "Người phụ trách",
+      "status": "Trạng thái",
+      "priority": "Ưu tiên",
+      "type": "Loại",
+      "estimatedHours": "Giờ ước tính",
+      "actualHours": "Giờ thực tế",
+      "label": "Nhãn",
+      "shortDescription": "Mô tả ngắn",
+      "description": "Mô tả"
+    },
+    "actions": {
+      "view": "Xem",
+      "assign": "Giao việc"
+    },
+    "form": {
+      "createTitle": "Thêm công việc",
+      "editTitle": "Sửa công việc",
+      "codePlaceholder": "Mã duy nhất",
+      "namePlaceholder": "Tên công việc",
+      "projectIdPlaceholder": "Project id (UUID)",
+      "projectPlaceholder": "Tìm dự án theo mã hoặc tên",
+      "assignedPlaceholder": "Tìm theo tên/email/username",
+      "statusPlaceholder": "Chọn trạng thái",
+      "priorityPlaceholder": "Chọn ưu tiên",
+      "labelPlaceholder": "Nhãn",
+      "typePlaceholder": "Loại",
+      "estimatedHoursPlaceholder": "Giờ ước tính",
+      "actualHoursPlaceholder": "Giờ thực tế",
+      "shortDescriptionPlaceholder": "Mô tả ngắn",
+      "descriptionPlaceholder": "Mô tả chi tiết"
+    },
+    "assign": {
+      "title": "Giao việc"
+    },
+    "view": {
+      "title": "Chi tiết công việc"
+    },
+    "log": {
+      "title": "Lịch sử thao tác",
+      "action": "Hành động",
+      "oldValue": "Giá trị cũ",
+      "newValue": "Giá trị mới",
+      "createdBy": "Người thực hiện",
+      "createdDate": "Thời gian"
+    },
+    "messages": {
+      "missingId": "Thiếu mã công việc.",
+      "loadFailed": "Không tải được công việc.",
+      "confirmDeleteTitle": "Xác nhận xoá",
+      "confirmDeleteContent": "Bạn có chắc muốn xoá \"{{label}}\"?",
+      "deleteFailed": "Không xoá được.",
+      "invalidTitle": "Không hợp lệ",
+      "codeRequired": "Vui lòng nhập mã.",
+      "nameRequired": "Vui lòng nhập tên.",
+      "assigneeRequired": "Vui lòng chọn người phụ trách."
+    }
+  }
+  ,
+  "resourceAllocation": {
+    "list": {
+      "searchPlaceholder": "Tìm kiếm (người dùng / vai trò)",
+      "userPlaceholder": "Người dùng",
+      "rolePlaceholder": "Vai trò",
+      "monthPlaceholder": "Tháng",
+      "searchButton": "Tìm kiếm"
+    },
+    "fields": {
+      "user": "Nhân sự",
+      "role": "Vai trò",
+      "month": "Tháng",
+      "allocationPercent": "% phân bổ",
+      "startDate": "Ngày bắt đầu",
+      "endDate": "Ngày kết thúc"
+    },
+    "actions": {
+      "view": "Xem"
+    },
+    "form": {
+      "createTitle": "Thêm phân bổ",
+      "editTitle": "Sửa phân bổ",
+      "userPlaceholder": "Tìm người dùng",
+      "rolePlaceholder": "Chọn vai trò",
+      "monthPlaceholder": "Chọn tháng",
+      "percentPlaceholder": "0–100"
+    },
+    "view": {
+      "title": "Chi tiết phân bổ"
+    },
+    "messages": {
+      "missingId": "Thiếu mã bản ghi.",
+      "loadFailed": "Không tải được phân bổ.",
+      "confirmDeleteTitle": "Xác nhận xoá",
+      "confirmDeleteContent": "Bạn có chắc muốn xoá \"{{label}}\"?",
+      "deleteFailed": "Không xoá được.",
+      "invalidTitle": "Không hợp lệ",
+      "userRequired": "Vui lòng chọn nhân sự.",
+      "roleRequired": "Vui lòng chọn vai trò.",
+      "monthRequired": "Vui lòng chọn tháng.",
+      "percentInvalid": "% phân bổ phải từ 0 đến 100.",
+      "dateRangeInvalid": "Ngày kết thúc phải sau hoặc trùng ngày bắt đầu."
+    }
+  },
+  "employeeOt": {
+    "list": {
+      "searchPlaceholder": "Tìm kiếm (người dùng / dự án / lý do)",
+      "userPlaceholder": "Người dùng",
+      "projectPlaceholder": "Dự án",
+      "statusPlaceholder": "Trạng thái",
+      "otTypePlaceholder": "Loại OT",
+      "otDateFromPlaceholder": "Ngày OT từ",
+      "otDateToPlaceholder": "Ngày OT đến",
+      "searchButton": "Tìm kiếm",
+      "reportMonthPlaceholder": "Tháng báo cáo",
+      "exportMonthlyButton": "Xuất OT tháng"
+    },
+    "fields": {
+      "user": "Nhân sự",
+      "project": "Dự án",
+      "otDate": "Ngày OT",
+      "startTime": "Bắt đầu",
+      "endTime": "Kết thúc",
+      "otHours": "Giờ OT",
+      "otType": "Loại OT",
+      "coefficient": "Hệ số",
+      "weightedOtHours": "Giờ OT quy đổi",
+      "reason": "Lý do",
+      "status": "Trạng thái",
+      "approvedBy": "Người duyệt",
+      "approvedDate": "Thời điểm duyệt"
+    },
+    "status": {
+      "DRAFT": "Nháp",
+      "SUBMITTED": "Chờ duyệt",
+      "APPROVED": "Đã duyệt",
+      "REJECTED": "Từ chối"
+    },
+    "otType": {
+      "WEEKDAY": "Ngày thường (×1,5)",
+      "WEEKEND": "Cuối tuần (×2,0)",
+      "HOLIDAY": "Ngày lễ (×3,0)"
+    },
+    "actions": {
+      "view": "Xem"
+    },
+    "form": {
+      "createTitle": "Đăng ký OT",
+      "editTitle": "Sửa OT",
+      "approvalHint": "Phiếu đang chờ duyệt. Chọn Đã duyệt hoặc Từ chối; không thể sửa các trường khác.",
+      "userPlaceholder": "Tìm người dùng",
+      "projectPlaceholder": "Tìm dự án (tuỳ chọn)",
+      "otHoursPlaceholder": "Số giờ",
+      "reasonPlaceholder": "Lý do làm OT"
+    },
+    "view": {
+      "title": "Chi tiết OT"
+    },
+    "messages": {
+      "missingId": "Thiếu mã bản ghi.",
+      "loadFailed": "Không tải được phiếu OT.",
+      "confirmDeleteTitle": "Xác nhận xoá",
+      "confirmDeleteContent": "Bạn có chắc muốn xoá \"{{label}}\"?",
+      "deleteFailed": "Không xoá được.",
+      "invalidTitle": "Không hợp lệ",
+      "userRequired": "Vui lòng chọn nhân sự.",
+      "reportMonthRequired": "Vui lòng chọn tháng báo cáo.",
+      "otDateRequired": "Vui lòng chọn ngày OT.",
+      "otTypeRequired": "Vui lòng chọn loại OT.",
+      "otHoursInvalid": "Giờ OT không được âm.",
+      "timeRangeInvalid": "Giờ kết thúc phải sau hoặc trùng giờ bắt đầu.",
+      "statusRequired": "Vui lòng chọn trạng thái."
+    }
+  },
+  "kanban": {
+    "title": "Bảng Kanban",
+    "subtitle": "Kéo thả để chuyển trạng thái công việc nhanh",
+    "projectPlaceholder": "Chọn dự án",
+    "load": "Tải",
+    "saving": "Đang lưu...",
+    "messages": {
+      "projectRequired": "Vui lòng chọn dự án."
+    }
   }
 }

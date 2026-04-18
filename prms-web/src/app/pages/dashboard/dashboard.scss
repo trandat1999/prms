@@ -1,0 +1,35 @@
+.dashboard-page {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.dashboard-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.summary-card {
+  height: 100%;
+}
+
+.chart-card {
+  min-height: 0;
+}
+
+.chart {
+  height: 320px;
+  width: 100%;
+}
+
+.chart--wide {
+  height: 340px;
+}
+
+.chart--empty {
+  height: 320px;
+}
+
+.progress-list {
+  max-width: 720px;
+}

@@ -1,15 +1,27 @@
 package com.tranhuudat.prms.entity;
 
+import java.util.Date;
+import java.math.BigDecimal;
+import java.util.UUID;
+
 import com.tranhuudat.prms.enums.PriorityEnum;
 import com.tranhuudat.prms.enums.ProjectStatusEnum;
-import jakarta.persistence.*;
-import lombok.*;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.SuperBuilder;
-
-import java.time.LocalDate;
-import java.util.Date;
-import java.util.UUID;
 
 @Entity
 @Table(name = "tbl_project")
@@ -23,6 +35,9 @@ public class Project extends BaseInformation {
 
     @Column(name = "manager_id")
     UUID managerId;
+
+    @Column(name = "project_value")
+    BigDecimal projectValue;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "manager_id",insertable = false,updatable = false)

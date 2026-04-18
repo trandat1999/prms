@@ -33,3 +33,16 @@ build/
 .vscode/
 
 .env
+
+# Logs
+logs/
+*.log
+*.log.*
+*.gz
+
+# Angular/Vite cache
+prms-web/.angular/
+prms-web/node_modules/
+
+# TypeScript build info
+*.tsbuildinfo

@@ -122,6 +122,8 @@ export class InputCommon {
   @Input() isServerSearch = false;
   @Input() urlSearch = "";
   @Input() autoClearSearchValue = true;
+  /** Params bổ sung khi gọi server-search (vd: { paramGroup, paramType }) */
+  @Input() extraSearchParams: any = null;
   @Output() searchChange: EventEmitter<string> = new EventEmitter<string>();
   @Input() isWrapLabel: boolean = false;
   @Output() blur: EventEmitter<any> = new EventEmitter<any>();
@@ -148,7 +150,7 @@ export class InputCommon {
     if (this.isServerSearch) {
       this.isLoadingMore = true;
       this.searchObject.pageIndex = this.searchObject.pageIndex + 1;
-      this.service.post(this.urlSearch, { ...this.searchObject }).subscribe((data) => {
+      this.service.post(this.urlSearch, { ...this.searchObject, ...(this.extraSearchParams || {}) }).subscribe((data) => {
         this.isLoadingMore = false;
         const temp = this.normalizeServerSearchBody(data);
         this.items = [...this.items, ...temp];
@@ -240,7 +242,7 @@ export class InputCommon {
       const getDataSelect = (name: string): Observable<any> => {
         this.searchObject.pageIndex = 0;
         return this.service
-          .post(this.urlSearch, { ...this.searchObject, keyword: name })
+          .post(this.urlSearch, { ...this.searchObject, ...(this.extraSearchParams || {}), keyword: name })
           .pipe(
             catchError(() => of({ body: [] })),
             map((res: any) => this.normalizeServerSearchBody(res))

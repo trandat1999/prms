@@ -11,7 +11,9 @@ import { NzSpinComponent } from 'ng-zorro-antd/spin';
 import { NzTableModule } from 'ng-zorro-antd/table';
 import { NzTagComponent } from 'ng-zorro-antd/tag';
 import { NzTooltipDirective } from 'ng-zorro-antd/tooltip';
+import { TranslatePipe } from '@ngx-translate/core';
 import { InputCommon } from '../../../shared/input/input';
+import { ProjectTasks } from '../project-tasks/project-tasks';
 import { Page } from '../models/page.model';
 import { Project, ProjectWritePayload } from '../models/project.model';
 import { ProjectSearchRequest } from '../models/project-search.request';
@@ -33,6 +35,7 @@ type ProjectCreateFormState = {
   shortDescription: string;
   description: string;
   managerId: string | null;
+  projectValue: number | null;
   priority: PriorityEnum | null;
   startDate: Date | null;
   endDate: Date | null;
@@ -56,6 +59,8 @@ type ProjectCreateFormState = {
     NzModalModule,
     NzSpinComponent,
     InputCommon,
+    TranslatePipe,
+    ProjectTasks,
   ],
   templateUrl: './project-list.html',
   styleUrl: './project-list.scss',
@@ -85,6 +90,11 @@ export class ProjectList {
   viewVisible = false;
   viewLoading = false;
   viewDetail: Project | null = null;
+
+  /** Popup task theo project */
+  taskPopupVisible = false;
+  taskPopupProjectId: string | null = null;
+  taskPopupProjectName: string | null = null;
 
   constructor(
     private projectService: ProjectService,
@@ -197,6 +207,23 @@ export class ProjectList {
           });
         }),
     });
+  }
+
+  onOpenTasks(row: Project): void {
+    const id = row?.id;
+    if (!id) {
+      this.notification.warning('Lỗi', 'Không có mã dự án để xem task.');
+      return;
+    }
+    this.taskPopupProjectId = id;
+    this.taskPopupProjectName = row?.name ?? row?.code ?? id;
+    this.taskPopupVisible = true;
+  }
+
+  closeTaskPopup(): void {
+    this.taskPopupVisible = false;
+    this.taskPopupProjectId = null;
+    this.taskPopupProjectName = null;
   }
 
   closeProjectFormModal(): void {
@@ -317,6 +344,7 @@ export class ProjectList {
       shortDescription: '',
       description: '',
       managerId: null,
+      projectValue: null,
       priority: 'MEDIUM',
       startDate: null,
       endDate: null,
@@ -336,6 +364,8 @@ export class ProjectList {
       shortDescription: p.shortDescription ?? '',
       description: p.description ?? '',
       managerId: p.managerId ?? null,
+      projectValue:
+        p.projectValue === null || p.projectValue === undefined ? null : Number(p.projectValue),
       priority: (p.priority as PriorityEnum) ?? 'MEDIUM',
       startDate: p.startDate ? new Date(p.startDate as string | Date) : null,
       endDate: p.endDate ? new Date(p.endDate as string | Date) : null,
@@ -363,16 +393,19 @@ export class ProjectList {
 
   private buildCreatePayload(): ProjectWritePayload {
     const f = this.createForm;
-    const toIso = (d: Date | null): string | null => (d ? new Date(d).toISOString() : null);
     return {
       code: f.code?.trim() || undefined,
       name: f.name?.trim() || undefined,
       shortDescription: f.shortDescription?.trim() ? f.shortDescription.trim() : null,
       description: f.description?.trim() ? f.description.trim() : null,
       managerId: f.managerId || null,
+      projectValue:
+        f.projectValue === null || f.projectValue === undefined || Number.isNaN(Number(f.projectValue))
+          ? null
+          : Number(f.projectValue),
       priority: f.priority ?? null,
-      startDate: toIso(f.startDate),
-      endDate: toIso(f.endDate),
+      startDate: f.startDate,
+      endDate: f.endDate,
       status: f.status ?? null,
       progressPercentage:
         f.progressPercentage === null || f.progressPercentage === undefined

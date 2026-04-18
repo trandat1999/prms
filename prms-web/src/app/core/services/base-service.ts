@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import {HttpClient} from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import {TranslateService} from '@ngx-translate/core';
 import {NgxSpinnerService} from 'ngx-spinner';
 import {NzNotificationService} from 'ng-zorro-antd/notification';
@@ -75,6 +75,38 @@ export class BaseService {
         console.log(error);
         this.notification.error(this.translate.instant("common.error") +(error?.error?.code? " "+error?.error?.code:""),
           error?.error?.message? error?.error?.message : this.translate.instant("common.commonError"));
+        return throwError(() => error);
+      }),
+      finalize(() => this.loading.hide())
+    );
+  }
+
+  postBlob(url: string, request: any) {
+    this.loading.show();
+    return this.http.post(this.serverUrl + url, request, { observe: 'response', responseType: 'blob' }).pipe(
+      map((res: HttpResponse<Blob>) => res),
+      catchError((error) => {
+        this.notification.error(
+          this.translate.instant('common.error') + (error?.error?.code ? ' ' + error?.error?.code : ''),
+          error?.error?.message ? error?.error?.message : this.translate.instant('common.commonError')
+        );
+        return throwError(() => error);
+      }),
+      finalize(() => this.loading.hide())
+    );
+  }
+
+  patch(url: string, request: any) {
+    this.loading.show();
+    return this.http.patch(this.serverUrl + url, request).pipe(
+      map((value) => {
+        return value as ApiResponse;
+      }),
+      catchError((error) => {
+        this.notification.error(
+          this.translate.instant('common.error') + (error?.error?.code ? ' ' + error?.error?.code : ''),
+          error?.error?.message ? error?.error?.message : this.translate.instant('common.commonError')
+        );
         return throwError(() => error);
       }),
       finalize(() => this.loading.hide())

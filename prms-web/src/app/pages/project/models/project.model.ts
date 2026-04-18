@@ -7,9 +7,10 @@ export type ProjectWritePayload = {
   description?: string | null;
   shortDescription?: string | null;
   managerId?: string | null;
+  projectValue?: number | null;
   priority?: PriorityEnum | null;
-  startDate?: string | null;
-  endDate?: string | null;
+  startDate?: string | Date | null;
+  endDate?: string | Date | null;
   status?: ProjectStatusEnum | null;
   progressPercentage?: number | null;
 };
@@ -23,6 +24,7 @@ export type Project = {
 
   managerId?: string;
   managerName?: string;
+  projectValue?: number;
   priority?: PriorityEnum;
   startDate?: string | Date;
   endDate?: string | Date;

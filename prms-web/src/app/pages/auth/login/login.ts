@@ -65,7 +65,7 @@ export class Login implements OnInit {
         } else {
           this.storageService.saveSessionToken(data.body);
         }
-        this.router.navigate(['welcome']);
+        this.router.navigate(['dashboard']);
       }
     })
   }

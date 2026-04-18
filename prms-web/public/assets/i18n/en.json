@@ -13,16 +13,93 @@
       "update": "Update"
     },
     "loading": "Loading",
+    "loadingData": "Loading data",
     "commonError": "An error occurred, please try again later",
     "error": "Error"
   },
   "breadcrumb": {
     "home": "Home",
+    "dashboard": "Dashboard",
     "none": "",
-    "project": "Project"
+    "project": "Project",
+    "management": "Management",
+    "users": "Users",
+    "appParams": "App params",
+    "tasks": "Tasks",
+    "resourceAllocation": "Resource allocation",
+    "employeeOt": "Employee OT",
+    "kanban": "Kanban",
+    "report": "Report"
+  },
+  "dashboard": {
+    "title": "PRMS Dashboard",
+    "loadError": "Could not load dashboard data.",
+    "summary": {
+      "totalPyc": "Total PYC",
+      "activePyc": "Active PYC",
+      "totalTask": "Total tasks",
+      "taskDone": "Tasks done",
+      "otMonth": "OT this month",
+      "resourceUsage": "Resource usage"
+    },
+    "charts": {
+      "resourceUtilization": "Resource utilization by month",
+      "utilization": "Utilization",
+      "taskStatus": "Task status distribution",
+      "otByProjectY": "OT by project (this month)",
+      "topPyc": "Top PYC by resource (active assignments)",
+      "topPycEmpty": "Not enough data to display this chart (need at least 2 PYC with assigned staff on non-done tasks).",
+      "workload": "Employee workload (allocation %, this month)",
+      "workloadEmpty": "No resource allocation for the current month."
+    },
+    "taskStatus": {
+      "TODO": "Todo",
+      "IN_PROGRESS": "In progress",
+      "REVIEW": "Review",
+      "DONE": "Done"
+    },
+    "pycProgress": "PYC progress",
+    "pycProgressEmpty": "No projects to display."
+  },
+  "report": {
+    "title": "PRMS reports",
+    "loadError": "Could not load report data.",
+    "actions": { "load": "Apply" },
+    "filter": { "period": "Granularity", "year": "Year" },
+    "period": { "month": "Month", "quarter": "Quarter", "year": "Year" },
+    "costUnitHint": "All amounts are in {{unit}}. PYC revenue = Σ(project_value) in the period (created_date). Resource cost (labor MM) = for each allocation row: (Mon–Fri working days overlapping the row’s start_date–end_date within the month) ÷ (Mon–Fri days in the full month) × (allocation % ÷ 100) × scale {{scale}}. Optional scale from App param group REPORT, name REPORT_LABOR_MM_PER_FULL_FTE_MONTH (default 1). If start_date/end_date are empty, the full month is used.",
+    "sections": {
+      "costRevenue": "Report 1 — Resource cost vs PYC revenue",
+      "allocation": "Report 2 — Labor MM by user (stacked)",
+      "personnel": "Report 3 — Personnel performance",
+      "ot": "Report 4 — OT by user and month",
+      "project": "Report 5 — Project performance",
+      "taskTrend": "Report 6 — Task completion trend (12 weeks)"
+    },
+    "table": {
+      "period": "Period",
+      "resourceCost": "Resource cost (MM)",
+      "pycRevenue": "PYC revenue (MM)",
+      "profit": "Profit (MM)",
+      "user": "User",
+      "tasksDone": "Tasks done",
+      "otHours": "OT hours (approved)",
+      "laborMm": "Labor value (MM)",
+      "pyc": "PYC",
+      "projectName": "Project",
+      "resourceShare": "Resource share (est. hours)"
+    },
+    "charts": {
+      "costVsRevenue": "Resource cost vs revenue vs profit",
+      "allocationStacked": "Labor MM by user (stacked)",
+      "otReport": "OT hours (user / month, top 24)",
+      "taskTrend": "Tasks completed per week (status log)"
+    },
+    "empty": { "allocation": "No labor MM data for this year." }
   },
   "navigation": {
     "dashboard": "Dashboard",
+    "report": "Reports",
     "category": "Category",
     "profile": "Profile",
     "settings": "Settings",
@@ -42,7 +119,12 @@
     "saleInvoice": "Sales Invoice",
     "directSale": "Direct Sale",
     "productShow": "Product show",
-    "projectRequest": "Project request"
+    "projectRequest": "Project request",
+    "appParams": "App params",
+    "tasks": "Tasks",
+    "resourceAllocation": "Resource allocation",
+    "employeeOt": "Employee OT",
+    "kanban": "Kanban"
   },
   "validation": {
     "required": "{{label}} is required",
@@ -71,5 +153,304 @@
     "signIn": "Sign in",
     "dontHaveAccount": "Don't have an account? ",
     "signUpNow": "Sign up now"
+  },
+  "project": {
+    "list": {
+      "searchPlaceholder": "Search (code/name/manager)",
+      "monthPlaceholder": "Start month",
+      "searchButton": "Search"
+    },
+    "fields": {
+      "code": "Code",
+      "name": "Name",
+      "manager": "Manager",
+      "projectValue": "Project value (MM)",
+      "priority": "Priority",
+      "startDate": "Start date",
+      "endDate": "End date",
+      "status": "Status",
+      "progress": "Progress",
+      "shortDescription": "Short description",
+      "description": "Description"
+    },
+    "actions": {
+      "view": "View",
+      "tasks": "Tasks"
+    },
+    "tasks": {
+      "title": "Tasks",
+      "forProject": "Project"
+    },
+    "view": {
+      "title": "Project detail"
+    }
+  },
+  "user": {
+    "list": {
+      "searchPlaceholder": "Search (username/email/full name)",
+      "statusPlaceholder": "Status",
+      "searchButton": "Search"
+    },
+    "fields": {
+      "username": "Username",
+      "fullName": "Full name",
+      "email": "Email",
+      "roles": "Roles",
+      "status": "Status",
+      "lastLogin": "Last login",
+      "accountNonLocked": "Account non-locked",
+      "accountNonExpired": "Account non-expired",
+      "credentialsNonExpired": "Credentials non-expired"
+    },
+    "actions": {
+      "view": "View",
+      "changePassword": "Update password"
+    },
+    "form": {
+      "rolesPlaceholder": "Select roles"
+    },
+    "password": {
+      "title": "Update password",
+      "forUser": "User",
+      "newPassword": "New password",
+      "newPasswordPlaceholder": "Enter new password"
+    },
+    "view": {
+      "title": "User detail"
+    }
+  }
+  ,
+  "appParam": {
+    "list": {
+      "searchPlaceholder": "Search (name/value/description)",
+      "groupPlaceholder": "Group",
+      "typePlaceholder": "Type",
+      "searchButton": "Search"
+    },
+    "fields": {
+      "paramGroup": "Group",
+      "paramName": "Name",
+      "paramValue": "Value",
+      "paramType": "Type",
+      "description": "Description"
+    },
+    "form": {
+      "createTitle": "Create app param",
+      "editTitle": "Edit app param",
+      "groupPlaceholder": "Param group",
+      "typePlaceholder": "Param type",
+      "namePlaceholder": "Param name",
+      "valuePlaceholder": "Param value",
+      "descriptionPlaceholder": "Description"
+    },
+    "messages": {
+      "missingId": "Missing id.",
+      "loadFailed": "Cannot load app param.",
+      "confirmDeleteTitle": "Confirm delete",
+      "confirmDeleteContent": "Delete \"{{label}}\"?",
+      "deleted": "Deleted.",
+      "deleteFailed": "Cannot delete.",
+      "created": "Created.",
+      "updated": "Updated.",
+      "invalidTitle": "Invalid",
+      "groupRequired": "Group is required.",
+      "nameRequired": "Name is required.",
+      "invalidFallback": "Please check your data.",
+      "actionFailed": "Action failed."
+    }
+  }
+  ,
+  "task": {
+    "list": {
+      "searchPlaceholder": "Search (code/name/project/assignee)",
+      "statusPlaceholder": "Status",
+      "typePlaceholder": "Type",
+      "searchButton": "Search"
+    },
+    "fields": {
+      "code": "Code",
+      "name": "Name",
+      "project": "Project",
+      "assigned": "Assignee",
+      "status": "Status",
+      "priority": "Priority",
+      "type": "Type",
+      "estimatedHours": "Estimated hours",
+      "actualHours": "Actual hours",
+      "label": "Label",
+      "shortDescription": "Short description",
+      "description": "Description"
+    },
+    "actions": {
+      "view": "View",
+      "assign": "Assign"
+    },
+    "form": {
+      "createTitle": "Create task",
+      "editTitle": "Edit task",
+      "codePlaceholder": "Unique code",
+      "namePlaceholder": "Task name",
+      "projectIdPlaceholder": "Project id (UUID)",
+      "projectPlaceholder": "Search project by code or name",
+      "assignedPlaceholder": "Search by name/email/username",
+      "statusPlaceholder": "Select status",
+      "priorityPlaceholder": "Select priority",
+      "labelPlaceholder": "Label",
+      "typePlaceholder": "Type",
+      "estimatedHoursPlaceholder": "Estimated hours",
+      "actualHoursPlaceholder": "Actual hours",
+      "shortDescriptionPlaceholder": "Short description",
+      "descriptionPlaceholder": "Description"
+    },
+    "assign": {
+      "title": "Assign task"
+    },
+    "view": {
+      "title": "Task detail"
+    },
+    "log": {
+      "title": "Task logs",
+      "action": "Action",
+      "oldValue": "Old value",
+      "newValue": "New value",
+      "createdBy": "By",
+      "createdDate": "At"
+    },
+    "messages": {
+      "missingId": "Missing id.",
+      "loadFailed": "Cannot load task.",
+      "confirmDeleteTitle": "Confirm delete",
+      "confirmDeleteContent": "Delete \"{{label}}\"?",
+      "deleteFailed": "Cannot delete.",
+      "invalidTitle": "Invalid",
+      "codeRequired": "Code is required.",
+      "nameRequired": "Name is required.",
+      "assigneeRequired": "Assignee is required."
+    }
+  }
+  ,
+  "resourceAllocation": {
+    "list": {
+      "searchPlaceholder": "Search (user / role)",
+      "userPlaceholder": "User",
+      "rolePlaceholder": "Role",
+      "monthPlaceholder": "Month",
+      "searchButton": "Search"
+    },
+    "fields": {
+      "user": "User",
+      "role": "Role",
+      "month": "Month",
+      "allocationPercent": "Allocation %",
+      "startDate": "Start date",
+      "endDate": "End date"
+    },
+    "actions": {
+      "view": "View"
+    },
+    "form": {
+      "createTitle": "Add allocation",
+      "editTitle": "Edit allocation",
+      "userPlaceholder": "Search user",
+      "rolePlaceholder": "Select role",
+      "monthPlaceholder": "Select month",
+      "percentPlaceholder": "0–100"
+    },
+    "view": {
+      "title": "Allocation detail"
+    },
+    "messages": {
+      "missingId": "Missing id.",
+      "loadFailed": "Cannot load allocation.",
+      "confirmDeleteTitle": "Confirm delete",
+      "confirmDeleteContent": "Delete \"{{label}}\"?",
+      "deleteFailed": "Cannot delete.",
+      "invalidTitle": "Invalid",
+      "userRequired": "Please select a user.",
+      "roleRequired": "Please select a role.",
+      "monthRequired": "Please select a month.",
+      "percentInvalid": "Allocation % must be between 0 and 100.",
+      "dateRangeInvalid": "End date must be on or after start date."
+    }
+  },
+  "employeeOt": {
+    "list": {
+      "searchPlaceholder": "Search (user / project / reason)",
+      "userPlaceholder": "User",
+      "projectPlaceholder": "Project",
+      "statusPlaceholder": "Status",
+      "otTypePlaceholder": "OT type",
+      "otDateFromPlaceholder": "OT date from",
+      "otDateToPlaceholder": "OT date to",
+      "searchButton": "Search",
+      "reportMonthPlaceholder": "Report month",
+      "exportMonthlyButton": "Export monthly OT"
+    },
+    "fields": {
+      "user": "User",
+      "project": "Project",
+      "otDate": "OT date",
+      "startTime": "Start time",
+      "endTime": "End time",
+      "otHours": "OT hours",
+      "otType": "OT type",
+      "coefficient": "Coefficient",
+      "weightedOtHours": "Weighted OT hours",
+      "reason": "Reason",
+      "status": "Status",
+      "approvedBy": "Approved by",
+      "approvedDate": "Approved at"
+    },
+    "status": {
+      "DRAFT": "Draft",
+      "SUBMITTED": "Submitted",
+      "APPROVED": "Approved",
+      "REJECTED": "Rejected"
+    },
+    "otType": {
+      "WEEKDAY": "Weekday (×1.5)",
+      "WEEKEND": "Weekend (×2.0)",
+      "HOLIDAY": "Holiday (×3.0)"
+    },
+    "actions": {
+      "view": "View"
+    },
+    "form": {
+      "createTitle": "Register OT",
+      "editTitle": "Edit OT",
+      "approvalHint": "This request is submitted. Choose Approve or Reject; other fields cannot be changed.",
+      "userPlaceholder": "Search user",
+      "projectPlaceholder": "Search project (optional)",
+      "otHoursPlaceholder": "Hours",
+      "reasonPlaceholder": "Reason for OT"
+    },
+    "view": {
+      "title": "OT detail"
+    },
+    "messages": {
+      "missingId": "Missing id.",
+      "loadFailed": "Cannot load OT record.",
+      "confirmDeleteTitle": "Confirm delete",
+      "confirmDeleteContent": "Delete \"{{label}}\"?",
+      "deleteFailed": "Cannot delete.",
+      "invalidTitle": "Invalid",
+      "userRequired": "Please select a user.",
+      "reportMonthRequired": "Please select report month.",
+      "otDateRequired": "Please select OT date.",
+      "otTypeRequired": "Please select OT type.",
+      "otHoursInvalid": "OT hours cannot be negative.",
+      "timeRangeInvalid": "End time must be on or after start time.",
+      "statusRequired": "Please select status."
+    }
+  },
+  "kanban": {
+    "title": "Kanban Board",
+    "subtitle": "Drag & drop tasks to change status quickly",
+    "projectPlaceholder": "Select project",
+    "load": "Load",
+    "saving": "Saving...",
+    "messages": {
+      "projectRequired": "Please select a project."
+    }
   }
 }

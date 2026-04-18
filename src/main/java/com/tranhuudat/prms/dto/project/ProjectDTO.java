@@ -6,10 +6,12 @@ import com.tranhuudat.prms.enums.PriorityEnum;
 import com.tranhuudat.prms.enums.ProjectStatusEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.beans.BeanUtils;
 
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.Objects;
 import java.util.UUID;
@@ -22,9 +24,11 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
+@EqualsAndHashCode(callSuper = true)
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE)
 public class ProjectDTO extends BaseDTO {
     UUID managerId;
+    BigDecimal projectValue;
     PriorityEnum priority;
     Date startDate;
     Date endDate;

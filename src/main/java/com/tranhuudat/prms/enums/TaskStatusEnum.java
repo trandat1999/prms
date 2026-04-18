@@ -6,11 +6,11 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum TaskStatusEnum {
-    TODO("TODO", "Việc cần làm"),
-    IN_PROGRESS("IN_PROGRESS", "Đang thực hiện"),
-    REVIEW("REVIEW", "Đang xem xét"),
-    COMPLETED("COMPLETED", "Đã hoàn thành"),
-    CANCELLED("CANCELLED", "Đã hủy");
+    TODO("TODO", "Todo"),
+    IN_PROGRESS("IN_PROGRESS", "In Progress"),
+    REVIEW("REVIEW", "Review"),
+    TESTING("TESTING", "Testing"),
+    DONE("DONE", "Done");
 
     private final String code;
     private final String name;

@@ -1,0 +1,32 @@
+.eo-page {
+  .filter-item {
+    min-width: 160px;
+    flex: 1 1 160px;
+  }
+  .filter-item--md {
+    min-width: 200px;
+    flex: 1 1 200px;
+  }
+  .filter-item--sm {
+    min-width: 140px;
+    flex: 0 1 180px;
+  }
+  .filter-item--xs {
+    min-width: 120px;
+    flex: 0 1 140px;
+  }
+}
+
+.eo-form-modal {
+  min-height: 120px;
+}
+
+.eo-view-dl {
+  dt {
+    color: rgba(0, 0, 0, 0.45);
+    font-weight: 500;
+  }
+  dd {
+    margin-bottom: 0.5rem;
+  }
+}

@@ -1,0 +1,205 @@
+.kanban {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.kanban__header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.kanban__titleText {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.kanban__subtitle {
+  color: rgba(0, 0, 0, 0.45);
+  font-size: 12px;
+}
+
+.kanban__controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 320px;
+}
+
+.kanban__project {
+  width: 320px;
+}
+
+.kanban__saving {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(0, 0, 0, 0.65);
+  font-size: 12px;
+}
+
+.kanban__board {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(260px, 1fr);
+  gap: 14px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+}
+
+.kanban__column {
+  background: #fafafa;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 10px;
+  padding: 10px;
+  min-height: 520px;
+  display: flex;
+  flex-direction: column;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease,
+    background-color 160ms ease;
+  margin-top: 15px;
+}
+
+.kanban__column.is-drop-hover {
+  border-color: rgba(22, 119, 255, 0.55);
+  box-shadow: 0 12px 26px rgba(22, 119, 255, 0.12);
+  transform: translateY(-2px);
+  background: rgba(22, 119, 255, 0.03);
+}
+
+.kanban__columnHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 6px 10px 6px;
+}
+
+.kanban__columnTitle {
+  font-weight: 700;
+}
+
+.kanban__columnCount {
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.65);
+}
+
+.kanban__list {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 40px;
+  border-radius: 10px;
+}
+
+/* CDK gắn cho mọi list kết nối khi kéo — giữ list trung tính, highlight chỉ ở .kanban__column.is-drop-hover */
+.kanban .kanban__list.cdk-drop-list-receiving {
+  box-shadow: none;
+  transform: none;
+  background-color: transparent;
+}
+
+.kanban__card {
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 10px;
+  padding: 10px;
+  cursor: grab;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.kanban__card:active {
+  cursor: grabbing;
+}
+
+/* Drag & drop (CDK) - ẩn "bản sao" placeholder, chỉ hiện khi thả */
+.kanban__list.cdk-drop-list-dragging .cdk-drag-placeholder {
+  display: none !important;
+}
+
+/* Card đang kéo: làm mờ card gốc */
+.kanban__list.cdk-drop-list-dragging .cdk-drag.cdk-drag-dragging {
+  opacity: 0.35;
+}
+
+/* Preview (phần đi theo con trỏ) */
+.cdk-drag-preview {
+  box-sizing: border-box;
+  border-radius: 10px;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+}
+
+/* Animation khi drop — giới hạn trong board Kanban */
+.kanban .cdk-drop-list-dragging .cdk-drag {
+  transition: transform 180ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.kanban__cardTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.kanban__cardTitle {
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.kanban__cardMeta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.kanban__assignee {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.kanban__avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  background: rgba(24, 144, 255, 0.12);
+  color: #1677ff;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+
+.kanban__assigneeText {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.65);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kanban__hours {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.65);
+}
+
+.kanban__loading {
+  display: flex;
+  justify-content: center;
+  padding: 24px 0;
+}
+

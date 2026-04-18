@@ -1,0 +1,454 @@
+# PRMS Codebase Guide For Cursor
+
+## 1. Purpose
+
+This file is the short-entry context for any AI agent working in this repo.
+Read this file first, then open only the backend/frontend files directly related to the task.
+
+Primary goal:
+
+- avoid loading the whole repo every time
+- keep changes aligned between backend and frontend
+- preserve the existing contracts, patterns, and naming already used in PRMS
+
+## 2. Repo Map
+
+This is a fullstack repo with backend at root and frontend in `prms-web`.
+
+### Backend
+
+- stack: Java 17, Spring Boot 3.5.x, Spring Security, JPA, PostgreSQL, JWT, OpenAPI
+- root package: `src/main/java/com/tranhuudat/prms`
+- resources: `src/main/resources`
+- server port: `8080`
+- main class: `src/main/java/com/tranhuudat/prms/PrmsApplication.java`
+- config entry: `src/main/resources/application.yml`
+
+### Frontend
+
+- stack: Angular 20 standalone, NG-ZORRO, ngx-translate, ngx-spinner
+- app root: `prms-web/src/app`
+- static assets: `prms-web/public/assets`
+- frontend dev port: `4200`
+- FE API base URL config: `prms-web/public/assets/config/app-config.json`
+
+## 3. Core Architecture
+
+### Backend flow
+
+Standard flow is:
+
+- `controller -> service -> repository -> entity`
+
+Important files:
+
+- controllers: `src/main/java/com/tranhuudat/prms/controller`
+- services: `src/main/java/com/tranhuudat/prms/service`
+- service implementations: `src/main/java/com/tranhuudat/prms/service/impl`
+- repositories: `src/main/java/com/tranhuudat/prms/repository`
+- entities: `src/main/java/com/tranhuudat/prms/entity`
+- DTOs: `src/main/java/com/tranhuudat/prms/dto`
+
+Do not bypass this layering unless the task explicitly requires a refactor.
+
+### Frontend flow
+
+Standard flow is:
+
+- `page/component -> feature service -> core BaseService -> backend API`
+
+Important files:
+
+- app routes: `prms-web/src/app/app.routes.ts`
+- app bootstrap/providers: `prms-web/src/app/app.config.ts`
+- HTTP wrapper: `prms-web/src/app/core/services/base-service.ts`
+- auth interceptor: `prms-web/src/app/core/guards/app-interceptor.ts`
+- storage/token handling: `prms-web/src/app/core/services/storage-service.ts`
+- layout/navigation: `prms-web/src/app/shared/layout/main-layout/main-layout.ts`
+- menu map: `prms-web/src/app/shared/utils/navigation.model.ts`
+
+## 4. Shared Contracts Between BE And FE
+
+### Unified response
+
+Backend uses `BaseResponse`:
+
+- file: `src/main/java/com/tranhuudat/prms/dto/BaseResponse.java`
+- fields: `timestamp`, `body`, `message`, `status`, `code`
+
+Frontend expects the same wrapper via:
+
+- `prms-web/src/app/shared/utils/api-response.ts`
+
+Any backend response shape change must be updated on frontend in the same task.
+
+### Search/paging contract
+
+Backend search request base:
+
+- `src/main/java/com/tranhuudat/prms/dto/SearchRequest.java`
+
+Current common pattern:
+
+- paged endpoint: `POST /api/v1/<entity>/page`
+- request body extends `SearchRequest`
+- fields commonly used: `keyword`, `voided`, `pageIndex`, `pageSize`, `ids`
+
+Frontend services and list pages follow the same contract.
+
+### Validation/error contract
+
+Backend validation helper:
+
+- `src/main/java/com/tranhuudat/prms/service/BaseService.java`
+
+Current behavior:
+
+- service validates request with `validation(...)`
+- 400 responses may return `body` as field-message map
+- frontend pages often read `raw.body` and show combined validation messages
+
+Backend exception mapping:
+
+- `src/main/java/com/tranhuudat/prms/exception/GlobalExceptionHandler.java`
+
+Do not change error body format lightly.
+
+## 5. Authentication And Request Lifecycle
+
+### Backend auth
+
+Main files:
+
+- controller: `src/main/java/com/tranhuudat/prms/controller/AuthenticationController.java`
+- security config: `src/main/java/com/tranhuudat/prms/config/SecurityConfig.java`
+- JWT filter: `src/main/java/com/tranhuudat/prms/config/JwtAuthenticationFilter.java`
+- JWT service: `src/main/java/com/tranhuudat/prms/service/JwtService.java`
+- auth service impl: `src/main/java/com/tranhuudat/prms/service/impl/AuthenticationServiceImpl.java`
+
+Notes:
+
+- public endpoints are controlled by `SecurityConfig.PUBLIC_ENDPOINTS`
+- most APIs require authentication
+- CORS currently allows `http://localhost:4200`
+- logout endpoint is `/api/v1/auth/logout`
+
+### Frontend auth
+
+Main files:
+
+- auth service: `prms-web/src/app/pages/auth/auth-service.ts`
+- interceptor: `prms-web/src/app/core/guards/app-interceptor.ts`
+- route guards: `prms-web/src/app/core/guards/auth-guard.ts`, `prms-web/src/app/core/guards/login-guard.ts`
+- token storage: `prms-web/src/app/core/services/storage-service.ts`
+- current user store: `prms-web/src/app/core/services/store-service.ts`
+
+Request flow:
+
+1. Interceptor adds `Authorization` header if access token exists.
+2. Interceptor also adds `Accept-language`.
+3. On `401`, frontend tries refresh token endpoint.
+4. If refresh fails, user is signed out and redirected to `/login`.
+
+## 6. Main Business Domains
+
+### Authentication
+
+Backend:
+
+- `AuthenticationController`
+- `AuthenticationServiceImpl`
+- entities: `User`, `Token`, `RefreshToken`
+
+Frontend:
+
+- `pages/auth/login`
+- `pages/auth/auth-service.ts`
+
+### Users
+
+Backend:
+
+- controller: `UserController`
+- service: `UserService`, `UserServiceImpl`
+- repository: `UserRepository`
+- DTOs: `dto/user/*`
+
+Frontend:
+
+- routes: `prms-web/src/app/pages/management/users/user.routes.ts`
+- page: `prms-web/src/app/pages/management/users/user-list/*`
+- service: `prms-web/src/app/pages/management/users/services/user.service.ts`
+- role service: `prms-web/src/app/pages/management/users/services/role.service.ts`
+
+Related endpoints:
+
+- `/api/v1/users/current`
+- `/api/v1/users/{id}`
+- `/api/v1/users/page`
+- `/api/v1/users`
+- `/api/v1/users/{id}/password`
+
+### Projects
+
+Backend:
+
+- controller: `ProjectController`
+- service: `ProjectService`, `ProjectServiceImpl`
+- repository: `ProjectRepository`
+- DTOs: `dto/project/*`
+- entity: `Project`
+
+Frontend:
+
+- route: `/project`
+- page: `prms-web/src/app/pages/project/project-list/*`
+- popup child component: `prms-web/src/app/pages/project/project-tasks/*`
+- service: `prms-web/src/app/pages/project/services/project.service.ts`
+- models: `prms-web/src/app/pages/project/models/*`
+
+Notes:
+
+- project list currently opens task popup via `ProjectTasks`
+- manager selection uses autocomplete users endpoint
+
+### Tasks
+
+Backend:
+
+- controller: `TaskController`
+- service: `TaskService`, `TaskServiceImpl`
+- repositories: `TaskRepository`, `TaskLogRepository`
+- DTOs: `dto/task/*`
+- entities: `Task`, `TaskLog`
+
+Frontend:
+
+- route: `/task`
+- page: `prms-web/src/app/pages/management/tasks/task-list/*`
+- shared task logic service: `prms-web/src/app/pages/management/tasks/services/task.service.ts`
+- models: `prms-web/src/app/pages/management/tasks/models/*`
+- project popup task component also reuses this domain
+
+Special task APIs:
+
+- `/api/v1/tasks/{id}/assign`
+- `/api/v1/tasks/{id}/status`
+- `/api/v1/tasks/{id}/logs`
+- `/api/v1/tasks/kanban/board`
+
+### Kanban
+
+Backend:
+
+- implemented inside task domain via `TaskController` and `TaskServiceImpl`
+
+Frontend:
+
+- route: `/kanban`
+- page: `prms-web/src/app/pages/kanban/task-kanban/*`
+- route file: `prms-web/src/app/pages/kanban/kanban.routes.ts`
+
+When task mentions drag/drop board, column status, or project board view, check task service and kanban page together.
+
+### Resource Allocation
+
+Backend:
+
+- controller: `ResourceAllocationController`
+- service: `ResourceAllocationService`, `ResourceAllocationServiceImpl`
+- repository: `ResourceAllocationRepository`
+- DTOs: `dto/resource_allocation/*`
+- entity: `ResourceAllocation`
+
+Frontend:
+
+- route: `/resource-allocation`
+- page: `prms-web/src/app/pages/resource-allocation/resource-allocation-list/*`
+- service: `prms-web/src/app/pages/resource-allocation/services/resource-allocation.service.ts`
+- models: `prms-web/src/app/pages/resource-allocation/models/*`
+
+### App Params
+
+Backend:
+
+- controller: `AppParamController`
+- service: `AppParamService`, `AppParamServiceImpl`
+- repository: `AppParamRepository`
+- entity: `AppParam`
+
+Frontend:
+
+- route: `/management/app-params`
+- page: `prms-web/src/app/pages/management/app-params/app-param-list/*`
+- service: `prms-web/src/app/pages/management/app-params/services/app-param.service.ts`
+
+Notes:
+
+- app params are reused as dynamic lookup data in some screens
+- task label filters use app params
+
+### Roles And Autocomplete
+
+Backend:
+
+- roles: `RoleController`, `RoleServiceImpl`, `RoleRepository`
+- autocomplete: `AutoCompleteController`, `AutoCompleteServiceImpl`
+
+Frontend:
+
+- role service: `pages/management/users/services/role.service.ts`
+- autocomplete service: `core/services/autocomplete.service.ts`
+
+Autocomplete endpoints currently cover users and projects.
+
+## 7. Frontend Routing Map
+
+Top-level routes from `prms-web/src/app/app.routes.ts`:
+
+- `/dashboard`
+- `/project`
+- `/task`
+- `/resource-allocation`
+- `/kanban`
+- `/management/users`
+- `/management/app-params`
+- `/login`
+
+Layout behavior:
+
+- authenticated routes render inside `MainLayout`
+- menu structure comes from `shared/utils/navigation.model.ts`
+
+## 8. Frontend UI Conventions
+
+Important conventions already used in this repo:
+
+- standalone components, not feature NgModules
+- API calls live in services, not directly in pages
+- use `BaseService` for HTTP calls when possible
+- user-facing translations come from `public/assets/i18n/en.json` and `vi.json`
+- shared input component should be preferred:
+  - `prms-web/src/app/shared/input/input.ts`
+
+If a new form/filter control is needed, first check whether `InputCommon` can be extended instead of adding one-off raw controls everywhere.
+
+## 9. Backend Conventions
+
+Follow the code as it is, not generic Spring habits.
+
+Current project conventions:
+
+- services often extend `BaseService`
+- responses are wrapped in `BaseResponse`
+- pagination helpers come from `BaseService.getPageable(...)`
+- validation usually happens in service layer, not controller annotations
+- business errors should use `AppException`
+- messages/i18n come from:
+  - `src/main/resources/i18n/messages.properties`
+  - `src/main/resources/i18n/messages_vi.properties`
+  - constants in `SystemMessage` and `SystemVariable`
+
+## 10. Where To Read First Based On Task Type
+
+### If task is backend-only API logic
+
+Open in this order:
+
+1. matching controller
+2. matching service interface and impl
+3. matching repository
+4. related DTO/entity
+5. `BaseService` and `GlobalExceptionHandler` if response/validation is involved
+
+### If task is frontend-only UI behavior
+
+Open in this order:
+
+1. matching route file
+2. matching page/component
+3. matching feature service
+4. related models/types/const
+5. shared components used by the page such as `InputCommon`
+
+### If task changes a domain end-to-end
+
+Open backend first:
+
+1. controller
+2. service impl
+3. DTO/entity/repository
+
+Then frontend:
+
+1. feature service
+2. list/detail/modal component
+3. models/types
+4. translation files if labels/messages changed
+
+### If task touches auth/login/token
+
+Open:
+
+1. `SecurityConfig`
+2. `JwtAuthenticationFilter`
+3. `AuthenticationController`
+4. `AuthenticationServiceImpl`
+5. FE `auth-service.ts`
+6. FE `app-interceptor.ts`
+7. FE `storage-service.ts`
+
+### If task touches kanban
+
+Open:
+
+1. `TaskController`
+2. `TaskServiceImpl`
+3. `dto/task/*` related to kanban board
+4. `pages/kanban/task-kanban/*`
+5. `pages/management/tasks/services/task.service.ts`
+
+## 11. Commands Commonly Needed
+
+Backend:
+
+- run app: `./mvnw spring-boot:run`
+- test: `./mvnw test`
+
+Frontend:
+
+- install deps: `npm install`
+- start dev: `npm start`
+- build: `npm run build`
+- test: `npm test`
+
+Frontend commands run inside `prms-web`.
+
+## 12. Change Safety Rules
+
+Before editing:
+
+- check whether touched files already have uncommitted user changes
+- do not change API field names on one side only
+- do not widen auth/cors/public endpoints unless task explicitly asks
+- do not bypass `BaseResponse` unless task explicitly changes API contract
+- do not introduce a second pattern if the repo already has one for the same problem
+
+After editing:
+
+- verify backend and frontend still agree on DTO/model field names
+- verify any new enum values exist on both BE and FE if both use them
+- update i18n files when new user-facing text is added
+- run at least targeted verification for the touched side
+
+## 13. Minimal Working Procedure For Cursor
+
+For every new task in this repo:
+
+1. Read this file first.
+2. Identify affected domain and layer.
+3. Open only the files listed in section 10 for that task type.
+4. Expand to adjacent files only when the contract or call chain requires it.
+5. If backend and frontend are both affected, update both in one pass.
+
+This file is intended to be the stable entry point. Do not replace it with a large dump of file-by-file notes.

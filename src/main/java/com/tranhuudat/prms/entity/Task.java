@@ -2,14 +2,24 @@ package com.tranhuudat.prms.entity;
 
 import com.tranhuudat.prms.enums.PriorityEnum;
 import com.tranhuudat.prms.enums.TaskStatusEnum;
-import jakarta.persistence.*;
-import lombok.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.SuperBuilder;
 
-import java.time.LocalDate;
-import java.util.HashSet;
-import java.util.Set;
+import java.math.BigDecimal;
+import java.util.UUID;
 
 @Entity
 @Table(name = "tbl_task")
@@ -21,31 +31,41 @@ import java.util.Set;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class Task extends BaseInformation {
 
+    @Column(name = "project_id")
+    UUID projectId;
+
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "project_id")
+    @JoinColumn(name = "project_id", insertable = false, updatable = false)
     Project project;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status")
     TaskStatusEnum status;
 
+    @Column(name = "kanban_order")
+    Integer kanbanOrder;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "priority")
     PriorityEnum priority;
 
     @Column(name = "estimated_hours")
-    Double estimatedHours;
+    BigDecimal estimatedHours;
 
     @Column(name = "actual_hours")
-    Double actualHours;
+    BigDecimal actualHours;
 
-    @Column(name = "due_date")
-    LocalDate dueDate;
+    @Column(name = "assigned_id")
+    UUID assignedId;
 
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(name = "task_assignment",
-            joinColumns = @JoinColumn(name = "task_id"),
-            inverseJoinColumns = @JoinColumn(name = "user_id"))
-    @Builder.Default
-    Set<User> assignedUsers = new HashSet<>();
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "assigned_id", insertable = false, updatable = false)
+    User assigned;
+
+    @Column(name = "label", length = 50)
+    String label;
+
+    @Column(name = "type", length = 50)
+    String type;
 }
+

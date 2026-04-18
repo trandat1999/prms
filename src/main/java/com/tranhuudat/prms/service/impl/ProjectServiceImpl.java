@@ -14,12 +14,12 @@ import com.tranhuudat.prms.dto.project.ProjectDTO;
 import com.tranhuudat.prms.dto.project.ProjectSearchRequest;
 import com.tranhuudat.prms.entity.Project;
 import com.tranhuudat.prms.repository.ProjectRepository;
-import com.tranhuudat.prms.repository.UserRepository;
 import com.tranhuudat.prms.service.BaseService;
 import com.tranhuudat.prms.service.ProjectService;
 import com.tranhuudat.prms.util.ConstUtil;
 import com.tranhuudat.prms.util.SystemMessage;
 import com.tranhuudat.prms.util.SystemVariable;
+import jakarta.persistence.EntityManager;
 
 import lombok.RequiredArgsConstructor;
 
@@ -28,7 +28,7 @@ import lombok.RequiredArgsConstructor;
 public class ProjectServiceImpl extends BaseService implements ProjectService {
 
     private final ProjectRepository projectRepository;
-    private final UserRepository userRepository;
+    private final EntityManager entityManager;
 
     @Override
     @Transactional
@@ -90,6 +90,6 @@ public class ProjectServiceImpl extends BaseService implements ProjectService {
     @Override
     @Transactional(readOnly = true)
     public BaseResponse getPage(ProjectSearchRequest request) {
-        return getResponse200(projectRepository.getPages(request, getPageable(request)));
+        return getResponse200(projectRepository.getPages(entityManager, request, getPageable(request)));
     }
 }

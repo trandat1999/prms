@@ -90,33 +90,97 @@ CREATE TABLE tbl_project (
     status VARCHAR(50),
     progress_percentage DOUBLE PRECISION,
     start_date DATE,
-    end_date DATE
+    end_date DATE,
+    project_value NUMERIC
 );
 
 -- Bảng tbl_task (từ entity Task)
-CREATE TABLE tbl_task (
-    id UUID PRIMARY KEY,
-    created_by VARCHAR(255),
-    created_date TIMESTAMP,
-    last_modified_by VARCHAR(255),
+CREATE TABLE tbl_task
+(
+    id                 UUID PRIMARY KEY,
+    created_by         VARCHAR(255),
+    created_date       TIMESTAMP,
+    last_modified_by   VARCHAR(255),
     last_modified_date TIMESTAMP,
-    voided BOOLEAN DEFAULT FALSE,
-    name VARCHAR(255),
-    description TEXT,
-    short_description VARCHAR(255),
-    code VARCHAR(100) UNIQUE NOT NULL,
-    project_id UUID,
-    status VARCHAR(50),
-    priority VARCHAR(50),
-    estimated_hours DOUBLE PRECISION,
-    actual_hours DOUBLE PRECISION,
-    due_date DATE,
-    CONSTRAINT fk_task_project FOREIGN KEY (project_id) REFERENCES tbl_project(id)
+    voided             BOOLEAN DEFAULT FALSE,
+    name               VARCHAR(255),
+    description        TEXT,
+    short_description  VARCHAR(255),
+    code               VARCHAR(100) UNIQUE NOT NULL,
+    project_id         UUID,
+    status             VARCHAR(50),
+    kanban_order       INTEGER,
+    priority           VARCHAR(50),
+    estimated_hours    numeric,
+    actual_hours       numeric,
+    assigned_id        UUID,
+    label              VARCHAR(50),
+    type               VARCHAR(50)
 );
 
--- Bảng liên kết task_assignment
-CREATE TABLE tbl_task_assignment (
-    task_id UUID NOT NULL,
-    user_id UUID NOT NULL,
-    PRIMARY KEY (task_id, user_id)
+CREATE TABLE tbl_task_log
+(
+    id                 UUID PRIMARY KEY,
+    created_by         VARCHAR(255),
+    created_date       TIMESTAMP,
+    last_modified_by   VARCHAR(255),
+    last_modified_date TIMESTAMP,
+    voided             BOOLEAN DEFAULT FALSE,
+    task_id            UUID NOT NULL,
+    action             VARCHAR(50) NOT NULL,
+    old_value          TEXT,
+    new_value          TEXT
+);
+
+
+CREATE TABLE tbl_app_param
+(
+    id                 UUID PRIMARY KEY,
+    created_by         VARCHAR(255),
+    created_date       TIMESTAMP,
+    last_modified_by   VARCHAR(255),
+    last_modified_date TIMESTAMP,
+    voided             BOOLEAN DEFAULT FALSE,
+    description        TEXT,
+    param_group        VARCHAR(100),
+    param_name         VARCHAR(255),
+    param_value        VARCHAR(255),
+    param_type         VARCHAR(50)
+);
+
+CREATE TABLE resource_allocation
+(
+    id                 UUID PRIMARY KEY,
+    created_by         VARCHAR(255),
+    created_date       TIMESTAMP,
+    last_modified_by   VARCHAR(255),
+    last_modified_date TIMESTAMP,
+    voided             BOOLEAN DEFAULT FALSE,
+    user_id            UUID NOT NULL,
+    role               VARCHAR(50),
+    month              TIMESTAMP,
+    start_date         TIMESTAMP,
+    end_date           TIMESTAMP,
+    allocation_percent NUMERIC
+);
+
+CREATE TABLE employee_ot
+(
+    id                 UUID PRIMARY KEY,
+    created_by         VARCHAR(255),
+    created_date       TIMESTAMP,
+    last_modified_by   VARCHAR(255),
+    last_modified_date TIMESTAMP,
+    voided             BOOLEAN DEFAULT FALSE,
+    user_id            UUID NOT NULL,
+    project_id         UUID,
+    ot_date            TIMESTAMP NOT NULL,
+    start_time         TIMESTAMP,
+    end_time           TIMESTAMP,
+    ot_hours           NUMERIC,
+    ot_type            VARCHAR(50), -- weekday / weekend / holiday
+    reason             TEXT,
+    status             VARCHAR(30), -- draft / submitted / approved / rejected
+    approved_by        UUID,
+    approved_date      TIMESTAMP
 );
