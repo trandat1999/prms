@@ -1,5 +1,6 @@
 import { CommonModule, DatePipe } from '@angular/common';
 import { Component } from '@angular/core';
+import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { NzAvatarComponent } from 'ng-zorro-antd/avatar';
 import { NzButtonComponent } from 'ng-zorro-antd/button';
@@ -13,7 +14,6 @@ import { NzTagComponent } from 'ng-zorro-antd/tag';
 import { NzTooltipDirective } from 'ng-zorro-antd/tooltip';
 import { TranslatePipe } from '@ngx-translate/core';
 import { InputCommon } from '../../../shared/input/input';
-import { ProjectTasks } from '../project-tasks/project-tasks';
 import { Page } from '../models/page.model';
 import { Project, ProjectWritePayload } from '../models/project.model';
 import { ProjectSearchRequest } from '../models/project-search.request';
@@ -60,7 +60,6 @@ type ProjectCreateFormState = {
     NzSpinComponent,
     InputCommon,
     TranslatePipe,
-    ProjectTasks,
   ],
   templateUrl: './project-list.html',
   styleUrl: './project-list.scss',
@@ -91,15 +90,11 @@ export class ProjectList {
   viewLoading = false;
   viewDetail: Project | null = null;
 
-  /** Popup task theo project */
-  taskPopupVisible = false;
-  taskPopupProjectId: string | null = null;
-  taskPopupProjectName: string | null = null;
-
   constructor(
     private projectService: ProjectService,
     private notification: NzNotificationService,
-    private modal: NzModalService
+    private modal: NzModalService,
+    private router: Router
   ) {}
 
   get projectFormTitle(): string {
@@ -209,21 +204,14 @@ export class ProjectList {
     });
   }
 
-  onOpenTasks(row: Project): void {
+  onOpenProjectTasks(row: Project): void {
     const id = row?.id;
     if (!id) {
-      this.notification.warning('Lỗi', 'Không có mã dự án để xem task.');
+      this.notification.warning('Lỗi', 'Không có mã dự án để xem công việc.');
       return;
     }
-    this.taskPopupProjectId = id;
-    this.taskPopupProjectName = row?.name ?? row?.code ?? id;
-    this.taskPopupVisible = true;
-  }
-
-  closeTaskPopup(): void {
-    this.taskPopupVisible = false;
-    this.taskPopupProjectId = null;
-    this.taskPopupProjectName = null;
+    const projectName = row?.name?.trim() || row?.code || id;
+    void this.router.navigate(['/project', id, 'tasks'], { state: { projectName } });
   }
 
   closeProjectFormModal(): void {

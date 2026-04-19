@@ -25,11 +25,6 @@ export const navigation: NavigationItem[] = [
     link: '/project',
   },
   {
-    translateKey: 'navigation.tasks',
-    iconType: 'unordered-list',
-    link: '/task',
-  },
-  {
     translateKey: 'navigation.resourceAllocation',
     iconType: 'team',
     link: '/resource-allocation',

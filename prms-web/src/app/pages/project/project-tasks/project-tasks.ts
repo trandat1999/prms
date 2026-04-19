@@ -1,5 +1,7 @@
 import { CommonModule, DatePipe } from '@angular/common';
-import { Component, Input } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { NzButtonComponent } from 'ng-zorro-antd/button';
@@ -49,9 +51,15 @@ type TaskFormState = {
   templateUrl: './project-tasks.html',
   styleUrls: ['./project-tasks.scss'],
 })
-export class ProjectTasks {
-  @Input({ required: true }) projectId!: string;
-  @Input() projectName: string | null = null;
+export class ProjectTasks implements OnInit {
+  private readonly route = inject(ActivatedRoute);
+  private readonly destroyRef = inject(DestroyRef);
+
+  /** projectId từ URL `/project/:projectId/tasks` */
+  effectiveProjectId = '';
+
+  /** Tên dự án (optional) từ `navigate(..., { state: { projectName } })` */
+  displayProjectName: string | null = null;
 
   keyword = '';
   status: TaskStatus | null = null;
@@ -112,7 +120,27 @@ export class ProjectTasks {
   ) {}
 
   ngOnInit(): void {
-    this.fetch();
+    this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((pm) => {
+      const id = pm.get('projectId');
+      if (!id) {
+        this.notification.warning(
+          this.translate.instant('common.error'),
+          this.translate.instant('task.messages.missingId')
+        );
+        return;
+      }
+      const prev = this.effectiveProjectId;
+      const changed = id !== prev;
+      if (changed) {
+        const state =
+          typeof history !== 'undefined' ? (history.state as { projectName?: string } | null) : null;
+        const name = state?.projectName?.trim();
+        this.displayProjectName = name ? name : null;
+        this.effectiveProjectId = id;
+        this.pageIndex = 1;
+      }
+      this.fetch();
+    });
   }
 
   get formTitle(): string {
@@ -287,7 +315,7 @@ export class ProjectTasks {
       name: this.form.name.trim(),
       shortDescription: this.form.shortDescription?.trim() ? this.form.shortDescription.trim() : null,
       description: this.form.description?.trim() ? this.form.description.trim() : null,
-      projectId: this.projectId, // khoá theo project popup
+      projectId: this.effectiveProjectId,
       status: this.form.status,
       priority: this.form.priority,
       type: this.form.type?.trim() ? this.form.type.trim() : null,
@@ -341,11 +369,14 @@ export class ProjectTasks {
   }
 
   private fetch(): void {
+    if (!this.effectiveProjectId) {
+      return;
+    }
     const req: TaskSearchRequest = {
       keyword: this.keyword?.trim() || null,
       status: this.status,
       type: this.type?.trim() ? this.type.trim() : null,
-      projectId: this.projectId,
+      projectId: this.effectiveProjectId,
       pageIndex: Math.max(0, (this.pageIndex ?? 1) - 1),
       pageSize: this.pageSize,
       voided: false,

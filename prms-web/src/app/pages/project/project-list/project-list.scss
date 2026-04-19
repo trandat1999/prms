@@ -16,6 +16,14 @@
   cursor: pointer;
 }
 
+.project-link {
+  cursor: pointer;
+}
+
+.project-link:hover {
+  text-decoration: underline;
+}
+
 .progress__text {
   min-width: 34px;
   text-align: right;

@@ -18,16 +18,10 @@ export const routes: Routes = [
         data: { breadcrumb: 'breadcrumb.report' },
         loadChildren: () => import('./pages/report/report.routes').then((m) => m.REPORT_ROUTES),
       },
-      { path: 'project', 
-        data: {
-          breadcrumb: 'breadcrumb.project',
-        },
-        loadChildren: () => import('./pages/project/project.routes').then(m => m.PROJECT_ROUTES) }
-      ,
       {
-        path: 'task',
-        data: { breadcrumb: 'breadcrumb.tasks' },
-        loadChildren: () => import('./pages/management/tasks/task.routes').then((m) => m.TASK_ROUTES),
+        path: 'project',
+        data: { breadcrumb: 'breadcrumb.project' },
+        loadChildren: () => import('./pages/project/project.routes').then((m) => m.PROJECT_ROUTES),
       },
       {
         path: 'resource-allocation',

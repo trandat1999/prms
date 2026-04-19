@@ -62,8 +62,26 @@
     <tbody>
       @for (item of table.data; track item.id) {
         <tr>
-          <td class="code text-primary text-nowrap">{{ item.code }}</td>
-          <td class="name">{{ item.name }}</td>
+          <td
+            class="code text-primary text-nowrap project-link"
+            role="button"
+            tabindex="0"
+            (click)="onOpenProjectTasks(item)"
+            (keydown.enter)="onOpenProjectTasks(item)"
+            (keydown.space)="$event.preventDefault(); onOpenProjectTasks(item)"
+          >
+            {{ item.code }}
+          </td>
+          <td
+            class="name project-link"
+            role="button"
+            tabindex="0"
+            (click)="onOpenProjectTasks(item)"
+            (keydown.enter)="onOpenProjectTasks(item)"
+            (keydown.space)="$event.preventDefault(); onOpenProjectTasks(item)"
+          >
+            {{ item.name }}
+          </td>
           <td>
             <div class="d-inline-flex align-items-center gap-2">
               <nz-avatar [nzText]="initials(item.managerName)" nzSize="small"></nz-avatar>
@@ -103,15 +121,6 @@
               nz-button
               nzType="text"
               nz-tooltip
-              [nzTooltipTitle]="'project.actions.tasks' | translate"
-              (click)="onOpenTasks(item)"
-            >
-              <span nz-icon nzType="unordered-list"></span>
-            </button>
-            <button
-              nz-button
-              nzType="text"
-              nz-tooltip
               [nzTooltipTitle]="'common.button.edit' | translate"
               (click)="onEdit(item)"
             >
@@ -132,29 +141,6 @@
     </tbody>
   </nz-table>
 </div>
-
-<nz-modal
-  [(nzVisible)]="taskPopupVisible"
-  [nzTitle]="'project.tasks.title' | translate"
-  [nzWidth]="1100"
-  (nzOnCancel)="closeTaskPopup()"
-  [nzMaskClosable]="true"
->
-  <div *nzModalContent>
-    <div class="mb-2 text-muted">
-      {{ 'project.tasks.forProject' | translate }}:
-      <b>{{ taskPopupProjectName }}</b>
-    </div>
-    @if (taskPopupProjectId) {
-      <app-project-tasks [projectId]="taskPopupProjectId" [projectName]="taskPopupProjectName"></app-project-tasks>
-    }
-  </div>
-  <ng-container *nzModalFooter>
-    <button nz-button type="button" (click)="closeTaskPopup()">
-      {{ 'common.button.close' | translate }}
-    </button>
-  </ng-container>
-</nz-modal>
 
 <nz-modal
   [(nzVisible)]="projectFormVisible"
