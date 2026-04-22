@@ -33,6 +33,47 @@ import static org.springframework.security.config.http.SessionCreationPolicy.STA
 @EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
+    private static final String[] STATIC_RESOURCES = {
+            "/",
+            "/error",
+            "/index.html",
+            "/favicon.ico",
+            "/manifest.webmanifest",
+            "/ngsw.json",
+            "/ngsw-worker.js",
+            "/safety-worker.js",
+            "/worker-basic.min.js",
+            "/assets/**",
+            "/media/**",
+            "/**/*.js",
+            "/**/*.css",
+            "/**/*.ico",
+            "/**/*.png",
+            "/**/*.svg",
+            "/**/*.woff2",
+            "/**/*.txt",
+            "/**/*.map",
+            "/**/*.webmanifest"
+    };
+
+    private static final String[] SPA_ROUTES = {
+            "/login",
+            "/dashboard",
+            "/dashboard/**",
+            "/report",
+            "/report/**",
+            "/project",
+            "/project/**",
+            "/resource-allocation",
+            "/resource-allocation/**",
+            "/employee-ot",
+            "/employee-ot/**",
+            "/kanban",
+            "/kanban/**",
+            "/management",
+            "/management/**"
+    };
+
     private final UserDetailsService userDetailsService;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final CustomAuthenticationEntryPoint authenticationEntryPoint;
@@ -45,6 +86,8 @@ public class SecurityConfig {
             "/v3/api-docs/**",
             "/swagger-ui/**",
             "/swagger-ui.html",
+            "/oauth2/**",
+            "/login/oauth2/**",
             "/auth/login",
             "/auth/introspect",
             "/auth/refresh",
@@ -59,8 +102,14 @@ public class SecurityConfig {
                 .authorizeHttpRequests(req ->
                         req.requestMatchers(PUBLIC_ENDPOINTS)
                                 .permitAll()
-                                .anyRequest()
+                                .requestMatchers(STATIC_RESOURCES)
+                                .permitAll()
+                                .requestMatchers(SPA_ROUTES)
+                                .permitAll()
+                                .requestMatchers("/api/v1/**")
                                 .authenticated()
+                                .anyRequest()
+                                .denyAll()
                 )
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .exceptionHandling(ex->ex.authenticationEntryPoint(authenticationEntryPoint).accessDeniedHandler(authenticationEntryPoint))
