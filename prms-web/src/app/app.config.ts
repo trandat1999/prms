@@ -23,6 +23,7 @@ import {provideTranslateService, TranslateService} from '@ngx-translate/core';
 import {StorageService} from './core/services/storage-service';
 import {NgxSpinnerModule} from 'ngx-spinner';
 import {appInterceptor} from './core/guards/app-interceptor';
+import {provideServiceWorker} from '@angular/service-worker';
 
 registerLocaleData(vi);
 const ngZorroConfig: NzConfig = {
@@ -72,6 +73,12 @@ export const appConfig: ApplicationConfig = {
       NgxSpinnerModule.forRoot({
         type: "ball-spin-clockwise"
       })
-    ])
+    ]),
+    // Bật Angular Service Worker (enabled=true để test push trên localhost).
+    // Lưu ý: `ngsw-worker.js` chỉ được generate khi build production có cấu hình serviceWorker.
+    provideServiceWorker('ngsw-worker.js', {
+      enabled: true,
+      registrationStrategy: 'registerWhenStable:3000',
+    })
   ]
 };

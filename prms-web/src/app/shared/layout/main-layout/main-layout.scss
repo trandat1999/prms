@@ -22,6 +22,49 @@
   transition: all .3s, padding 0s;
 }
 
+.header-actions {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 0 16px;
+  min-width: 0;
+}
+
+.notif-trigger {
+  flex: 0 0 auto;
+  margin-right: 4px;
+}
+
+.notif-item {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.notif-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: transparent;
+  margin-top: 6px;
+  flex: 0 0 8px;
+}
+
+.notif-item.is-unread .notif-dot {
+  background: #1890ff;
+}
+
+.notif-item.is-unread .notif-content > div:first-child {
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.88);
+}
+
+.notif-time {
+  margin-top: 2px;
+}
+
 .trigger:hover {
   color: #1890ff;
 }

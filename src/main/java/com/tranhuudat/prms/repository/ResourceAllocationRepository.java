@@ -51,7 +51,7 @@ public interface ResourceAllocationRepository extends JpaRepository<ResourceAllo
                 params.put("year", request.getYear());
             }
             if (Objects.nonNull(request.getMonthYear())) {
-                where.add("year(entity.resourceMonth) = :monthYear");
+                where.add("month(entity.resourceMonth) = :monthYear");
                 params.put("monthYear", request.getMonthYear());
             }
             if (StringUtils.hasText(request.getRole())) {
@@ -87,5 +87,26 @@ public interface ResourceAllocationRepository extends JpaRepository<ResourceAllo
         List<ResourceAllocationDto> content = query.getResultList();
         Long total = countQuery.getSingleResult();
         return new PageImpl<>(content, pageable, Objects.nonNull(total) ? total : 0L);
+    }
+
+    /**
+     * Danh sách phân bổ theo tháng (năm + tháng của {@code resourceMonth}), không phân trang.
+     * Dùng cho xuất Excel; chỉ áp dụng điều kiện tháng, không lọc theo user/role/keyword.
+     */
+    default List<ResourceAllocationDto> listAllByResourceMonth(
+            EntityManager entityManager, int year, int monthValue) {
+        String jpql =
+                "select new com.tranhuudat.prms.dto.resource_allocation.ResourceAllocationDto(entity) "
+                        + "from ResourceAllocation entity "
+                        + "left join entity.user u "
+                        + "where (entity.voided is null or entity.voided = false) "
+                        + "and year(entity.resourceMonth) = :year "
+                        + "and month(entity.resourceMonth) = :monthValue "
+                        + "order by lower(coalesce(u.fullName, u.username, '')) asc, entity.role asc";
+        return entityManager
+                .createQuery(jpql, ResourceAllocationDto.class)
+                .setParameter("year", year)
+                .setParameter("monthValue", monthValue)
+                .getResultList();
     }
 }

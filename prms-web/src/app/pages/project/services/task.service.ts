@@ -1,11 +1,12 @@
 import { Injectable } from '@angular/core';
 import { map } from 'rxjs';
-import { BaseService } from '../../../../core/services/base-service';
-import { ApiResponse } from '../../../../shared/utils/api-response';
-import { Page } from '../../../project/models/page.model';
+import { BaseService } from '../../../core/services/base-service';
+import { ApiResponse } from '../../../shared/utils/api-response';
+import { Page } from '../models/page.model';
 import {
   Task,
   TaskAssignPayload,
+  TaskChecklistItem,
   TaskKanbanBoard,
   TaskKanbanBoardUpdatePayload,
   TaskLog,
@@ -95,7 +96,8 @@ export class TaskService {
   }
 
   getKanbanBoard(projectId: string) {
-    return this.base.get(`${this.apiUrl}/kanban/board?projectId=${projectId}`).pipe(
+    const qs = projectId ? `?projectId=${projectId}` : '';
+    return this.base.get(`${this.apiUrl}/kanban/board${qs}`).pipe(
       map((res: ApiResponse) => ({
         raw: res,
         board: (res?.body ?? null) as TaskKanbanBoard | null,
@@ -111,5 +113,22 @@ export class TaskService {
       }))
     );
   }
-}
 
+  getChecklists(taskId: string) {
+    return this.base.get(`${this.apiUrl}/${taskId}/checklists`).pipe(
+      map((res: ApiResponse) => ({
+        raw: res,
+        items: (res?.body ?? []) as TaskChecklistItem[],
+      }))
+    );
+  }
+
+  toggleChecklist(taskId: string, checklistId: string, checked: boolean) {
+    return this.base.patch(`${this.apiUrl}/${taskId}/checklists/${checklistId}`, { checked }).pipe(
+      map((res: ApiResponse) => ({
+        raw: res,
+        items: (res?.body ?? []) as TaskChecklistItem[],
+      }))
+    );
+  }
+}

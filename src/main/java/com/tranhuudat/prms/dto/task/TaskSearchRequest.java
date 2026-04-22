@@ -15,6 +15,11 @@ import java.util.UUID;
 public class TaskSearchRequest extends SearchRequest {
     UUID projectId;
     UUID assignedId;
+    UUID reporterId;
+    UUID reviewerId;
+    UUID parentTaskId;
+    /** Khi chọn task cha (tránh chọn chính task đang sửa). */
+    UUID excludeTaskId;
     TaskStatusEnum status;
     String type;
 }

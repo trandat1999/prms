@@ -105,14 +105,14 @@
         <nz-spin nzSimple></nz-spin>
       </div>
     } @else {
-      <div class="row g-3">
+      <div class="row g-3" [formGroup]="modalForm">
         <div class="col-md-6">
           <app-input
             label="{{ 'appParam.fields.paramGroup' | translate }}"
             [labelSpan]="24"
             [inputSpan]="24"
             [placeHolder]="'appParam.form.groupPlaceholder' | translate"
-            [(ngModel)]="form.paramGroup"
+            formControlName="paramGroup"
           ></app-input>
         </div>
         <div class="col-md-6">
@@ -121,7 +121,7 @@
             [labelSpan]="24"
             [inputSpan]="24"
             [placeHolder]="'appParam.form.typePlaceholder' | translate"
-            [(ngModel)]="form.paramType"
+            formControlName="paramType"
           ></app-input>
         </div>
         <div class="col-md-6">
@@ -130,7 +130,7 @@
             [labelSpan]="24"
             [inputSpan]="24"
             [placeHolder]="'appParam.form.namePlaceholder' | translate"
-            [(ngModel)]="form.paramName"
+            formControlName="paramName"
           ></app-input>
         </div>
         <div class="col-md-6">
@@ -139,7 +139,7 @@
             [labelSpan]="24"
             [inputSpan]="24"
             [placeHolder]="'appParam.form.valuePlaceholder' | translate"
-            [(ngModel)]="form.paramValue"
+            formControlName="paramValue"
           ></app-input>
         </div>
         <div class="col-md-12">
@@ -150,7 +150,7 @@
             type="textarea"
             [textareaRows]="3"
             [placeHolder]="'appParam.form.descriptionPlaceholder' | translate"
-            [(ngModel)]="form.description"
+            formControlName="description"
           ></app-input>
         </div>
       </div>

@@ -1,0 +1,11 @@
+{
+  "name": "PRMS",
+  "short_name": "PRMS",
+  "theme_color": "#001529",
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "scope": "/",
+  "start_url": "/",
+  "icons": []
+}
+

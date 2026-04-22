@@ -30,6 +30,26 @@ public class SystemMessage {
     public static final String ACTIVE_NEW_PASS_SUCCESS= "app.message.activeNewPassSuccess";
     public static final String FILE_NAME_INVALID = "app.message.fileNameInvalid";
     public static final String WRITE_FILE_ERROR = "app.message.writeFileError";
+    public static final String RESOURCE_ALLOCATION_EXPORT_MONTH_REQUIRED =
+            "app.message.resourceAllocation.exportMonthRequired";
+    public static final String NOT_PROJECT_MEMBER = "app.message.notProjectMember";
+    public static final String INVALID_PARENT_TASK = "app.message.invalidParentTask";
+    public static final String TASK_PREDECESSOR_NOT_DONE = "app.message.taskPredecessorNotDone";
+    public static final String TASK_DEPENDENCY_CYCLE = "app.message.taskDependencyCycle";
+    public static final String TASK_DEPENDENCY_SELF = "app.message.taskDependencySelf";
+
+    /** Tham số: {0} mã task tiên quyết, {1} mã task kế tiếp */
+    public static final String NOTIFICATION_TASK_PREDECESSOR_DONE = "app.notification.taskPredecessorDone";
+
+    /** Tham số: {0} mã công việc, {1} tên công việc */
+    public static final String NOTIFICATION_TASK_ASSIGNED = "app.notification.taskAssigned";
+
+    /** Email subject/body: {0} predCode, {1} succCode, {2} link */
+    public static final String MAIL_TASK_PREDECESSOR_DONE_SUBJECT = "app.mail.taskPredecessorDone.subject";
+    public static final String MAIL_TASK_PREDECESSOR_DONE_BODY = "app.mail.taskPredecessorDone.body";
+
+    /** Email subject: {0} mã công việc, {1} tên công việc */
+    public static final String MAIL_TASK_ASSIGNED_SUBJECT = "app.mail.taskAssigned.subject";
 
     // validation
     public static final String VALIDATION_NOTNULL = "{app.validation.NotNull}";

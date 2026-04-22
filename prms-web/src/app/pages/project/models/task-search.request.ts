@@ -8,7 +8,10 @@ export type TaskSearchRequest = {
   ids?: string[] | null;
   projectId?: string | null;
   assignedId?: string | null;
+  reporterId?: string | null;
+  reviewerId?: string | null;
+  parentTaskId?: string | null;
+  excludeTaskId?: string | null;
   status?: TaskStatus | null;
   type?: string | null;
 };
-

@@ -160,6 +160,20 @@ Important frontend files:
   - `src/main/resources/i18n/messages.properties`
   - `src/main/resources/i18n/messages_vi.properties`
 
+### Service errors: `SystemMessage` + `SystemVariable` (không hard code string)
+
+- Trong `*ServiceImpl`, mọi chỗ **bắn lỗi / trả message cho client** (ví dụ `getResponse400/404/500(...)`, `AppException`, chuỗi trong `getMessage(...)` dùng cho response) phải dùng **đa ngôn ngữ**: chỉ dùng key từ `SystemMessage` và resolve qua `getMessage(...)`, **không** gõ trực tiếp tiếng Anh/tiếng Việt trong code service.
+- **Key field** trong map lỗi validation (ví dụ `errors.put(...)`, map gửi về `body` cho 400) phải là hằng từ `SystemVariable` (tên field request như `END_DATE`, `PROJECT_ID`, hoặc placeholder domain như `EMPLOYEE_OT`, `TASK`), **không** hard code literal `"endDate"`, `"projectId"`, ...
+- Khi cần tên khái niệm/entity trong câu thông báo (ví dụ “không tìm thấy X”), truyền placeholder đã i18n: `getMessage(SystemVariable.<...>)` làm tham số của `getMessage(SystemMessage.<...>, ...)`.
+- Thêm lỗi/field mới: bổ sung `SystemMessage` (và bản dịch trong `messages*.properties`); nếu là key field hoặc biến domain dùng trong message thì bổ sung `SystemVariable` (và message `app.variable.*` trong `messages*.properties` nếu giá trị là key i18n).
+
+Ví dụ chuẩn:
+
+```java
+return getResponse404(getMessage(SystemMessage.NOT_FOUND, getMessage(SystemVariable.EMPLOYEE_OT)));
+errors.put(SystemVariable.END_DATE, getMessage(SystemMessage.BAD_REQUEST));
+```
+
 ### Backend style
 
 - Prefer constructor injection.
@@ -217,6 +231,22 @@ Frontend auth request flow:
 - If behavior is missing, extend `InputCommon` first, then reuse it from pages.
 - For month/year selection cases, use the existing `type="date"` plus `dateMode` pattern where applicable.
 
+### Form submit và lỗi validation từ BE (gán vào `FormControl`)
+
+- Luồng submit form gọi API: trong handler success (ví dụ `subscribe` sau feature service), **xử lý luôn** nhánh lỗi validation do BE trả (thường `data.code === API_CODE_BAD_REQUEST` hoặc mã tương đương với `BaseResponse.code` dùng cho 400).
+- Khi BE trả `body` là map **tên field → chuỗi lỗi** (khớp key với tên control / field DTO, đồng bộ với key BE như `SystemVariable`), duyệt `Object.keys(data.body)` và gán lỗi vào đúng control: `this.formGroup.controls[key]?.setErrors({ serverError: data.body[key] })` (giữ key `serverError` để đồng bộ với `app-input` / pattern hiện có).
+- Không bỏ qua map field lỗi: tránh chỉ toast chung nếu màn hình đã dùng reactive form và BE trả map theo field.
+- Form phẳng: key trong `body` trùng tên `FormControl`. Form lồng nhau: map key → path control hoặc helper set lỗi từng nhóm cho khớp contract BE.
+- Tham chiếu chuẩn: `prms-web/src/app/pages/auth/login/login.ts` (submit login, nhánh `API_CODE_BAD_REQUEST` + `setErrors`).
+
+### Quy ước form ở FE: `formGroup` cho form lưu dữ liệu, `ngModel` cho filter/search
+
+- **Form tạo/sửa/lưu dữ liệu** (modal create/edit, submit/update password, các màn có nút “Submit/Save”): dùng **Reactive Forms**.
+  - Template: bọc vùng form bằng `[formGroup]="..."` và trên `app-input` dùng `formControlName="..."` (không truyền `[formControl]` trực tiếp).
+  - Lý do: dễ mở rộng/đổi validator, dễ map lỗi từ BE vào từng field qua `setErrors({ serverError: ... })`, và đồng bộ `statusChanges` để `app-input` tự update error text.
+  - Tham chiếu chuẩn: `prms-web/src/app/pages/auth/login/login.html`.
+- **Form filter/search** (keyword/status/type... để lọc list, không submit payload “ghi dữ liệu”): có thể tiếp tục dùng `[(ngModel)]` cho đơn giản.
+
 ### Feature organization
 
 - Put feature-specific `type`/`enum`/`const` in `pages/<module>/models/*`.
@@ -246,6 +276,7 @@ Frontend auth request flow:
 - Keep DTO/model/type/enum names aligned across both sides.
 - Do not rename payload fields on one side only.
 - Frontend list/search pages commonly read validation maps from `raw.body`.
+- Form submit: map `body` field → message vào `FormControl.setErrors` theo mục **Form submit và lỗi validation từ BE** ở §7.
 - Verify backend and frontend still agree on DTO/model field names after edits.
 - If both sides use the same enum, update both sides together.
 
@@ -279,7 +310,7 @@ Frontend auth request flow:
 ### Tasks and Kanban
 
 - Backend: `TaskController`, `TaskService`, `TaskServiceImpl`, `TaskRepository`, `TaskLogRepository`, `dto/task/*`, `Task`, `TaskLog`
-- Frontend tasks: `pages/management/tasks/task-list/*`, `pages/management/tasks/services/task.service.ts`, `pages/management/tasks/models/*`
+- Frontend tasks (UI theo dự án): `pages/project/project-tasks/*`; API + model: `pages/project/services/task.service.ts`, `pages/project/models/task.model.ts`, `task.types.ts`, `task-search.request.ts`
 - Frontend kanban: `pages/kanban/task-kanban/*`, `pages/kanban/kanban.routes.ts`
 - Special APIs:
   - `/api/v1/tasks/{id}/assign`
@@ -308,8 +339,7 @@ Frontend auth request flow:
 Top-level routes include:
 
 - `/dashboard`
-- `/project`
-- `/task`
+- `/project` (kèm `/project/:projectId/tasks`, `/project/:projectId/team`)
 - `/resource-allocation`
 - `/kanban`
 - `/management/users`
@@ -368,7 +398,7 @@ Then frontend:
 2. `TaskServiceImpl`
 3. related `dto/task/*`
 4. `pages/kanban/task-kanban/*`
-5. `pages/management/tasks/services/task.service.ts`
+5. `pages/project/services/task.service.ts`
 
 ## 12) Adding a new feature/domain
 

@@ -16,6 +16,7 @@ import com.tranhuudat.prms.service.BaseService;
 import com.tranhuudat.prms.service.EmployeeOtService;
 import com.tranhuudat.prms.util.DateUtil;
 import com.tranhuudat.prms.util.SystemMessage;
+import com.tranhuudat.prms.util.SystemVariable;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
@@ -82,7 +83,7 @@ public class EmployeeOtServiceImpl extends BaseService implements EmployeeOtServ
         HashMap<String, String> errors = validation(request);
         EmployeeOt entity = employeeOtRepository.findById(id).orElse(null);
         if (Objects.isNull(entity) || Boolean.TRUE.equals(entity.getVoided())) {
-            return getResponse404(getMessage(SystemMessage.NOT_FOUND, "employee_ot"));
+            return getResponse404(getMessage(SystemMessage.NOT_FOUND, getMessage(SystemVariable.EMPLOYEE_OT)));
         }
         errors.putAll(validateBusiness(request));
         errors.putAll(validateUpdateTransition(request, entity));
@@ -99,7 +100,7 @@ public class EmployeeOtServiceImpl extends BaseService implements EmployeeOtServ
     public BaseResponse delete(UUID id) {
         EmployeeOt entity = employeeOtRepository.findById(id).orElse(null);
         if (Objects.isNull(entity) || Boolean.TRUE.equals(entity.getVoided())) {
-            return getResponse404(getMessage(SystemMessage.NOT_FOUND, "employee_ot"));
+            return getResponse404(getMessage(SystemMessage.NOT_FOUND, getMessage(SystemVariable.EMPLOYEE_OT)));
         }
         entity.setVoided(true);
         employeeOtRepository.save(entity);
@@ -111,7 +112,7 @@ public class EmployeeOtServiceImpl extends BaseService implements EmployeeOtServ
     public BaseResponse getById(UUID id) {
         EmployeeOt entity = employeeOtRepository.findById(id).orElse(null);
         if (Objects.isNull(entity) || Boolean.TRUE.equals(entity.getVoided())) {
-            return getResponse404(getMessage(SystemMessage.NOT_FOUND, "employee_ot"));
+            return getResponse404(getMessage(SystemMessage.NOT_FOUND, getMessage(SystemVariable.EMPLOYEE_OT)));
         }
         return getResponse200(new EmployeeOtDto(entity));
     }
@@ -178,7 +179,7 @@ public class EmployeeOtServiceImpl extends BaseService implements EmployeeOtServ
         HashMap<String, String> errors = new HashMap<>();
         EmployeeOtStatusEnum s = request.getStatus();
         if (s != EmployeeOtStatusEnum.DRAFT && s != EmployeeOtStatusEnum.SUBMITTED) {
-            errors.put("status", getMessage(SystemMessage.BAD_REQUEST));
+            errors.put(SystemVariable.STATUS, getMessage(SystemMessage.BAD_REQUEST));
         }
         return errors;
     }
@@ -188,24 +189,24 @@ public class EmployeeOtServiceImpl extends BaseService implements EmployeeOtServ
         EmployeeOtStatusEnum cur = entity.getStatus();
         EmployeeOtStatusEnum next = request.getStatus() != null ? request.getStatus() : cur;
         if (cur == EmployeeOtStatusEnum.APPROVED) {
-            errors.put("status", getMessage(SystemMessage.BAD_REQUEST));
+            errors.put(SystemVariable.STATUS, getMessage(SystemMessage.BAD_REQUEST));
             return errors;
         }
         if (cur == EmployeeOtStatusEnum.SUBMITTED) {
             if (next != EmployeeOtStatusEnum.APPROVED && next != EmployeeOtStatusEnum.REJECTED) {
-                errors.put("status", getMessage(SystemMessage.BAD_REQUEST));
+                errors.put(SystemVariable.STATUS, getMessage(SystemMessage.BAD_REQUEST));
             }
             if (hasCoreFieldChanges(request, entity)) {
-                errors.put("coreFields", getMessage(SystemMessage.BAD_REQUEST));
+                errors.put(SystemVariable.CORE_FIELDS, getMessage(SystemMessage.BAD_REQUEST));
             }
             UUID approverId = resolveCurrentUserId();
             if (approverId == null) {
-                errors.put("status", getMessage(SystemMessage.UNAUTHORIZED));
+                errors.put(SystemVariable.STATUS, getMessage(SystemMessage.UNAUTHORIZED));
             }
             return errors;
         }
         if (!isAllowedDraftRejectedTransition(cur, next)) {
-            errors.put("status", getMessage(SystemMessage.BAD_REQUEST));
+            errors.put(SystemVariable.STATUS, getMessage(SystemMessage.BAD_REQUEST));
         }
         return errors;
     }
@@ -302,22 +303,22 @@ public class EmployeeOtServiceImpl extends BaseService implements EmployeeOtServ
         if (request.getUserId() != null) {
             User user = userRepository.findById(request.getUserId()).orElse(null);
             if (user == null || Boolean.TRUE.equals(user.getVoided())) {
-                errors.put("userId", getMessage(SystemMessage.NOT_FOUND, "user"));
+                errors.put(SystemVariable.USER_ID, getMessage(SystemMessage.NOT_FOUND, getMessage(SystemVariable.USER)));
             }
         }
         if (request.getProjectId() != null) {
             Project project = projectRepository.findById(request.getProjectId()).orElse(null);
             if (project == null || Boolean.TRUE.equals(project.getVoided())) {
-                errors.put("projectId", getMessage(SystemMessage.NOT_FOUND, "project"));
+                errors.put(SystemVariable.PROJECT_ID, getMessage(SystemMessage.NOT_FOUND, getMessage(SystemVariable.PROJECT)));
             }
         }
         if (request.getStartTime() != null
                 && request.getEndTime() != null
                 && request.getStartTime().after(request.getEndTime())) {
-            errors.put("endTime", getMessage(SystemMessage.BAD_REQUEST));
+            errors.put(SystemVariable.END_TIME, getMessage(SystemMessage.BAD_REQUEST));
         }
         if (request.getOtHours() != null && request.getOtHours().signum() < 0) {
-            errors.put("otHours", getMessage(SystemMessage.BAD_REQUEST));
+            errors.put(SystemVariable.OT_HOURS, getMessage(SystemMessage.BAD_REQUEST));
         }
         return errors;
     }

@@ -28,5 +28,15 @@ public class AutoCompleteController {
     public ResponseEntity<BaseResponse> projects(@RequestBody AutocompleteSearchRequest request) {
         return ResponseEntity.ok(autoCompleteService.projects(request));
     }
+
+    @PostMapping("/projects/kanban")
+    public ResponseEntity<BaseResponse> kanbanProjects(@RequestBody AutocompleteSearchRequest request) {
+        return ResponseEntity.ok(autoCompleteService.kanbanProjects(request));
+    }
+
+    @PostMapping("/project-members")
+    public ResponseEntity<BaseResponse> projectMembers(@RequestBody AutocompleteSearchRequest request) {
+        return ResponseEntity.ok(autoCompleteService.projectMembers(request));
+    }
 }
 

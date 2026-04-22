@@ -1,3 +1,4 @@
 {
-  "apiUrl": "http://localhost:8080"
+  "apiUrl": "http://localhost:9999",
+  "pushPublicKey": "BOD1PV1b45gm3FLbifmxLz9xp_ZJ3GVxKcdvq-n4Tx9ht16-i3DpCzKq5irY-wcNRhay53ZpRYGrxIrHOtRcp_w"
 }

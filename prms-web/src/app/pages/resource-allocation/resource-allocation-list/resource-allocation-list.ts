@@ -1,6 +1,6 @@
 import { CommonModule, DatePipe } from '@angular/common';
 import { Component } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { NzButtonComponent } from 'ng-zorro-antd/button';
 import { NzIconDirective } from 'ng-zorro-antd/icon';
@@ -10,19 +10,15 @@ import { NzSpinComponent } from 'ng-zorro-antd/spin';
 import { NzTableModule } from 'ng-zorro-antd/table';
 import { InputCommon } from '../../../shared/input/input';
 import { ApiResponse } from '../../../shared/utils/api-response';
+import {
+  applyServerFieldErrorsToFormGroup,
+  clearServerErrorsOnFormGroup,
+  parseServerFieldErrorMap,
+} from '../../../shared/utils/form-server-errors';
 import { Page } from '../../project/models/page.model';
 import { ResourceAllocation, ResourceAllocationWritePayload } from '../models/resource-allocation.model';
 import { ResourceAllocationSearchRequest } from '../models/resource-allocation-search.request';
 import { ResourceAllocationService } from '../services/resource-allocation.service';
-
-type FormState = {
-  userId: string | null;
-  role: string | null;
-  month: Date | null;
-  startDate: Date | null;
-  endDate: Date | null;
-  allocationPercent: number | null;
-};
 
 @Component({
   selector: 'app-resource-allocation-list',
@@ -30,6 +26,7 @@ type FormState = {
     CommonModule,
     DatePipe,
     FormsModule,
+    ReactiveFormsModule,
     NzTableModule,
     NzButtonComponent,
     NzIconDirective,
@@ -61,11 +58,20 @@ export class ResourceAllocationList {
   editingId: string | null = null;
   submitting = false;
   loading = false;
-  form: FormState = this.emptyForm();
+  readonly modalForm = new FormGroup({
+    userId: new FormControl<string | null>(null),
+    role: new FormControl<string | null>(null),
+    month: new FormControl<Date | null>(null),
+    startDate: new FormControl<Date | null>(null),
+    endDate: new FormControl<Date | null>(null),
+    allocationPercent: new FormControl<number | null>(100),
+  });
 
   viewVisible = false;
   viewLoading = false;
   viewDetail: ResourceAllocation | null = null;
+
+  exportingExcel = false;
 
   constructor(
     private service: ResourceAllocationService,
@@ -89,6 +95,40 @@ export class ResourceAllocationList {
     this.fetch();
   }
 
+  onExportExcel(): void {
+    if (!this.filterMonth) {
+      this.notification.warning(
+        this.translate.instant('resourceAllocation.messages.invalidTitle'),
+        this.translate.instant('resourceAllocation.messages.exportMonthRequired')
+      );
+      return;
+    }
+    const ym = this.formatYearMonth(this.filterMonth);
+    this.exportingExcel = true;
+    this.service.exportExcel({ month: this.filterMonth }).subscribe({
+      next: (res) => {
+        this.exportingExcel = false;
+        const blob = res?.body;
+        if (!blob) return;
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `phan-bo-nguon-luc-${ym}.xlsx`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+      },
+      error: () => {
+        this.exportingExcel = false;
+      },
+    });
+  }
+
+  private formatYearMonth(d: Date): string {
+    const y = d.getFullYear();
+    const m = `${d.getMonth() + 1}`.padStart(2, '0');
+    return `${m}-${y}`;
+  }
+
   onPageIndexChange(i: number): void {
     this.pageIndex = i;
     this.fetch();
@@ -104,7 +144,8 @@ export class ResourceAllocationList {
     this.formMode = 'create';
     this.editingId = null;
     this.loading = false;
-    this.form = this.emptyForm();
+    this.resetModalForm();
+    clearServerErrorsOnFormGroup(this.modalForm);
     this.formVisible = true;
   }
 
@@ -118,7 +159,8 @@ export class ResourceAllocationList {
     this.editingId = id;
     this.formVisible = true;
     this.loading = true;
-    this.form = this.emptyForm();
+    this.resetModalForm();
+    clearServerErrorsOnFormGroup(this.modalForm);
     this.service.getById(id).subscribe({
       next: ({ raw, row }) => {
         this.loading = false;
@@ -193,6 +235,7 @@ export class ResourceAllocationList {
 
   closeModal(): void {
     this.formVisible = false;
+    clearServerErrorsOnFormGroup(this.modalForm);
   }
 
   closeView(): void {
@@ -202,15 +245,17 @@ export class ResourceAllocationList {
 
   save(): void {
     if (this.formMode === 'edit' && this.loading) return;
+    clearServerErrorsOnFormGroup(this.modalForm);
     if (!this.validate()) return;
 
+    const v = this.modalForm.getRawValue();
     const payload: ResourceAllocationWritePayload = {
-      userId: this.form.userId as string,
-      role: (this.form.role ?? '').trim(),
-      month: this.form.month as Date,
-      startDate: this.form.startDate ?? null,
-      endDate: this.form.endDate ?? null,
-      allocationPercent: Number(this.form.allocationPercent),
+      userId: v.userId as string,
+      role: (v.role ?? '').trim(),
+      month: v.month as Date,
+      startDate: v.startDate ?? null,
+      endDate: v.endDate ?? null,
+      allocationPercent: Number(v.allocationPercent),
     };
 
     if (this.formMode === 'create') {
@@ -220,6 +265,7 @@ export class ResourceAllocationList {
           this.submitting = false;
           if (raw?.code === 201) {
             this.notification.success(this.translate.instant('common.button.done'), raw?.message ?? '');
+            clearServerErrorsOnFormGroup(this.modalForm);
             this.formVisible = false;
             this.fetch();
             return;
@@ -242,6 +288,7 @@ export class ResourceAllocationList {
         this.submitting = false;
         if (raw?.code === 200) {
           this.notification.success(this.translate.instant('common.button.done'), raw?.message ?? '');
+          clearServerErrorsOnFormGroup(this.modalForm);
           this.formVisible = false;
           this.fetch();
           return;
@@ -276,58 +323,59 @@ export class ResourceAllocationList {
     });
   }
 
-  private emptyForm(): FormState {
-    return {
+  private resetModalForm(): void {
+    this.modalForm.reset({
       userId: null,
       role: null,
       month: null,
       startDate: null,
       endDate: null,
       allocationPercent: 100,
-    };
+    });
   }
 
   private applyToForm(row: ResourceAllocation): void {
-    this.form = {
+    this.modalForm.patchValue({
       userId: row.userId ?? null,
       role: row.role ?? null,
       month: this.asDate(row.month),
       startDate: this.asDate(row.startDate ?? null),
       endDate: this.asDate(row.endDate ?? null),
       allocationPercent: row.allocationPercent ?? null,
-    };
+    });
   }
 
   private validate(): boolean {
-    if (!this.form.userId) {
+    const f = this.modalForm.getRawValue();
+    if (!f.userId) {
       this.notification.warning(
         this.translate.instant('resourceAllocation.messages.invalidTitle'),
         this.translate.instant('resourceAllocation.messages.userRequired')
       );
       return false;
     }
-    if (!this.form.role?.trim()) {
+    if (!f.role?.trim()) {
       this.notification.warning(
         this.translate.instant('resourceAllocation.messages.invalidTitle'),
         this.translate.instant('resourceAllocation.messages.roleRequired')
       );
       return false;
     }
-    if (!this.form.month) {
+    if (!f.month) {
       this.notification.warning(
         this.translate.instant('resourceAllocation.messages.invalidTitle'),
         this.translate.instant('resourceAllocation.messages.monthRequired')
       );
       return false;
     }
-    if (this.form.allocationPercent == null || this.form.allocationPercent < 0 || this.form.allocationPercent > 100) {
+    if (f.allocationPercent == null || f.allocationPercent < 0 || f.allocationPercent > 100) {
       this.notification.warning(
         this.translate.instant('resourceAllocation.messages.invalidTitle'),
         this.translate.instant('resourceAllocation.messages.percentInvalid')
       );
       return false;
     }
-    if (this.form.startDate && this.form.endDate && this.form.startDate > this.form.endDate) {
+    if (f.startDate && f.endDate && f.startDate > f.endDate) {
       this.notification.warning(
         this.translate.instant('resourceAllocation.messages.invalidTitle'),
         this.translate.instant('resourceAllocation.messages.dateRangeInvalid')
@@ -338,12 +386,13 @@ export class ResourceAllocationList {
   }
 
   private handleWriteError(raw: ApiResponse | undefined): void {
-    const errBody = raw?.body;
-    if (raw?.code === 400 && errBody && typeof errBody === 'object' && !Array.isArray(errBody)) {
-      const msg = Object.values(errBody as Record<string, string>).filter(Boolean).join(' ');
-      this.notification.warning(this.translate.instant('resourceAllocation.messages.invalidTitle'), msg || raw?.message || '');
+    const map = parseServerFieldErrorMap(raw);
+    if (map) {
+      clearServerErrorsOnFormGroup(this.modalForm);
+      applyServerFieldErrorsToFormGroup(this.modalForm, map);
       return;
     }
+    clearServerErrorsOnFormGroup(this.modalForm);
     this.notification.warning(this.translate.instant('common.error'), raw?.message ?? '');
   }
 

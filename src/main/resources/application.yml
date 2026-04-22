@@ -33,9 +33,22 @@ spring:
   messages:
     basename: i18n/messages
     encoding: UTF-8
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+        transport:
+          protocol: smtp
 
 server:
-  port: 8080
+  port: 9999
 
 logging:
   level:
@@ -48,7 +61,25 @@ logging:
     name: logs/prms.log
 
 app:
+  mail:
+    enabled: ${APP_MAIL_ENABLED:false}
+    from: ${APP_MAIL_FROM:${MAIL_USERNAME}}
+  notification:
+    job:
+      enabled: ${APP_NOTIFICATION_JOB_ENABLED:true}
+      fixed-delay-ms: ${APP_NOTIFICATION_JOB_FIXED_DELAY_MS:30000}
+      batch-size: ${APP_NOTIFICATION_JOB_BATCH_SIZE:25}
+      max-attempts: ${APP_NOTIFICATION_JOB_MAX_ATTEMPTS:8}
   jwt:
     secret-key: amFzaGRmc2hnZmpza2Fmc2hkZnljem5iY2FzZ2R3cWZzbmFzZGFkZnNhc2Rm
     expiration-access-token: 604800000
     expiration-refresh-token: 604800000
+  push:
+    # VAPID keys cho Web Push (generate 1 lần, set qua env cho production)
+    vapid-public-key: ${APP_PUSH_VAPID_PUBLIC_KEY}
+    vapid-private-key: ${APP_PUSH_VAPID_PRIVATE_KEY}
+    subject: ${APP_PUSH_SUBJECT:mailto:admin@localhost}
+  client:
+    base-url: ${APP_CLIENT_BASE_URL:http://localhost:4200}
+  server:
+    base-url: ${APP_SERVER_BASE_URL:http://localhost:9999}

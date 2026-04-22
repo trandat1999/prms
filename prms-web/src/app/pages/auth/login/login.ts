@@ -1,5 +1,10 @@
 import {Component, OnInit} from '@angular/core';
-import {API_CODE_BAD_REQUEST, GUTTER_H, GUTTER_V} from "../../../shared/utils/const";
+import {API_CODE_BAD_REQUEST, GUTTER_H, GUTTER_V} from '../../../shared/utils/const';
+import {
+  applyServerFieldErrorsToFormGroup,
+  clearServerErrorsOnFormGroup,
+  parseServerFieldErrorMap,
+} from '../../../shared/utils/form-server-errors';
 import {FormControl, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
 import {AuthService} from '../auth-service';
 import {StorageService} from '../../../core/services/storage-service';
@@ -53,12 +58,12 @@ export class Login implements OnInit {
     this.authService.login(this.formGroup.getRawValue()).subscribe((data) => {
       this.isSubmitting = false;
       if (data.code == API_CODE_BAD_REQUEST) {
-        if (data.body) {
-          Object.keys(data.body).forEach(key => {
-            this.formGroup.controls[key]?.setErrors({'serverError': data.body[key]});
-          });
-          return;
+        const map = parseServerFieldErrorMap(data);
+        if (map) {
+          clearServerErrorsOnFormGroup(this.formGroup);
+          applyServerFieldErrorsToFormGroup(this.formGroup, map);
         }
+        return;
       } else {
         if (this.formGroup.get('rememberMe').value) {
           this.storageService.saveToken(data.body);
@@ -67,6 +72,8 @@ export class Login implements OnInit {
         }
         this.router.navigate(['dashboard']);
       }
+    }, error => {
+      this.isSubmitting = false;
     })
   }
 

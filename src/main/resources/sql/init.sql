@@ -114,6 +114,15 @@ CREATE TABLE tbl_task
     estimated_hours    numeric,
     actual_hours       numeric,
     assigned_id        UUID,
+    reporter_id        UUID,
+    reviewer_id        UUID,
+    parent_task_id     UUID,
+    due_date           TIMESTAMP,
+    started_at         TIMESTAMP,
+    completed_at       TIMESTAMP,
+    blocked_reason     TEXT,
+    task_category      VARCHAR(50),
+    story_point        INTEGER,
     label              VARCHAR(50),
     type               VARCHAR(50)
 );
@@ -131,6 +140,133 @@ CREATE TABLE tbl_task_log
     old_value          TEXT,
     new_value          TEXT
 );
+
+CREATE TABLE tbl_project_member
+(
+    id                 UUID PRIMARY KEY,
+    created_by         VARCHAR(255),
+    created_date       TIMESTAMP,
+    last_modified_by   VARCHAR(255),
+    last_modified_date TIMESTAMP,
+    voided             BOOLEAN DEFAULT FALSE,
+    project_id         UUID NOT NULL,
+    user_id            UUID NOT NULL,
+    role_in_project    VARCHAR(50) NOT NULL,
+    allocation_percent NUMERIC,
+    is_lead            BOOLEAN DEFAULT FALSE,
+    start_date         TIMESTAMP,
+    end_date           TIMESTAMP,
+    active             BOOLEAN DEFAULT TRUE
+);
+
+CREATE UNIQUE INDEX uq_tbl_project_member_project_user_active
+    ON tbl_project_member (project_id, user_id)
+    WHERE voided = FALSE;
+
+CREATE TABLE tbl_task_comment
+(
+    id                 UUID PRIMARY KEY,
+    created_by         VARCHAR(255),
+    created_date       TIMESTAMP,
+    last_modified_by   VARCHAR(255),
+    last_modified_date TIMESTAMP,
+    voided             BOOLEAN DEFAULT FALSE,
+    task_id            UUID NOT NULL,
+    content            TEXT NOT NULL
+);
+
+CREATE TABLE tbl_task_checklist
+(
+    id                 UUID PRIMARY KEY,
+    created_by         VARCHAR(255),
+    created_date       TIMESTAMP,
+    last_modified_by   VARCHAR(255),
+    last_modified_date TIMESTAMP,
+    voided             BOOLEAN DEFAULT FALSE,
+    task_id            UUID NOT NULL,
+    title              VARCHAR(255) NOT NULL,
+    checked            BOOLEAN DEFAULT FALSE,
+    sort_order         INTEGER,
+    estimated_hours    NUMERIC
+);
+
+CREATE TABLE tbl_task_dependency
+(
+    id                      UUID PRIMARY KEY,
+    created_by              VARCHAR(255),
+    created_date            TIMESTAMP,
+    last_modified_by        VARCHAR(255),
+    last_modified_date      TIMESTAMP,
+    voided                  BOOLEAN DEFAULT FALSE,
+    predecessor_task_id   UUID NOT NULL,
+    successor_task_id     UUID NOT NULL
+);
+
+CREATE UNIQUE INDEX uq_tbl_task_dependency_active
+    ON tbl_task_dependency (predecessor_task_id, successor_task_id)
+    WHERE voided IS DISTINCT FROM TRUE;
+
+CREATE TABLE tbl_notification
+(
+    id                 UUID PRIMARY KEY,
+    created_by         VARCHAR(255),
+    created_date       TIMESTAMP,
+    last_modified_by   VARCHAR(255),
+    last_modified_date TIMESTAMP,
+    voided             BOOLEAN DEFAULT FALSE,
+    user_id            UUID NOT NULL,
+    type               VARCHAR(80) NOT NULL,
+    message_key        VARCHAR(200) NOT NULL,
+    message_args_json  TEXT,
+    related_project_id UUID,
+    related_task_id    UUID,
+    read_at            TIMESTAMP
+);
+
+CREATE TABLE tbl_notification_delivery
+(
+    id                 UUID PRIMARY KEY,
+    created_by         VARCHAR(255),
+    created_date       TIMESTAMP,
+    last_modified_by   VARCHAR(255),
+    last_modified_date TIMESTAMP,
+    voided             BOOLEAN DEFAULT FALSE,
+    notification_id    UUID NOT NULL,
+    channel            VARCHAR(40) NOT NULL,
+    status             VARCHAR(40) NOT NULL,
+    attempt_count      INTEGER,
+    next_attempt_at    TIMESTAMP,
+    sent_at            TIMESTAMP,
+    last_error         TEXT,
+    to_address         VARCHAR(255),
+    template_name      VARCHAR(200),
+    subject_key        VARCHAR(200),
+    model_json         TEXT
+);
+
+CREATE INDEX idx_tbl_notification_user_created_date
+    ON tbl_notification (user_id, created_date desc);
+
+CREATE INDEX idx_tbl_notification_delivery_status_next
+    ON tbl_notification_delivery (status, next_attempt_at, created_date);
+
+CREATE TABLE tbl_push_subscription
+(
+    id                 UUID PRIMARY KEY,
+    created_by         VARCHAR(255),
+    created_date       TIMESTAMP,
+    last_modified_by   VARCHAR(255),
+    last_modified_date TIMESTAMP,
+    voided             BOOLEAN DEFAULT FALSE,
+    user_id            UUID NOT NULL,
+    endpoint           TEXT NOT NULL,
+    p256dh             TEXT NOT NULL,
+    auth               TEXT NOT NULL,
+    expiration_time    BIGINT
+);
+
+CREATE UNIQUE INDEX uq_tbl_push_subscription_endpoint
+    ON tbl_push_subscription (endpoint);
 
 
 CREATE TABLE tbl_app_param

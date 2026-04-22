@@ -1,0 +1,89 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title th:text="${subject}">Notification</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        color: #111827;
+        background: #ffffff;
+        margin: 0;
+        padding: 0;
+      }
+      .wrap {
+        max-width: 640px;
+        margin: 0 auto;
+        padding: 24px;
+      }
+      .card {
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 20px;
+      }
+      .muted {
+        color: #6b7280;
+        font-size: 14px;
+      }
+      .title {
+        font-size: 18px;
+        font-weight: 700;
+        margin: 0 0 12px 0;
+      }
+      .btn {
+        display: inline-block;
+        background: #2563eb;
+        color: #ffffff !important;
+        padding: 10px 14px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 12px;
+      }
+      td {
+        padding: 8px 0;
+        vertical-align: top;
+      }
+      td.k {
+        width: 40%;
+        color: #6b7280;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="card">
+        <p class="title">New task assignment</p>
+        <p class="muted" th:if="${recipientName}">
+          Hi <span th:text="${recipientName}">there</span>,
+        </p>
+        <p class="muted">You have been assigned a task in PRMS.</p>
+
+        <table>
+          <tr>
+            <td class="k">Task code</td>
+            <td><b th:text="${taskCode}">TASK-001</b></td>
+          </tr>
+          <tr th:if="${taskName}">
+            <td class="k">Title</td>
+            <td th:text="${taskName}">Task title</td>
+          </tr>
+        </table>
+
+        <div style="margin-top: 16px">
+          <a class="btn" th:href="${link}" target="_blank" rel="noopener">Open in PRMS</a>
+        </div>
+        <p class="muted" style="margin-top: 16px" th:if="${link}">
+          If the button doesn't work, copy and paste this link:<br />
+          <span th:text="${link}"></span>
+        </p>
+      </div>
+      <p class="muted" style="margin-top: 12px">This is an automated message from PRMS.</p>
+    </div>
+  </body>
+</html>

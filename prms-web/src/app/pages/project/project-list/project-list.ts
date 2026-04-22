@@ -1,7 +1,7 @@
 import { CommonModule, DatePipe } from '@angular/common';
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
-import { FormsModule } from '@angular/forms';
+import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { NzAvatarComponent } from 'ng-zorro-antd/avatar';
 import { NzButtonComponent } from 'ng-zorro-antd/button';
 import { NzIconDirective } from 'ng-zorro-antd/icon';
@@ -28,20 +28,11 @@ import {
 import { PriorityEnum, ProjectStatusEnum } from '../models/project.types';
 import { ProjectService } from '../services/project.service';
 import { ApiResponse } from '../../../shared/utils/api-response';
-
-type ProjectCreateFormState = {
-  code: string;
-  name: string;
-  shortDescription: string;
-  description: string;
-  managerId: string | null;
-  projectValue: number | null;
-  priority: PriorityEnum | null;
-  startDate: Date | null;
-  endDate: Date | null;
-  status: ProjectStatusEnum | null;
-  progressPercentage: number | null;
-};
+import {
+  applyServerFieldErrorsToFormGroup,
+  clearServerErrorsOnFormGroup,
+  parseServerFieldErrorMap,
+} from '../../../shared/utils/form-server-errors';
 
 @Component({
   selector: 'app-project-list',
@@ -49,6 +40,7 @@ type ProjectCreateFormState = {
     CommonModule,
     DatePipe,
     FormsModule,
+    ReactiveFormsModule,
     NzTableModule,
     NzAvatarComponent,
     NzTagComponent,
@@ -83,7 +75,19 @@ export class ProjectList {
   editingProjectId: string | null = null;
   projectFormSubmitting = false;
   projectFormLoading = false;
-  createForm: ProjectCreateFormState = this.emptyCreateForm();
+  readonly projectModalForm = new FormGroup({
+    code: new FormControl<string>('',[Validators.required]),
+    name: new FormControl<string>('',[Validators.required]),
+    shortDescription: new FormControl<string>(''),
+    description: new FormControl<string>(''),
+    managerId: new FormControl<string | null>(null),
+    projectValue: new FormControl<number | null>(null),
+    priority: new FormControl<PriorityEnum | null>('MEDIUM'),
+    startDate: new FormControl<Date | null>(null),
+    endDate: new FormControl<Date | null>(null),
+    status: new FormControl<ProjectStatusEnum | null>('NOT_STARTED'),
+    progressPercentage: new FormControl<number | null>(0),
+  });
 
   /** Modal xem */
   viewVisible = false;
@@ -114,6 +118,7 @@ export class ProjectList {
     this.editingProjectId = null;
     this.projectFormLoading = false;
     this.resetCreateForm();
+    clearServerErrorsOnFormGroup(this.projectModalForm);
     this.projectFormVisible = true;
   }
 
@@ -128,6 +133,7 @@ export class ProjectList {
     this.projectFormVisible = true;
     this.projectFormLoading = true;
     this.resetCreateForm();
+    clearServerErrorsOnFormGroup(this.projectModalForm);
     this.projectService.getById(id).subscribe({
       next: ({ raw, project }) => {
         this.projectFormLoading = false;
@@ -214,8 +220,19 @@ export class ProjectList {
     void this.router.navigate(['/project', id, 'tasks'], { state: { projectName } });
   }
 
+  onOpenProjectMembers(row: Project): void {
+    const id = row?.id;
+    if (!id) {
+      this.notification.warning('Lỗi', 'Không có mã dự án để xem thành viên.');
+      return;
+    }
+    const projectName = row?.name?.trim() || row?.code || id;
+    void this.router.navigate(['/project', id, 'team'], { state: { projectName } });
+  }
+
   closeProjectFormModal(): void {
     this.projectFormVisible = false;
+    clearServerErrorsOnFormGroup(this.projectModalForm);
   }
 
   closeViewModal(): void {
@@ -227,6 +244,7 @@ export class ProjectList {
     if (this.projectFormMode === 'edit' && this.projectFormLoading) {
       return;
     }
+    clearServerErrorsOnFormGroup(this.projectModalForm);
     if (!this.validateCreateForm()) {
       return;
     }
@@ -280,6 +298,7 @@ export class ProjectList {
         this.projectFormSubmitting = false;
         if (raw?.code === 201) {
           this.notification.success('Thành công', raw?.message ?? 'Đã tạo dự án.');
+          clearServerErrorsOnFormGroup(this.projectModalForm);
           this.projectFormVisible = false;
           this.fetch();
           return;
@@ -299,6 +318,7 @@ export class ProjectList {
         this.projectFormSubmitting = false;
         if (raw?.code === 200) {
           this.notification.success('Thành công', raw?.message ?? 'Đã cập nhật dự án.');
+          clearServerErrorsOnFormGroup(this.projectModalForm);
           this.projectFormVisible = false;
           this.fetch();
           return;
@@ -312,12 +332,13 @@ export class ProjectList {
   }
 
   private handleWriteError(raw: ApiResponse | undefined): void {
-    const errBody = raw?.body;
-    if (raw?.code === 400 && errBody && typeof errBody === 'object' && !Array.isArray(errBody)) {
-      const msg = Object.values(errBody as Record<string, string>).filter(Boolean).join(' ');
-      this.notification.warning('Không hợp lệ', msg || raw?.message || 'Vui lòng kiểm tra dữ liệu.');
+    const map = parseServerFieldErrorMap(raw);
+    if (map) {
+      clearServerErrorsOnFormGroup(this.projectModalForm);
+      applyServerFieldErrorsToFormGroup(this.projectModalForm, map);
       return;
     }
+    clearServerErrorsOnFormGroup(this.projectModalForm);
     this.notification.warning('Không thành công', raw?.message ?? 'Thao tác thất bại.');
   }
 
@@ -325,8 +346,8 @@ export class ProjectList {
     this.notification.warning('Thông báo', raw?.message ?? fallback);
   }
 
-  private emptyCreateForm(): ProjectCreateFormState {
-    return {
+  private resetCreateForm(): void {
+    this.projectModalForm.reset({
       code: '',
       name: '',
       shortDescription: '',
@@ -338,15 +359,11 @@ export class ProjectList {
       endDate: null,
       status: 'NOT_STARTED',
       progressPercentage: 0,
-    };
-  }
-
-  private resetCreateForm(): void {
-    this.createForm = this.emptyCreateForm();
+    });
   }
 
   private applyProjectToForm(p: Project): void {
-    this.createForm = {
+    this.projectModalForm.patchValue({
       code: p.code ?? '',
       name: p.name ?? '',
       shortDescription: p.shortDescription ?? '',
@@ -362,12 +379,13 @@ export class ProjectList {
         p.progressPercentage === null || p.progressPercentage === undefined
           ? 0
           : Number(p.progressPercentage),
-    };
+    });
   }
 
   private validateCreateForm(): boolean {
-    const code = this.createForm.code?.trim();
-    const name = this.createForm.name?.trim();
+    const f = this.projectModalForm.getRawValue();
+    const code = f.code?.trim();
+    const name = f.name?.trim();
     if (!code) {
       this.notification.warning('Thiếu dữ liệu', 'Vui lòng nhập mã dự án.');
       return false;
@@ -380,7 +398,7 @@ export class ProjectList {
   }
 
   private buildCreatePayload(): ProjectWritePayload {
-    const f = this.createForm;
+    const f = this.projectModalForm.getRawValue();
     return {
       code: f.code?.trim() || undefined,
       name: f.name?.trim() || undefined,

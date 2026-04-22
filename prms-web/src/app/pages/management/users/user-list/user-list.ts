@@ -1,6 +1,6 @@
 import { CommonModule, DatePipe } from '@angular/common';
 import { Component } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NzButtonComponent } from 'ng-zorro-antd/button';
 import { NzIconDirective } from 'ng-zorro-antd/icon';
 import { NzModalModule, NzModalService } from 'ng-zorro-antd/modal';
@@ -11,6 +11,11 @@ import { NzTagComponent } from 'ng-zorro-antd/tag';
 import { TranslatePipe } from '@ngx-translate/core';
 import { InputCommon } from '../../../../shared/input/input';
 import { ApiResponse } from '../../../../shared/utils/api-response';
+import {
+  applyServerFieldErrorsToFormGroup,
+  clearServerErrorsOnFormGroup,
+  parseServerFieldErrorMap,
+} from '../../../../shared/utils/form-server-errors';
 import { Page } from '../../../project/models/page.model';
 import { Role } from '../models/role.model';
 import { User, UserCreatePayload, UserDetail, UserUpdatePayload } from '../models/user.model';
@@ -18,25 +23,13 @@ import { UserSearchRequest } from '../models/user-search.request';
 import { RoleService } from '../services/role.service';
 import { UserService } from '../services/user.service';
 
-type UserFormState = {
-  username: string;
-  password?: string;
-  email: string;
-  fullName: string;
-  enabled: boolean;
-  roleCodes: string[];
-};
-
-type PasswordFormState = {
-  newPassword: string;
-};
-
 @Component({
   selector: 'app-user-list',
   imports: [
     CommonModule,
     DatePipe,
     FormsModule,
+    ReactiveFormsModule,
     NzTableModule,
     NzTagComponent,
     NzButtonComponent,
@@ -65,7 +58,17 @@ export class UserList {
   editingUserId: string | null = null;
   userFormSubmitting = false;
   userFormLoading = false;
-  form: UserFormState = this.emptyForm();
+  readonly userModalForm = new FormGroup({
+    username: new FormControl<string>(''),
+    password: new FormControl<string>(''),
+    email: new FormControl<string>(''),
+    fullName: new FormControl<string>(''),
+    enabled: new FormControl<boolean>(true),
+    roleCodes: new FormControl<string[]>(['USER']),
+  });
+  readonly passwordModalForm = new FormGroup({
+    newPassword: new FormControl<string>(''),
+  });
 
   /** Modal xem */
   viewVisible = false;
@@ -80,7 +83,6 @@ export class UserList {
   passwordSubmitting = false;
   passwordUserId: string | null = null;
   passwordUserLabel: string | null = null;
-  passwordForm: PasswordFormState = { newPassword: '' };
 
   readonly enabledOptions = [
     { label: 'Tất cả', value: null },
@@ -124,8 +126,9 @@ export class UserList {
     this.userFormMode = 'create';
     this.editingUserId = null;
     this.userFormLoading = false;
-    this.form = this.emptyForm();
+    this.resetUserModalForm();
     this.ensureDefaultRoles();
+    clearServerErrorsOnFormGroup(this.userModalForm);
     this.userFormVisible = true;
   }
 
@@ -139,7 +142,8 @@ export class UserList {
     this.editingUserId = id;
     this.userFormVisible = true;
     this.userFormLoading = true;
-    this.form = this.emptyForm();
+    this.resetUserModalForm();
+    clearServerErrorsOnFormGroup(this.userModalForm);
 
     this.userService.getById(id).subscribe({
       next: ({ raw, user }) => {
@@ -220,6 +224,7 @@ export class UserList {
 
   closeUserFormModal(): void {
     this.userFormVisible = false;
+    clearServerErrorsOnFormGroup(this.userModalForm);
   }
 
   closeViewModal(): void {
@@ -235,7 +240,8 @@ export class UserList {
     }
     this.passwordUserId = id;
     this.passwordUserLabel = row.fullName?.trim() || row.username || id;
-    this.passwordForm = { newPassword: '' };
+    this.passwordModalForm.reset({ newPassword: '' });
+    clearServerErrorsOnFormGroup(this.passwordModalForm);
     this.passwordVisible = true;
   }
 
@@ -243,12 +249,14 @@ export class UserList {
     this.passwordVisible = false;
     this.passwordUserId = null;
     this.passwordUserLabel = null;
+    clearServerErrorsOnFormGroup(this.passwordModalForm);
   }
 
   savePassword(): void {
     const id = this.passwordUserId;
-    const pwd = this.passwordForm?.newPassword ?? '';
+    const pwd = String(this.passwordModalForm.get('newPassword')?.value ?? '');
     if (!id) return;
+    clearServerErrorsOnFormGroup(this.passwordModalForm);
     if (!pwd || String(pwd).length < 6) {
       this.notification.warning('Thiếu dữ liệu', 'Mật khẩu tối thiểu 6 ký tự.');
       return;
@@ -262,7 +270,7 @@ export class UserList {
           this.closePasswordModal();
           return;
         }
-        this.handleWriteError(raw);
+        this.handleWriteError(raw, 'password');
       },
       error: () => {
         this.passwordSubmitting = false;
@@ -272,6 +280,7 @@ export class UserList {
 
   saveUserForm(): void {
     if (this.userFormMode === 'edit' && this.userFormLoading) return;
+    clearServerErrorsOnFormGroup(this.userModalForm);
     if (!this.validateForm()) return;
 
     if (this.userFormMode === 'create') {
@@ -313,30 +322,30 @@ export class UserList {
     });
   }
 
-  private emptyForm(): UserFormState {
-    return {
+  private resetUserModalForm(): void {
+    this.userModalForm.reset({
       username: '',
       password: '',
       email: '',
       fullName: '',
       enabled: true,
       roleCodes: ['USER'],
-    };
+    });
   }
 
   private applyUserToForm(u: UserDetail): void {
-    this.form = {
+    this.userModalForm.patchValue({
       username: u.username ?? '',
       password: '',
       email: u.email ?? '',
       fullName: u.fullName ?? '',
       enabled: u.enabled ?? true,
       roleCodes: (u.roles ?? []).length ? (u.roles ?? []) : ['USER'],
-    };
+    });
   }
 
   private validateForm(): boolean {
-    const f = this.form;
+    const f = this.userModalForm.getRawValue();
     if (!f.username?.trim()) {
       this.notification.warning('Thiếu dữ liệu', 'Vui lòng nhập username.');
       return false;
@@ -359,7 +368,7 @@ export class UserList {
   }
 
   private submitCreate(): void {
-    const f = this.form;
+    const f = this.userModalForm.getRawValue();
     const payload: UserCreatePayload = {
       username: f.username.trim(),
       password: String(f.password ?? ''),
@@ -374,6 +383,7 @@ export class UserList {
         this.userFormSubmitting = false;
         if (raw?.code === 201) {
           this.notification.success('Thành công', raw?.message ?? 'Đã tạo người dùng.');
+          clearServerErrorsOnFormGroup(this.userModalForm);
           this.userFormVisible = false;
           this.fetch();
           return;
@@ -387,7 +397,7 @@ export class UserList {
   }
 
   private submitUpdate(id: string): void {
-    const f = this.form;
+    const f = this.userModalForm.getRawValue();
     const payload: UserUpdatePayload = {
       username: f.username.trim(),
       email: f.email.trim(),
@@ -401,6 +411,7 @@ export class UserList {
         this.userFormSubmitting = false;
         if (raw?.code === 200) {
           this.notification.success('Thành công', raw?.message ?? 'Đã cập nhật người dùng.');
+          clearServerErrorsOnFormGroup(this.userModalForm);
           this.userFormVisible = false;
           this.fetch();
           return;
@@ -413,12 +424,20 @@ export class UserList {
     });
   }
 
-  private handleWriteError(raw: ApiResponse | undefined): void {
-    const errBody = raw?.body;
-    if (raw?.code === 400 && errBody && typeof errBody === 'object' && !Array.isArray(errBody)) {
-      const msg = Object.values(errBody as Record<string, string>).filter(Boolean).join(' ');
-      this.notification.warning('Không hợp lệ', msg || raw?.message || 'Vui lòng kiểm tra dữ liệu.');
+  private handleWriteError(raw: ApiResponse | undefined, target: 'user' | 'password' = 'user'): void {
+    const map = parseServerFieldErrorMap(raw);
+    if (map) {
+      if (target === 'password') {
+        applyServerFieldErrorsToFormGroup(this.passwordModalForm, map);
+      } else {
+        applyServerFieldErrorsToFormGroup(this.userModalForm, map);
+      }
       return;
+    }
+    if (target === 'password') {
+      clearServerErrorsOnFormGroup(this.passwordModalForm);
+    } else {
+      clearServerErrorsOnFormGroup(this.userModalForm);
     }
     this.notification.warning('Không thành công', raw?.message ?? 'Thao tác thất bại.');
   }
@@ -439,8 +458,9 @@ export class UserList {
   }
 
   private ensureDefaultRoles(): void {
-    if (!this.form.roleCodes || this.form.roleCodes.length === 0) {
-      this.form.roleCodes = ['USER'];
+    const codes = this.userModalForm.get('roleCodes')?.value;
+    if (!codes || codes.length === 0) {
+      this.userModalForm.patchValue({ roleCodes: ['USER'] });
     }
   }
 }

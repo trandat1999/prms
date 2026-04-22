@@ -129,14 +129,14 @@
         <nz-spin nzSimple></nz-spin>
       </div>
     } @else {
-      <div class="row g-3">
+      <div class="row g-3" [formGroup]="userModalForm">
         <div class="col-md-6">
           <app-input
             label="Username"
             [labelSpan]="24"
             [inputSpan]="24"
             placeHolder="username"
-            [(ngModel)]="form.username"
+            formControlName="username"
           ></app-input>
         </div>
         <div class="col-md-6">
@@ -146,7 +146,7 @@
             [inputSpan]="24"
             type="email"
             placeHolder="email"
-            [(ngModel)]="form.email"
+            formControlName="email"
           ></app-input>
         </div>
 
@@ -156,7 +156,7 @@
             [labelSpan]="24"
             [inputSpan]="24"
             placeHolder="Họ tên"
-            [(ngModel)]="form.fullName"
+            formControlName="fullName"
           ></app-input>
         </div>
 
@@ -169,7 +169,7 @@
               type="password"
               [inputPassword]="true"
               placeHolder="Mật khẩu"
-              [(ngModel)]="form.password"
+              formControlName="password"
             ></app-input>
           </div>
         }
@@ -187,7 +187,7 @@
             bindLabelFallback="code"
             bindValue="code"
             [placeHolder]="'user.form.rolesPlaceholder' | translate"
-            [(ngModel)]="form.roleCodes"
+            formControlName="roleCodes"
           ></app-input>
         </div>
 
@@ -203,7 +203,7 @@
             ]"
             bindLabel="label"
             bindValue="value"
-            [(ngModel)]="form.enabled"
+            formControlName="enabled"
           ></app-input>
         </div>
       </div>
@@ -234,7 +234,7 @@
   (nzOnCancel)="closePasswordModal()"
   [nzMaskClosable]="!passwordSubmitting"
 >
-  <div *nzModalContent class="user-password-modal">
+  <div *nzModalContent class="user-password-modal" [formGroup]="passwordModalForm">
     <div class="mb-2 text-muted">
       {{ 'user.password.forUser' | translate }}: <b>{{ passwordUserLabel }}</b>
     </div>
@@ -245,7 +245,7 @@
       type="password"
       [inputPassword]="true"
       [placeHolder]="'user.password.newPasswordPlaceholder' | translate"
-      [(ngModel)]="passwordForm.newPassword"
+      formControlName="newPassword"
     ></app-input>
   </div>
   <ng-container *nzModalFooter>

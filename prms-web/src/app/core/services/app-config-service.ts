@@ -28,6 +28,10 @@ export class AppConfigService {
     return this.config.apiUrl;
   }
 
+  get pushPublicKey() {
+    return this.config?.pushPublicKey;
+  }
+
   changeLanguage(language: string){
     this.localStorage.setLanguage(language);
     this.translate.use(language);

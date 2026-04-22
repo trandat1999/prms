@@ -10,6 +10,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -27,22 +28,42 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
     @Query("select new com.tranhuudat.prms.dto.task.TaskDto(entity) from Task entity " +
             "left join entity.project p " +
             "left join entity.assigned a " +
+            "left join entity.reporter rep " +
+            "left join entity.reviewer rev " +
+            "left join entity.parentTask pt " +
             "where (entity.voided is null or entity.voided = false) " +
             "and (:projectId is null or entity.projectId = :projectId) " +
             "order by entity.status asc, coalesce(entity.kanbanOrder, 2147483647) asc, entity.createdDate asc")
     List<TaskDto> getKanbanTasks(UUID projectId);
+
+    @Query("select new com.tranhuudat.prms.dto.task.TaskDto(entity) from Task entity " +
+            "left join entity.project p " +
+            "left join entity.assigned a " +
+            "left join entity.reporter rep " +
+            "left join entity.reviewer rev " +
+            "left join entity.parentTask pt " +
+            "where (entity.voided is null or entity.voided = false) " +
+            "and (entity.projectId in :projectIds) " +
+            "order by entity.status asc, coalesce(entity.kanbanOrder, 2147483647) asc, entity.createdDate asc")
+    List<TaskDto> getKanbanTasksInProjects(@Param("projectIds") List<UUID> projectIds);
 
     default Page<TaskDto> getPages(EntityManager entityManager, TaskSearchRequest request, Pageable pageable) {
         String select =
                 "select new com.tranhuudat.prms.dto.task.TaskDto(entity) "
                         + "from Task entity "
                         + "left join entity.project p "
-                        + "left join entity.assigned a ";
+                        + "left join entity.assigned a "
+                        + "left join entity.reporter rep "
+                        + "left join entity.reviewer rev "
+                        + "left join entity.parentTask pt ";
         String count =
                 "select count(entity) "
                         + "from Task entity "
                         + "left join entity.project p "
-                        + "left join entity.assigned a ";
+                        + "left join entity.assigned a "
+                        + "left join entity.reporter rep "
+                        + "left join entity.reviewer rev "
+                        + "left join entity.parentTask pt ";
 
         List<String> where = new ArrayList<>();
         Map<String, Object> params = new HashMap<>();
@@ -60,6 +81,22 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
             if (Objects.nonNull(request.getAssignedId())) {
                 where.add("entity.assignedId = :assignedId");
                 params.put("assignedId", request.getAssignedId());
+            }
+            if (Objects.nonNull(request.getReporterId())) {
+                where.add("entity.reporterId = :reporterId");
+                params.put("reporterId", request.getReporterId());
+            }
+            if (Objects.nonNull(request.getReviewerId())) {
+                where.add("entity.reviewerId = :reviewerId");
+                params.put("reviewerId", request.getReviewerId());
+            }
+            if (Objects.nonNull(request.getParentTaskId())) {
+                where.add("entity.parentTaskId = :parentTaskId");
+                params.put("parentTaskId", request.getParentTaskId());
+            }
+            if (Objects.nonNull(request.getExcludeTaskId())) {
+                where.add("entity.id <> :excludeTaskId");
+                params.put("excludeTaskId", request.getExcludeTaskId());
             }
             if (Objects.nonNull(request.getStatus())) {
                 where.add("entity.status = :status");
@@ -79,7 +116,11 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
                                 + "or lower(entity.type) like :kw "
                                 + "or lower(p.name) like :kw "
                                 + "or lower(a.username) like :kw "
-                                + "or lower(a.fullName) like :kw"
+                                + "or lower(a.fullName) like :kw "
+                                + "or lower(rep.username) like :kw "
+                                + "or lower(rep.fullName) like :kw "
+                                + "or lower(rev.username) like :kw "
+                                + "or lower(rev.fullName) like :kw"
                                 + ")");
                 params.put("kw", "%" + request.getKeyword().trim().toLowerCase() + "%");
             }

@@ -1,0 +1,272 @@
+<div class="pm-page">
+  @if (displayProjectName) {
+    <div class="mb-2 text-muted small">
+      {{ 'projectMember.forProject' | translate }}: <b>{{ displayProjectName }}</b>
+    </div>
+  }
+  <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+    <div class="d-flex flex-wrap align-items-center gap-2 flex-grow-1">
+      <app-input
+        class="filter-item"
+        [showLabel]="false"
+        [offMb]="true"
+        [placeHolder]="'projectMember.list.searchPlaceholder' | translate"
+        [(ngModel)]="keyword"
+      ></app-input>
+
+      <app-input
+        class="filter-item filter-item--sm"
+        [showLabel]="false"
+        [offMb]="true"
+        type="select"
+        [items]="roleOptions"
+        bindLabel="label"
+        bindValue="value"
+        [allowClear]="true"
+        [placeHolder]="'projectMember.list.rolePlaceholder' | translate"
+        [(ngModel)]="roleInProject"
+      ></app-input>
+
+      <app-input
+        class="filter-item filter-item--xs"
+        [showLabel]="false"
+        [offMb]="true"
+        type="select"
+        [items]="activeOptions"
+        bindLabel="label"
+        bindValue="value"
+        [allowClear]="true"
+        [placeHolder]="'projectMember.list.activePlaceholder' | translate"
+        [(ngModel)]="active"
+      ></app-input>
+
+      @if (isProjectManager) {
+        <button nz-button nzType="primary" (click)="onCreate()">
+          <span nz-icon nzType="plus"></span>
+          {{ 'common.button.create' | translate }}
+        </button>
+      }
+      <button nz-button (click)="onSearch()">
+        <span nz-icon nzType="search"></span>
+        {{ 'projectMember.list.searchButton' | translate }}
+      </button>
+    </div>
+  </div>
+
+  <nz-table
+    #table
+    [nzData]="rows"
+    [nzFrontPagination]="false"
+    nzSize="small"
+    [nzTotal]="page?.totalElements || 0"
+    [nzPageIndex]="pageIndex"
+    [nzPageSize]="pageSize"
+    [nzShowSizeChanger]="true"
+    (nzPageIndexChange)="onPageIndexChange($event)"
+    (nzPageSizeChange)="onPageSizeChange($event)"
+  >
+    <thead>
+      <tr>
+        <th>{{ 'projectMember.fields.user' | translate }}</th>
+        <th>{{ 'projectMember.fields.role' | translate }}</th>
+        <th>{{ 'projectMember.fields.allocationPercent' | translate }}</th>
+        <th>{{ 'projectMember.fields.isLead' | translate }}</th>
+        <th>{{ 'projectMember.fields.active' | translate }}</th>
+        <th>{{ 'projectMember.fields.startDate' | translate }}</th>
+        <th>{{ 'projectMember.fields.endDate' | translate }}</th>
+        <th class="text-center">{{ 'common.button.action' | translate }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (item of table.data; track item.id) {
+        <tr>
+          <td class="text-nowrap">{{ item.userDisplay || '—' }}</td>
+          <td class="text-nowrap">{{ roleLabel(item.roleInProject) }}</td>
+          <td class="text-end text-nowrap">
+            {{ item.allocationPercent != null ? item.allocationPercent + '%' : '—' }}
+          </td>
+          <td class="text-center">
+            <nz-tag [nzColor]="item.isLead ? 'blue' : 'default'">
+              {{ item.isLead ? ('projectMember.labels.yes' | translate) : ('projectMember.labels.no' | translate) }}
+            </nz-tag>
+          </td>
+          <td class="text-center">
+            <nz-tag [nzColor]="item.active !== false ? 'green' : 'default'">
+              {{ item.active !== false ? ('projectMember.labels.active' | translate) : ('projectMember.labels.inactive' | translate) }}
+            </nz-tag>
+          </td>
+          <td class="text-nowrap">{{ item.startDate ? (item.startDate | date: 'dd/MM/yyyy') : '—' }}</td>
+          <td class="text-nowrap">{{ item.endDate ? (item.endDate | date: 'dd/MM/yyyy') : '—' }}</td>
+          <td class="text-center">
+            <button nz-button nzType="text" (click)="onView(item)" [title]="'projectMember.actions.view' | translate">
+              <span nz-icon nzType="eye"></span>
+            </button>
+            @if (isProjectManager) {
+              <button nz-button nzType="text" (click)="onEdit(item)" [title]="'common.button.edit' | translate">
+                <span nz-icon nzType="edit"></span>
+              </button>
+              <button nz-button nzType="text" (click)="onDelete(item)" [title]="'common.button.delete' | translate">
+                <span nz-icon nzType="delete"></span>
+              </button>
+            }
+          </td>
+        </tr>
+      }
+    </tbody>
+  </nz-table>
+</div>
+
+<nz-modal
+  [(nzVisible)]="formVisible"
+  [nzTitle]="formTitle"
+  [nzWidth]="720"
+  (nzOnCancel)="closeModal()"
+  [nzMaskClosable]="!submitting && !loading"
+>
+  <div *nzModalContent class="pm-form-modal">
+    @if (formMode === 'edit' && loading) {
+      <div class="text-center py-5">
+        <nz-spin nzSimple></nz-spin>
+      </div>
+    } @else {
+      <div class="row g-3" [formGroup]="modalForm">
+        <div class="col-md-12">
+          <app-input
+            label="{{ 'projectMember.fields.user' | translate }}"
+            [labelSpan]="24"
+            [inputSpan]="24"
+            type="select"
+            [isServerSearch]="true"
+            [urlSearch]="userAutocompleteUrl"
+            bindLabel="fullName"
+            bindLabelFallback="username,email"
+            bindValue="id"
+            [allowClear]="true"
+            [placeHolder]="'projectMember.form.userPlaceholder' | translate"
+            formControlName="userId"
+          ></app-input>
+        </div>
+        <div class="col-md-6">
+          <app-input
+            label="{{ 'projectMember.fields.role' | translate }}"
+            [labelSpan]="24"
+            [inputSpan]="24"
+            type="select"
+            [items]="roleOptions"
+            bindLabel="label"
+            bindValue="value"
+            [allowClear]="true"
+            [placeHolder]="'projectMember.form.rolePlaceholder' | translate"
+            formControlName="roleInProject"
+          ></app-input>
+        </div>
+        <div class="col-md-6">
+          <app-input
+            label="{{ 'projectMember.fields.allocationPercent' | translate }}"
+            [labelSpan]="24"
+            [inputSpan]="24"
+            type="number"
+            [min]="0"
+            [max]="100"
+            [step]="1"
+            [placeHolder]="'projectMember.form.percentPlaceholder' | translate"
+            formControlName="allocationPercent"
+          ></app-input>
+        </div>
+        <div class="col-md-4">
+          <app-input
+            label="{{ 'projectMember.fields.isLead' | translate }}"
+            [labelSpan]="24"
+            [inputSpan]="24"
+            type="select"
+            [items]="leadOptions"
+            bindLabel="label"
+            bindValue="value"
+            formControlName="isLead"
+          ></app-input>
+        </div>
+        <div class="col-md-4">
+          <app-input
+            label="{{ 'projectMember.fields.active' | translate }}"
+            [labelSpan]="24"
+            [inputSpan]="24"
+            type="select"
+            [items]="activeOptions"
+            bindLabel="label"
+            bindValue="value"
+            formControlName="active"
+          ></app-input>
+        </div>
+        <div class="col-md-4">
+          <app-input
+            label="{{ 'projectMember.fields.startDate' | translate }}"
+            [labelSpan]="24"
+            [inputSpan]="24"
+            type="date"
+            [allowClear]="true"
+            formControlName="startDate"
+          ></app-input>
+        </div>
+        <div class="col-md-4">
+          <app-input
+            label="{{ 'projectMember.fields.endDate' | translate }}"
+            [labelSpan]="24"
+            [inputSpan]="24"
+            type="date"
+            [allowClear]="true"
+            formControlName="endDate"
+          ></app-input>
+        </div>
+      </div>
+    }
+  </div>
+  <ng-container *nzModalFooter>
+    <button nz-button (click)="closeModal()" [disabled]="submitting">{{ 'common.button.cancel' | translate }}</button>
+    <button nz-button nzType="primary" (click)="save()" [nzLoading]="submitting" [disabled]="loading">
+      {{ 'common.button.submit' | translate }}
+    </button>
+  </ng-container>
+</nz-modal>
+
+<nz-modal
+  [(nzVisible)]="viewVisible"
+  [nzTitle]="'projectMember.view.title' | translate"
+  [nzWidth]="640"
+  (nzOnCancel)="closeView()"
+  [nzFooter]="null"
+>
+  <div *nzModalContent>
+    @if (viewLoading) {
+      <div class="text-center py-5">
+        <nz-spin nzSimple></nz-spin>
+      </div>
+    } @else if (viewDetail) {
+      <dl class="row pm-view-dl mb-0">
+        <dt class="col-sm-4">{{ 'projectMember.fields.user' | translate }}</dt>
+        <dd class="col-sm-8">{{ viewDetail.userDisplay || '—' }}</dd>
+        <dt class="col-sm-4">{{ 'projectMember.fields.role' | translate }}</dt>
+        <dd class="col-sm-8">{{ roleLabel(viewDetail.roleInProject) }}</dd>
+        <dt class="col-sm-4">{{ 'projectMember.fields.allocationPercent' | translate }}</dt>
+        <dd class="col-sm-8">
+          {{ viewDetail.allocationPercent != null ? (viewDetail.allocationPercent + '%') : '—' }}
+        </dd>
+        <dt class="col-sm-4">{{ 'projectMember.fields.isLead' | translate }}</dt>
+        <dd class="col-sm-8">
+          {{ viewDetail.isLead ? ('projectMember.labels.yes' | translate) : ('projectMember.labels.no' | translate) }}
+        </dd>
+        <dt class="col-sm-4">{{ 'projectMember.fields.active' | translate }}</dt>
+        <dd class="col-sm-8">
+          {{
+            viewDetail.active !== false
+              ? ('projectMember.labels.active' | translate)
+              : ('projectMember.labels.inactive' | translate)
+          }}
+        </dd>
+        <dt class="col-sm-4">{{ 'projectMember.fields.startDate' | translate }}</dt>
+        <dd class="col-sm-8">{{ viewDetail.startDate ? (viewDetail.startDate | date: 'dd/MM/yyyy') : '—' }}</dd>
+        <dt class="col-sm-4">{{ 'projectMember.fields.endDate' | translate }}</dt>
+        <dd class="col-sm-8">{{ viewDetail.endDate ? (viewDetail.endDate | date: 'dd/MM/yyyy') : '—' }}</dd>
+      </dl>
+    }
+  </div>
+</nz-modal>

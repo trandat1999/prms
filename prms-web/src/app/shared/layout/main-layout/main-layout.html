@@ -60,7 +60,45 @@
         <span class="header-trigger" (click)="isCollapsed = !isCollapsed">
             <span nz-icon [nzType]="isCollapsed ? 'menu-unfold' : 'menu-fold'"></span>
         </span>
-        <div class="header-trigger">
+        <div class="header-actions">
+          <span
+            class="notif-trigger d-inline-flex align-items-center"
+            nz-dropdown
+            [nzDropdownMenu]="notifMenu"
+            nzTrigger="click"
+            (nzVisibleChange)="onNotifDropdownVisible($event)"
+          >
+            <nz-badge [nzCount]="notifUnread" [nzOverflowCount]="99">
+              <span nz-icon nzType="bell" class="fs-5" style="cursor: pointer"></span>
+            </nz-badge>
+          </span>
+          <nz-dropdown-menu #notifMenu="nzDropdownMenu">
+            <ul nz-menu class="mb-0 p-0" style="min-width: 320px; max-height: 380px; overflow-y: auto">
+              @if (notifLoading) {
+                <li nz-menu-item nzDisabled>
+                  {{ 'layout.notificationsLoading' | translate }}
+                </li>
+              } @else if (!notifItems.length) {
+                <li nz-menu-item nzDisabled>
+                  {{ 'layout.notificationsEmpty' | translate }}
+                </li>
+              } @else {
+                @for (n of notifItems; track n.id) {
+                  <li nz-menu-item (click)="openNotification(n)">
+                    <div class="notif-item" [class.is-unread]="!n.read">
+                      <span class="notif-dot" aria-hidden="true"></span>
+                      <div class="notif-content">
+                        <div class="small text-break" [class.text-muted]="n.read">{{ n.message }}</div>
+                        @if (n.createdDate) {
+                          <div class="small text-muted notif-time">{{ n.createdDate }}</div>
+                        }
+                      </div>
+                    </div>
+                  </li>
+                }
+              }
+            </ul>
+          </nz-dropdown-menu>
           <nz-select [nzCustomTemplate]="defaultTemplate" (ngModelChange)="changeLanguage($event)"
                      class="me-3" [(ngModel)]="currentLanguage">
             <nz-option nzValue="en" nzLabel="{{'layout.english' |translate}}"></nz-option>

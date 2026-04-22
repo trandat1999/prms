@@ -15,14 +15,12 @@
         [urlSearch]="projectAutocompleteUrl"
         [bindValue]="'id'"
         [bindLabelFallback]="'code,name'"
+        [allowClear]="true"
         [(ngModel)]="projectId"
         (valueChange)="onLoad()"
       ></app-input>
 
-      <button nz-button nzType="primary" (click)="onLoad()">
-        <span nz-icon nzType="search"></span>
-        {{ 'kanban.load' | translate }}
-      </button>
+      <!-- auto load on enter -->
     </div>
   </div>
 
@@ -48,6 +46,8 @@
             [id]="listId(col.status)"
             [cdkDropListConnectedTo]="connectedListIds()"
             [cdkDropListData]="col.tasks"
+            [cdkDropListDisabled]="false"
+            [cdkDropListEnterPredicate]="enterPredicate(col.status)"
             (cdkDropListEntered)="onListEntered(col.status)"
             (cdkDropListExited)="onListExited(col.status)"
             (cdkDropListDropped)="drop($event, col.status)"
@@ -56,6 +56,8 @@
               <div
                 class="kanban__card"
                 cdkDrag
+                [cdkDragData]="t"
+                [cdkDragDisabled]="!canDragTask(t)"
                 (cdkDragStarted)="onDragStarted(col.status)"
                 (cdkDragEnded)="onDragEnded()"
               >
@@ -63,12 +65,26 @@
                   <div class="kanban__cardTitle">{{ t.name || t.code }}</div>
                   <nz-tag [nzColor]="priorityColor(t.priority)">{{ t.priority || '—' }}</nz-tag>
                 </div>
+                @if (!projectId && t.projectName) {
+                  <div class="small text-muted text-truncate">{{ t.projectName }}</div>
+                }
 
                 <div class="kanban__cardMeta">
                   <div class="kanban__assignee">
                     <div class="kanban__avatar">{{ initials(t.assignedDisplay) }}</div>
                     <div class="kanban__assigneeText">{{ t.assignedDisplay || '—' }}</div>
                   </div>
+                  <span
+                    class="ms-2 small text-muted"
+                    nz-popover
+                    nzPopoverTrigger="click"
+                    (nzPopoverVisibleChange)="($event ? ensureChecklistLoaded(t) : null)"
+                    [nzPopoverContent]="checklistTpl"
+                    [nzPopoverTitle]="'task.checklist.title' | translate"
+                  >
+                    <span nz-icon nzType="check-square"></span>
+                    {{ checklistSummary(t).done }}/{{ checklistSummary(t).total }}
+                  </span>
                   @if (t.estimatedHours !== null && t.estimatedHours !== undefined) {
                     <div class="kanban__hours">{{ t.estimatedHours }}h</div>
                   }
@@ -85,3 +101,32 @@
     </div>
   }
 </div>
+
+<ng-template #checklistTpl>
+  @if (activeChecklistTask?.id) {
+    @if (checklistByTaskId[activeChecklistTask.id]?.loading) {
+      <div class="py-2 text-center"><nz-spin nzSize="small"></nz-spin></div>
+    } @else {
+      <div style="min-width: 320px; max-width: 420px; max-height: 320px; overflow: auto">
+        @if (!checklistByTaskId[activeChecklistTask.id]?.items?.length) {
+          <div class="text-muted small py-2">{{ 'task.checklist.empty' | translate }}</div>
+        } @else {
+          @for (c of checklistByTaskId[activeChecklistTask.id].items; track c.id) {
+            <label class="d-flex align-items-start gap-2 py-1">
+              <input
+                type="checkbox"
+                class="form-check-input mt-1"
+                [checked]="!!c.checked"
+                (change)="toggleChecklist(activeChecklistTask!, c, ($any($event.target).checked))"
+              />
+              <span class="small text-break">{{ c.title }}</span>
+              @if (c.estimatedHours !== null && c.estimatedHours !== undefined) {
+                <span class="ms-auto small text-muted">{{ c.estimatedHours }}h</span>
+              }
+            </label>
+          }
+        }
+      </div>
+    }
+  }
+</ng-template>

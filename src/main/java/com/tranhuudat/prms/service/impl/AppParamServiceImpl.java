@@ -9,6 +9,7 @@ import com.tranhuudat.prms.service.AppParamService;
 import com.tranhuudat.prms.service.BaseService;
 import com.tranhuudat.prms.util.ConstUtil;
 import com.tranhuudat.prms.util.SystemMessage;
+import com.tranhuudat.prms.util.SystemVariable;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
@@ -46,7 +47,7 @@ public class AppParamServiceImpl extends BaseService implements AppParamService 
         HashMap<String, String> errors = validation(request);
         AppParam entity = appParamRepository.findById(id).orElse(null);
         if (Objects.isNull(entity) || Boolean.TRUE.equals(entity.getVoided())) {
-            return getResponse404(getMessage(SystemMessage.NOT_FOUND, "app_param"));
+            return getResponse404(getMessage(SystemMessage.NOT_FOUND, getMessage(SystemVariable.APP_PARAM)));
         }
         if (!CollectionUtils.isEmpty(errors)) {
             return getResponse400(getMessage(SystemMessage.BAD_REQUEST), errors);
@@ -61,7 +62,7 @@ public class AppParamServiceImpl extends BaseService implements AppParamService 
     public BaseResponse delete(UUID id) {
         AppParam entity = appParamRepository.findById(id).orElse(null);
         if (Objects.isNull(entity) || Boolean.TRUE.equals(entity.getVoided())) {
-            return getResponse404(getMessage(SystemMessage.NOT_FOUND, "app_param"));
+            return getResponse404(getMessage(SystemMessage.NOT_FOUND, getMessage(SystemVariable.APP_PARAM)));
         }
         entity.setVoided(true);
         entity = appParamRepository.save(entity);
@@ -73,7 +74,7 @@ public class AppParamServiceImpl extends BaseService implements AppParamService 
     public BaseResponse getById(UUID id) {
         AppParam entity = appParamRepository.findById(id).orElse(null);
         if (Objects.isNull(entity) || Boolean.TRUE.equals(entity.getVoided())) {
-            return getResponse404(getMessage(SystemMessage.NOT_FOUND, "app_param"));
+            return getResponse404(getMessage(SystemMessage.NOT_FOUND, getMessage(SystemVariable.APP_PARAM)));
         }
         return getResponse200(new AppParamDto(entity));
     }
@@ -84,4 +85,3 @@ public class AppParamServiceImpl extends BaseService implements AppParamService 
         return getResponse200(appParamRepository.getPages(entityManager, request, getPageable(request)));
     }
 }
-

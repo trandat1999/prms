@@ -58,4 +58,9 @@ export class ResourceAllocationService {
       }))
     );
   }
+
+  /** Xuất Excel theo tháng; backend chỉ áp dụng trường `month`. */
+  exportExcel(request: { month: Date | string }) {
+    return this.base.postBlob(`${this.apiUrl}/export/excel`, { month: request.month, voided: false });
+  }
 }

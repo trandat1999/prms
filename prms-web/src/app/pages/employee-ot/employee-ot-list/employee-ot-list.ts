@@ -1,6 +1,6 @@
 import { CommonModule, DatePipe } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { NzButtonComponent } from 'ng-zorro-antd/button';
 import { NzIconDirective } from 'ng-zorro-antd/icon';
@@ -10,23 +10,16 @@ import { NzSpinComponent } from 'ng-zorro-antd/spin';
 import { NzTableModule } from 'ng-zorro-antd/table';
 import { InputCommon } from '../../../shared/input/input';
 import { ApiResponse } from '../../../shared/utils/api-response';
+import {
+  applyServerFieldErrorsToFormGroup,
+  clearServerErrorsOnFormGroup,
+  parseServerFieldErrorMap,
+} from '../../../shared/utils/form-server-errors';
 import { Page } from '../../project/models/page.model';
 import { EmployeeOt, EmployeeOtWritePayload } from '../models/employee-ot.model';
 import { EmployeeOtSearchRequest } from '../models/employee-ot-search.request';
 import { EmployeeOtStatus, EmployeeOtType, EMPLOYEE_OT_TYPE_COEFFICIENT } from '../models/employee-ot.types';
 import { EmployeeOtService } from '../services/employee-ot.service';
-
-type FormState = {
-  userId: string | null;
-  projectId: string | null;
-  otDate: Date | null;
-  startTime: Date | null;
-  endTime: Date | null;
-  otHours: number | null;
-  otType: EmployeeOtType | null;
-  reason: string | null;
-  status: EmployeeOtStatus | null;
-};
 
 @Component({
   selector: 'app-employee-ot-list',
@@ -34,6 +27,7 @@ type FormState = {
     CommonModule,
     DatePipe,
     FormsModule,
+    ReactiveFormsModule,
     NzTableModule,
     NzButtonComponent,
     NzIconDirective,
@@ -95,7 +89,17 @@ export class EmployeeOtList implements OnInit {
   editingRowStatus: EmployeeOtStatus | null = null;
   submitting = false;
   loading = false;
-  form: FormState = this.emptyForm();
+  readonly modalForm = new FormGroup({
+    userId: new FormControl<string | null>(null),
+    projectId: new FormControl<string | null>(null),
+    otDate: new FormControl<Date | null>(null),
+    startTime: new FormControl<Date | null>(null),
+    endTime: new FormControl<Date | null>(null),
+    otHours: new FormControl<number | null>(null),
+    otType: new FormControl<EmployeeOtType | null>(EmployeeOtType.WEEKDAY),
+    reason: new FormControl<string | null>(null),
+    status: new FormControl<EmployeeOtStatus | null>(EmployeeOtStatus.DRAFT),
+  });
 
   viewVisible = false;
   viewLoading = false;
@@ -194,8 +198,9 @@ export class EmployeeOtList implements OnInit {
     this.editingId = null;
     this.editingRowStatus = null;
     this.loading = false;
-    this.form = this.emptyForm();
-    this.form.status = EmployeeOtStatus.DRAFT;
+    this.resetModalForm();
+    this.modalForm.patchValue({ status: EmployeeOtStatus.DRAFT });
+    clearServerErrorsOnFormGroup(this.modalForm);
     this.formVisible = true;
   }
 
@@ -213,7 +218,8 @@ export class EmployeeOtList implements OnInit {
     this.editingRowStatus = row.status ?? null;
     this.formVisible = true;
     this.loading = true;
-    this.form = this.emptyForm();
+    this.resetModalForm();
+    clearServerErrorsOnFormGroup(this.modalForm);
     this.service.getById(id).subscribe({
       next: ({ raw, row: r }) => {
         this.loading = false;
@@ -221,7 +227,7 @@ export class EmployeeOtList implements OnInit {
           this.editingRowStatus = r.status ?? null;
           this.applyToForm(r);
           if (this.formCoreDisabled) {
-            this.form.status = EmployeeOtStatus.APPROVED;
+            this.modalForm.patchValue({ status: EmployeeOtStatus.APPROVED });
           }
         } else {
           this.notifyFromResponse(raw, this.translate.instant('employeeOt.messages.loadFailed'));
@@ -295,6 +301,7 @@ export class EmployeeOtList implements OnInit {
 
   closeModal(): void {
     this.formVisible = false;
+    clearServerErrorsOnFormGroup(this.modalForm);
   }
 
   closeView(): void {
@@ -304,18 +311,20 @@ export class EmployeeOtList implements OnInit {
 
   save(): void {
     if (this.formMode === 'edit' && this.loading) return;
+    clearServerErrorsOnFormGroup(this.modalForm);
     if (!this.validate()) return;
 
+    const v = this.modalForm.getRawValue();
     const payload: EmployeeOtWritePayload = {
-      userId: this.form.userId as string,
-      projectId: this.form.projectId?.trim() ? this.form.projectId : null,
-      otDate: this.form.otDate as Date,
-      startTime: this.form.startTime ?? null,
-      endTime: this.form.endTime ?? null,
-      otHours: this.form.otHours ?? null,
-      otType: this.form.otType as EmployeeOtType,
-      reason: this.form.reason?.trim() ? this.form.reason.trim() : null,
-      status: this.form.status ?? EmployeeOtStatus.DRAFT,
+      userId: v.userId as string,
+      projectId: v.projectId?.trim() ? v.projectId : null,
+      otDate: v.otDate as Date,
+      startTime: v.startTime ?? null,
+      endTime: v.endTime ?? null,
+      otHours: v.otHours ?? null,
+      otType: v.otType as EmployeeOtType,
+      reason: v.reason?.trim() ? v.reason.trim() : null,
+      status: v.status ?? EmployeeOtStatus.DRAFT,
     };
 
     if (this.formMode === 'create') {
@@ -325,6 +334,7 @@ export class EmployeeOtList implements OnInit {
           this.submitting = false;
           if (raw?.code === 201) {
             this.notification.success(this.translate.instant('common.button.done'), raw?.message ?? '');
+            clearServerErrorsOnFormGroup(this.modalForm);
             this.formVisible = false;
             this.fetch();
             return;
@@ -350,6 +360,7 @@ export class EmployeeOtList implements OnInit {
         this.submitting = false;
         if (raw?.code === 200) {
           this.notification.success(this.translate.instant('common.button.done'), raw?.message ?? '');
+          clearServerErrorsOnFormGroup(this.modalForm);
           this.formVisible = false;
           this.fetch();
           return;
@@ -387,8 +398,8 @@ export class EmployeeOtList implements OnInit {
     });
   }
 
-  private emptyForm(): FormState {
-    return {
+  private resetModalForm(): void {
+    this.modalForm.reset({
       userId: null,
       projectId: null,
       otDate: null,
@@ -398,11 +409,11 @@ export class EmployeeOtList implements OnInit {
       otType: EmployeeOtType.WEEKDAY,
       reason: null,
       status: EmployeeOtStatus.DRAFT,
-    };
+    });
   }
 
   private applyToForm(row: EmployeeOt): void {
-    this.form = {
+    this.modalForm.patchValue({
       userId: row.userId ?? null,
       projectId: row.projectId ?? null,
       otDate: this.asDate(row.otDate),
@@ -412,46 +423,47 @@ export class EmployeeOtList implements OnInit {
       otType: (row.otType as EmployeeOtType) ?? EmployeeOtType.WEEKDAY,
       reason: row.reason ?? null,
       status: row.status ?? EmployeeOtStatus.DRAFT,
-    };
+    });
   }
 
   private validate(): boolean {
-    if (!this.form.userId) {
+    const f = this.modalForm.getRawValue();
+    if (!f.userId) {
       this.notification.warning(
         this.translate.instant('employeeOt.messages.invalidTitle'),
         this.translate.instant('employeeOt.messages.userRequired')
       );
       return false;
     }
-    if (!this.form.otDate) {
+    if (!f.otDate) {
       this.notification.warning(
         this.translate.instant('employeeOt.messages.invalidTitle'),
         this.translate.instant('employeeOt.messages.otDateRequired')
       );
       return false;
     }
-    if (!this.form.otType) {
+    if (!f.otType) {
       this.notification.warning(
         this.translate.instant('employeeOt.messages.invalidTitle'),
         this.translate.instant('employeeOt.messages.otTypeRequired')
       );
       return false;
     }
-    if (this.form.otHours != null && this.form.otHours < 0) {
+    if (f.otHours != null && f.otHours < 0) {
       this.notification.warning(
         this.translate.instant('employeeOt.messages.invalidTitle'),
         this.translate.instant('employeeOt.messages.otHoursInvalid')
       );
       return false;
     }
-    if (this.form.startTime && this.form.endTime && this.form.startTime > this.form.endTime) {
+    if (f.startTime && f.endTime && f.startTime > f.endTime) {
       this.notification.warning(
         this.translate.instant('employeeOt.messages.invalidTitle'),
         this.translate.instant('employeeOt.messages.timeRangeInvalid')
       );
       return false;
     }
-    if (!this.form.status) {
+    if (!f.status) {
       this.notification.warning(
         this.translate.instant('employeeOt.messages.invalidTitle'),
         this.translate.instant('employeeOt.messages.statusRequired')
@@ -462,12 +474,13 @@ export class EmployeeOtList implements OnInit {
   }
 
   private handleWriteError(raw: ApiResponse | undefined): void {
-    const errBody = raw?.body;
-    if (raw?.code === 400 && errBody && typeof errBody === 'object' && !Array.isArray(errBody)) {
-      const msg = Object.values(errBody as Record<string, string>).filter(Boolean).join(' ');
-      this.notification.warning(this.translate.instant('employeeOt.messages.invalidTitle'), msg || raw?.message || '');
+    const map = parseServerFieldErrorMap(raw);
+    if (map) {
+      clearServerErrorsOnFormGroup(this.modalForm);
+      applyServerFieldErrorsToFormGroup(this.modalForm, map);
       return;
     }
+    clearServerErrorsOnFormGroup(this.modalForm);
     this.notification.warning(this.translate.instant('common.error'), raw?.message ?? '');
   }
 

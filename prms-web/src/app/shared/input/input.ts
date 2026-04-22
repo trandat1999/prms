@@ -3,34 +3,37 @@ import {
   EventEmitter,
   HostBinding,
   Input,
+  OnDestroy,
+  OnInit,
   Optional,
   Output,
   Self,
   SimpleChanges,
   TemplateRef,
-  ViewChild
+  ViewChild,
 } from '@angular/core';
-import {FormsModule, NgControl, Validators} from '@angular/forms';
-import {BooleanInput} from 'ng-zorro-antd/core/types';
-import {BehaviorSubject, catchError, debounceTime, map, Observable, of, switchMap} from 'rxjs';
-import {TranslatePipe, TranslateService} from '@ngx-translate/core';
-import {BaseService} from '../../core/services/base-service';
-import {NzFormControlComponent, NzFormItemComponent, NzFormLabelComponent} from 'ng-zorro-antd/form';
-import {NgClass, NgTemplateOutlet} from '@angular/common';
-import {NzColDirective} from 'ng-zorro-antd/grid';
+import { FormsModule, NgControl, Validators } from '@angular/forms';
+import { BooleanInput } from 'ng-zorro-antd/core/types';
+import { BehaviorSubject, catchError, debounceTime, map, Observable, of, Subscription, switchMap } from 'rxjs';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { BaseService } from '../../core/services/base-service';
+import { NzFormControlComponent, NzFormItemComponent, NzFormLabelComponent } from 'ng-zorro-antd/form';
+import { NgClass, NgTemplateOutlet } from '@angular/common';
+import { NzColDirective } from 'ng-zorro-antd/grid';
 import {
   NzInputAddonAfterDirective,
   NzInputAddonBeforeDirective,
   NzInputDirective,
   NzInputPrefixDirective,
   NzInputSuffixDirective,
-  NzInputWrapperComponent
+  NzInputWrapperComponent,
 } from 'ng-zorro-antd/input';
-import {NzOptionComponent, NzSelectComponent} from 'ng-zorro-antd/select';
-import {NzSpinComponent} from 'ng-zorro-antd/spin';
-import {NzIconDirective} from 'ng-zorro-antd/icon';
-import {NzDatePickerComponent} from 'ng-zorro-antd/date-picker';
-import {NzInputNumberComponent} from 'ng-zorro-antd/input-number';
+import { NzOptionComponent, NzSelectComponent } from 'ng-zorro-antd/select';
+import { NzSpinComponent } from 'ng-zorro-antd/spin';
+import { NzIconDirective } from 'ng-zorro-antd/icon';
+import { NzDatePickerComponent } from 'ng-zorro-antd/date-picker';
+import { NzInputNumberComponent } from 'ng-zorro-antd/input-number';
+import { SERVER_FORM_ERROR_KEY } from '../utils/form-server-errors';
 
 @Component({
   selector: 'app-input',
@@ -54,17 +57,18 @@ import {NzInputNumberComponent} from 'ng-zorro-antd/input-number';
     NzInputAddonAfterDirective,
     NzInputPrefixDirective,
     NzInputSuffixDirective,
-    NzInputWrapperComponent
+    NzInputWrapperComponent,
   ],
   templateUrl: './input.html',
   styleUrl: './input.scss',
 })
-export class InputCommon {
+export class InputCommon implements OnInit, OnDestroy {
   static nextId = 0;
   @HostBinding()
   id: string = `nuclear-input-${InputCommon.nextId++}`;
   inputElement: NgControl;
   ngControl: NgControl;
+  private statusSub?: Subscription;
 
   @ViewChild('inputElements') set content1(content: NgControl) {
     if (content) {
@@ -79,8 +83,8 @@ export class InputCommon {
   @Input() hasFeedback: boolean = false;
   @Input() labelSpan: number = null;
   @Input() inputSpan: number = null;
-  @Input() errorText: string = "";
-  @Input() warningText: string = "";
+  @Input() errorText: string = '';
+  @Input() warningText: string = '';
   @Input() label: string = '';
   @Input() hint: string = '';
   @Input() tooltipTitle: string = null;
@@ -96,7 +100,7 @@ export class InputCommon {
   @Input() allowSearch: boolean = true;
   @Input() isTranslation: boolean = false;
   @Input() allowClear: BooleanInput = false;
-  @Input() selectMode: "default" | "multiple" | "tags" = "default";
+  @Input() selectMode: 'default' | 'multiple' | 'tags' = 'default';
   @Input('value') val: any;
   @Input() step: number = 1;
   @Input() min: number = -Infinity;
@@ -104,7 +108,7 @@ export class InputCommon {
   @Input() showTime: boolean = false;
   @Input() showNow: boolean = true;
   @Input() showToday: boolean = true;
-  @Input() dateTimeFormat: string = "dd/MM/yyyy";
+  @Input() dateTimeFormat: string = 'dd/MM/yyyy';
   @Input() dateMode: 'date' | 'week' | 'month' | 'quarter' | 'year' = 'date';
   @Input() showLabel: boolean = true;
   @Input() prefixIcon: string;
@@ -118,19 +122,19 @@ export class InputCommon {
   @Input() isSearch: boolean = false;
   @Input() offMb: boolean = false;
   @Output() valueChange: EventEmitter<any> = new EventEmitter<any>();
-  @Input() disabledDate: (current: Date) => boolean
+  @Input() disabledDate: (current: Date) => boolean;
   @Input() isServerSearch = false;
-  @Input() urlSearch = "";
+  @Input() urlSearch = '';
   @Input() autoClearSearchValue = true;
   /** Params bổ sung khi gọi server-search (vd: { paramGroup, paramType }) */
   @Input() extraSearchParams: any = null;
   @Output() searchChange: EventEmitter<string> = new EventEmitter<string>();
   @Input() isWrapLabel: boolean = false;
   @Output() blur: EventEmitter<any> = new EventEmitter<any>();
-  @Input() inputPassword: boolean = false
+  @Input() inputPassword: boolean = false;
   isLoading = false;
   isLoadingMore = false;
-  searchChange$ = new BehaviorSubject("");
+  searchChange$ = new BehaviorSubject('');
   searchObject: any = {
     pageIndex: 0,
     pageSize: 20,
@@ -173,15 +177,16 @@ export class InputCommon {
     this.inputElement?.control?.setErrors(errors ? errors : null);
   }
 
-  onChange: any = () => {
-  };
-  onTouched: any = () => {
-  };
+  onChange: any = () => {};
+  onTouched: any = () => {};
 
-  constructor(public translate: TranslateService, @Self() @Optional() public control: NgControl,
-              private service: BaseService) {
+  constructor(
+    public translate: TranslateService,
+    @Self() @Optional() public control: NgControl,
+    private service: BaseService
+  ) {
     if (this.control) {
-      this.ngControl = this.control
+      this.ngControl = this.control;
       this.control.valueAccessor = this;
     }
   }
@@ -195,15 +200,15 @@ export class InputCommon {
 
   writeValue(value: any): void {
     if (value) {
-      if (this.type == "date") {
-        this.val = new Date(value)
+      if (this.type == 'date') {
+        this.val = new Date(value);
       } else {
         if (this.isServerSearch && this.bindValue == null && this.type == 'select') {
           if (this.selectMode != 'multiple') {
-            this.items.push(value)
+            this.items.push(value);
           }
           if (this.selectMode == 'multiple') {
-            this.items = [...value]
+            this.items = [...value];
           }
         }
         this.val = value;
@@ -233,10 +238,13 @@ export class InputCommon {
   }
 
   ngOnInit(): void {
-    if (this.control) {
-      this.control.control?.statusChanges.subscribe((status) => {
-        this.inputElement?.control.markAsDirty();
+    const c = this.control?.control;
+    if (c) {
+      this.statusSub = c.statusChanges.subscribe(() => {
+        this.inputElement?.control?.markAsDirty();
+        this.updateErrorText();
       });
+      this.updateErrorText();
     }
     if (this.isServerSearch) {
       const getDataSelect = (name: string): Observable<any> => {
@@ -248,19 +256,22 @@ export class InputCommon {
             map((res: any) => this.normalizeServerSearchBody(res))
           );
       };
-      const optionList$: Observable<any[]> = this.searchChange$
-        .asObservable()
-        .pipe(debounceTime(500))
-        .pipe(switchMap(getDataSelect));
-      optionList$.subscribe(data => {
+      const optionList$: Observable<any[]> = this.searchChange$.asObservable().pipe(debounceTime(500)).pipe(switchMap(getDataSelect));
+      optionList$.subscribe((data) => {
         this.items = data;
         this.isLoading = false;
       });
     }
   }
 
+  ngOnDestroy(): void {
+    this.statusSub?.unsubscribe();
+  }
+
   ngOnChanges(changes: SimpleChanges): void {
-    this.errorText = changes['errorText']?.currentValue || this.errorText;
+    if (changes['errorText']) {
+      this.errorText = changes['errorText'].currentValue ?? this.errorText ?? '';
+    }
     this.label = changes['label']?.currentValue ? changes['label']?.currentValue : this.label;
     this.placeHolder = changes['placeHolder']?.currentValue ? changes['placeHolder']?.currentValue : this.placeHolder;
     this.warningText = changes['warningText']?.currentValue ? changes['warningText']?.currentValue : this.warningText;
@@ -315,18 +326,18 @@ export class InputCommon {
   compareFn = (o1: any, o2: any): boolean => {
     if (o1 && o2) {
       if (o1.value && o2.value) {
-        return o1.value === o2.value
+        return o1.value === o2.value;
       }
       if (o1.key && o2.key) {
-        return o1.key === o2.key
+        return o1.key === o2.key;
       }
       if (o1.id && o2.id) {
-        return o1.id === o2.id
+        return o1.id === o2.id;
       }
       return o1 === o2;
     }
     return o1 === o2;
-  }
+  };
 
   isTemplateRef(value: unknown): value is TemplateRef<void> {
     return value instanceof TemplateRef;
@@ -337,37 +348,47 @@ export class InputCommon {
     this.blur.next(this.value);
   }
 
-  updateErrorText() {
-    this.errorText = null;
-    if (this.control && this.control.control && this.control.control.errors) {
-      const errors = this.control.control.errors;
-      if (errors?.['maxlength']) {
-        this.errorText = this.translate.instant("validation.maxlength", {
-          label: this.label || "",
-          requiredLength: errors?.['maxlength'].requiredLength
-        })
-      } else if (errors?.['required']) {
-        this.errorText = this.translate.instant("validation.required", {
-          label: this.label || "",
-        })
-      } else if (errors?.['max']) {
-        this.errorText = this.translate.instant("validation.max", {
-          label: this.label || "",
-          max: errors?.['max'].max
-        })
-      } else if (errors?.['min']) {
-        this.errorText = this.translate.instant("validation.min", {
-          label: this.label || "",
-          min: errors?.['min'].min
-        })
-      } else if (errors?.['email']) {
-        this.errorText = this.translate.instant("validation.email", {
-          label: this.label || ""
-        })
-      } else {
-        const firstKey = Object.keys(errors)[0];
-        this.errorText = errors[firstKey];
-      }
+  updateErrorText(): void {
+    this.errorText = '';
+    const ctrl = this.control?.control;
+    if (!ctrl?.errors) {
+      return;
+    }
+    const errors = ctrl.errors;
+
+    const serverMsg = errors[SERVER_FORM_ERROR_KEY];
+    if (serverMsg != null && typeof serverMsg === 'string' && serverMsg.trim()) {
+      this.errorText = serverMsg;
+      return;
+    }
+
+    if (errors?.['maxlength']) {
+      this.errorText = this.translate.instant('validation.maxlength', {
+        label: this.label || '',
+        requiredLength: errors?.['maxlength'].requiredLength,
+      });
+    } else if (errors?.['required']) {
+      this.errorText = this.translate.instant('validation.required', {
+        label: this.label || '',
+      });
+    } else if (errors?.['max']) {
+      this.errorText = this.translate.instant('validation.max', {
+        label: this.label || '',
+        max: errors?.['max'].max,
+      });
+    } else if (errors?.['min']) {
+      this.errorText = this.translate.instant('validation.min', {
+        label: this.label || '',
+        min: errors?.['min'].min,
+      });
+    } else if (errors?.['email']) {
+      this.errorText = this.translate.instant('validation.email', {
+        label: this.label || '',
+      });
+    } else {
+      const firstKey = Object.keys(errors)[0];
+      const v = errors[firstKey];
+      this.errorText = typeof v === 'string' ? v : '';
     }
   }
 }

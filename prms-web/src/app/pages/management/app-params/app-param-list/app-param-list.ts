@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { NzButtonComponent } from 'ng-zorro-antd/button';
 import { NzIconDirective } from 'ng-zorro-antd/icon';
@@ -10,24 +10,22 @@ import { NzSpinComponent } from 'ng-zorro-antd/spin';
 import { NzTableModule } from 'ng-zorro-antd/table';
 import { InputCommon } from '../../../../shared/input/input';
 import { ApiResponse } from '../../../../shared/utils/api-response';
+import {
+  applyServerFieldErrorsToFormGroup,
+  clearServerErrorsOnFormGroup,
+  parseServerFieldErrorMap,
+} from '../../../../shared/utils/form-server-errors';
 import { Page } from '../../../project/models/page.model';
 import { AppParam, AppParamWritePayload } from '../models/app-param.model';
 import { AppParamSearchRequest } from '../models/app-param-search.request';
 import { AppParamService } from '../services/app-param.service';
-
-type AppParamFormState = {
-  paramGroup: string;
-  paramName: string;
-  paramValue: string;
-  paramType: string;
-  description: string;
-};
 
 @Component({
   selector: 'app-app-param-list',
   imports: [
     CommonModule,
     FormsModule,
+    ReactiveFormsModule,
     NzTableModule,
     NzButtonComponent,
     NzIconDirective,
@@ -56,7 +54,13 @@ export class AppParamList {
   editingId: string | null = null;
   submitting = false;
   loading = false;
-  form: AppParamFormState = this.emptyForm();
+  readonly modalForm = new FormGroup({
+    paramGroup: new FormControl<string>(''),
+    paramName: new FormControl<string>(''),
+    paramValue: new FormControl<string>(''),
+    paramType: new FormControl<string>(''),
+    description: new FormControl<string>(''),
+  });
 
   constructor(
     private service: AppParamService,
@@ -84,7 +88,8 @@ export class AppParamList {
     this.formMode = 'create';
     this.editingId = null;
     this.loading = false;
-    this.form = this.emptyForm();
+    this.resetModalForm();
+    clearServerErrorsOnFormGroup(this.modalForm);
     this.formVisible = true;
   }
 
@@ -98,7 +103,8 @@ export class AppParamList {
     this.editingId = id;
     this.formVisible = true;
     this.loading = true;
-    this.form = this.emptyForm();
+    this.resetModalForm();
+    clearServerErrorsOnFormGroup(this.modalForm);
     this.service.getById(id).subscribe({
       next: ({ raw, item }) => {
         this.loading = false;
@@ -161,18 +167,21 @@ export class AppParamList {
 
   closeModal(): void {
     this.formVisible = false;
+    clearServerErrorsOnFormGroup(this.modalForm);
   }
 
   save(): void {
     if (this.formMode === 'edit' && this.loading) return;
+    clearServerErrorsOnFormGroup(this.modalForm);
     if (!this.validate()) return;
 
+    const v = this.modalForm.getRawValue();
     const payload: AppParamWritePayload = {
-      paramGroup: this.form.paramGroup.trim(),
-      paramName: this.form.paramName.trim(),
-      paramValue: this.form.paramValue?.trim() ? this.form.paramValue.trim() : null,
-      paramType: this.form.paramType?.trim() ? this.form.paramType.trim() : null,
-      description: this.form.description?.trim() ? this.form.description.trim() : null,
+      paramGroup: v.paramGroup.trim(),
+      paramName: v.paramName.trim(),
+      paramValue: v.paramValue?.trim() ? v.paramValue.trim() : null,
+      paramType: v.paramType?.trim() ? v.paramType.trim() : null,
+      description: v.description?.trim() ? v.description.trim() : null,
     };
 
     if (this.formMode === 'create') {
@@ -182,6 +191,7 @@ export class AppParamList {
           this.submitting = false;
           if (raw?.code === 201) {
             this.notification.success(this.t('common.button.done'), raw?.message ?? this.t('appParam.messages.created'));
+            clearServerErrorsOnFormGroup(this.modalForm);
             this.formVisible = false;
             this.fetch();
             return;
@@ -204,6 +214,7 @@ export class AppParamList {
         this.submitting = false;
         if (raw?.code === 200) {
           this.notification.success(this.t('common.button.done'), raw?.message ?? this.t('appParam.messages.updated'));
+          clearServerErrorsOnFormGroup(this.modalForm);
           this.formVisible = false;
           this.fetch();
           return;
@@ -231,32 +242,33 @@ export class AppParamList {
     });
   }
 
-  private emptyForm(): AppParamFormState {
-    return {
+  private resetModalForm(): void {
+    this.modalForm.reset({
       paramGroup: '',
       paramName: '',
       paramValue: '',
       paramType: '',
       description: '',
-    };
+    });
   }
 
   private applyToForm(item: AppParam): void {
-    this.form = {
+    this.modalForm.patchValue({
       paramGroup: item.paramGroup ?? '',
       paramName: item.paramName ?? '',
       paramValue: (item.paramValue ?? '') as string,
       paramType: (item.paramType ?? '') as string,
       description: (item.description ?? '') as string,
-    };
+    });
   }
 
   private validate(): boolean {
-    if (!this.form.paramGroup?.trim()) {
+    const f = this.modalForm.getRawValue();
+    if (!f.paramGroup?.trim()) {
       this.notification.warning(this.t('appParam.messages.invalidTitle'), this.t('appParam.messages.groupRequired'));
       return false;
     }
-    if (!this.form.paramName?.trim()) {
+    if (!f.paramName?.trim()) {
       this.notification.warning(this.t('appParam.messages.invalidTitle'), this.t('appParam.messages.nameRequired'));
       return false;
     }
@@ -264,12 +276,13 @@ export class AppParamList {
   }
 
   private handleWriteError(raw: ApiResponse | undefined): void {
-    const errBody = raw?.body;
-    if (raw?.code === 400 && errBody && typeof errBody === 'object' && !Array.isArray(errBody)) {
-      const msg = Object.values(errBody as Record<string, string>).filter(Boolean).join(' ');
-      this.notification.warning(this.t('appParam.messages.invalidTitle'), msg || raw?.message || this.t('appParam.messages.invalidFallback'));
+    const map = parseServerFieldErrorMap(raw);
+    if (map) {
+      clearServerErrorsOnFormGroup(this.modalForm);
+      applyServerFieldErrorsToFormGroup(this.modalForm, map);
       return;
     }
+    clearServerErrorsOnFormGroup(this.modalForm);
     this.notification.warning(this.t('common.error'), raw?.message ?? this.t('appParam.messages.actionFailed'));
   }
 

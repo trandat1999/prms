@@ -2,6 +2,7 @@ package com.tranhuudat.prms.controller;
 
 import com.tranhuudat.prms.dto.BaseResponse;
 import com.tranhuudat.prms.dto.task.TaskAssignRequest;
+import com.tranhuudat.prms.dto.task.TaskChecklistToggleRequest;
 import com.tranhuudat.prms.dto.task.TaskKanbanBoardUpdateRequest;
 import com.tranhuudat.prms.dto.task.TaskDto;
 import com.tranhuudat.prms.dto.task.TaskSearchRequest;
@@ -64,8 +65,22 @@ public class TaskController {
         return ResponseEntity.ok(taskService.getLogs(id));
     }
 
+    @GetMapping("/{id}/checklists")
+    public ResponseEntity<BaseResponse> getChecklists(@PathVariable UUID id) {
+        return ResponseEntity.ok(taskService.getChecklists(id));
+    }
+
+    @PatchMapping("/{taskId}/checklists/{checklistId}")
+    public ResponseEntity<BaseResponse> toggleChecklist(
+            @PathVariable UUID taskId,
+            @PathVariable UUID checklistId,
+            @RequestBody TaskChecklistToggleRequest request
+    ) {
+        return ResponseEntity.ok(taskService.toggleChecklist(taskId, checklistId, request));
+    }
+
     @GetMapping("/kanban/board")
-    public ResponseEntity<BaseResponse> getKanbanBoard(@RequestParam UUID projectId) {
+    public ResponseEntity<BaseResponse> getKanbanBoard(@RequestParam(required = false) UUID projectId) {
         return ResponseEntity.ok(taskService.getKanbanBoard(projectId));
     }
 

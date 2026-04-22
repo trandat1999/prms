@@ -62,6 +62,10 @@
         <span nz-icon nzType="search"></span>
         {{ 'resourceAllocation.list.searchButton' | translate }}
       </button>
+      <button nz-button nzType="default" (click)="onExportExcel()" [nzLoading]="exportingExcel">
+        <span nz-icon nzType="download"></span>
+        {{ 'resourceAllocation.list.exportExcelButton' | translate }}
+      </button>
     </div>
   </div>
 
@@ -127,7 +131,7 @@
         <nz-spin nzSimple></nz-spin>
       </div>
     } @else {
-      <div class="row g-3">
+      <div class="row g-3" [formGroup]="modalForm">
         <div class="col-md-12">
           <app-input
             label="{{ 'resourceAllocation.fields.user' | translate }}"
@@ -141,7 +145,7 @@
             bindValue="id"
             [allowClear]="true"
             [placeHolder]="'resourceAllocation.form.userPlaceholder' | translate"
-            [(ngModel)]="form.userId"
+            formControlName="userId"
           ></app-input>
         </div>
         <div class="col-md-6">
@@ -158,7 +162,7 @@
             bindValue="paramValue"
             [allowClear]="true"
             [placeHolder]="'resourceAllocation.form.rolePlaceholder' | translate"
-            [(ngModel)]="form.role"
+            formControlName="role"
           ></app-input>
         </div>
         <div class="col-md-6">
@@ -170,7 +174,7 @@
             dateTimeFormat="MM/yyyy"
             [dateMode]="'month'"
             [placeHolder]="'resourceAllocation.form.monthPlaceholder' | translate"
-            [(ngModel)]="form.month"
+            formControlName="month"
           ></app-input>
         </div>
         <div class="col-md-4">
@@ -183,7 +187,7 @@
             [max]="100"
             [step]="1"
             [placeHolder]="'resourceAllocation.form.percentPlaceholder' | translate"
-            [(ngModel)]="form.allocationPercent"
+            formControlName="allocationPercent"
           ></app-input>
         </div>
         <div class="col-md-4">
@@ -193,7 +197,7 @@
             [inputSpan]="24"
             type="date"
             [allowClear]="true"
-            [(ngModel)]="form.startDate"
+            formControlName="startDate"
           ></app-input>
         </div>
         <div class="col-md-4">
@@ -203,7 +207,7 @@
             [inputSpan]="24"
             type="date"
             [allowClear]="true"
-            [(ngModel)]="form.endDate"
+            formControlName="endDate"
           ></app-input>
         </div>
       </div>

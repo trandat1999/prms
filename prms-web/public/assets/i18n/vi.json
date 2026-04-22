@@ -29,7 +29,8 @@
     "resourceAllocation": "Phân bổ nguồn lực",
     "employeeOt": "Đăng ký OT",
     "kanban": "Kanban",
-    "report": "Báo cáo"
+    "report": "Báo cáo",
+    "projectTeam": "Thành viên dự án"
   },
   "dashboard": {
     "title": "Dashboard PRMS",
@@ -130,7 +131,9 @@
     "english": "English",
     "vietnamese": "Vietnamese",
     "profile": "Profile",
-    "logout": "Logout"
+    "logout": "Logout",
+    "notificationsLoading": "Đang tải…",
+    "notificationsEmpty": "Không có thông báo"
   },
   "project": {
     "list": {
@@ -153,7 +156,8 @@
     },
     "actions": {
       "view": "Xem",
-      "tasks": "Công việc"
+      "tasks": "Công việc",
+      "team": "Thành viên"
     },
     "tasks": {
       "title": "Công việc",
@@ -161,6 +165,57 @@
     },
     "view": {
       "title": "Chi tiết dự án"
+    }
+  },
+  "projectMember": {
+    "title": "Thành viên dự án",
+    "forProject": "Dự án",
+    "list": {
+      "searchPlaceholder": "Tìm theo user hoặc project",
+      "rolePlaceholder": "Vai trò",
+      "activePlaceholder": "Trạng thái",
+      "searchButton": "Tìm kiếm"
+    },
+    "fields": {
+      "user": "Thành viên",
+      "role": "Vai trò",
+      "allocationPercent": "% phân bổ",
+      "isLead": "Lead",
+      "active": "Trạng thái",
+      "startDate": "Ngày bắt đầu",
+      "endDate": "Ngày kết thúc"
+    },
+    "actions": {
+      "view": "Xem"
+    },
+    "form": {
+      "createTitle": "Thêm thành viên",
+      "editTitle": "Sửa thành viên",
+      "userPlaceholder": "Tìm người dùng",
+      "rolePlaceholder": "Chọn vai trò",
+      "percentPlaceholder": "0–100"
+    },
+    "view": {
+      "title": "Chi tiết thành viên"
+    },
+    "labels": {
+      "yes": "Có",
+      "no": "Không",
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "messages": {
+      "missingProjectId": "Thiếu mã dự án.",
+      "missingId": "Thiếu mã thành viên.",
+      "loadFailed": "Không tải được thành viên.",
+      "confirmDeleteTitle": "Xác nhận xoá",
+      "confirmDeleteContent": "Bạn có chắc muốn xoá \"{{label}}\"?",
+      "deleteFailed": "Không xoá được.",
+      "invalidTitle": "Không hợp lệ",
+      "userRequired": "Vui lòng chọn thành viên.",
+      "roleRequired": "Vui lòng chọn vai trò.",
+      "percentInvalid": "% phân bổ phải từ 0 đến 100.",
+      "dateRangeInvalid": "Ngày kết thúc phải sau hoặc trùng ngày bắt đầu."
     }
   },
   "user": {
@@ -250,6 +305,13 @@
       "name": "Tên công việc",
       "project": "Dự án",
       "assigned": "Người phụ trách",
+      "reporter": "Người yêu cầu",
+      "reviewer": "Người review",
+      "parentTask": "Công việc cha",
+      "dueDate": "Hạn hoàn thành",
+      "blockedReason": "Lý do tắc nghẽn",
+      "taskCategory": "Phân loại",
+      "storyPoint": "Story point",
       "status": "Trạng thái",
       "priority": "Ưu tiên",
       "type": "Loại",
@@ -271,6 +333,14 @@
       "projectIdPlaceholder": "Project id (UUID)",
       "projectPlaceholder": "Tìm dự án theo mã hoặc tên",
       "assignedPlaceholder": "Tìm theo tên/email/username",
+      "projectMemberPlaceholder": "Tìm thành viên trong dự án",
+      "reporterPlaceholder": "Người yêu cầu (thành viên dự án nếu đã chọn dự án)",
+      "reviewerPlaceholder": "Người review (thành viên dự án nếu đã chọn dự án)",
+      "parentTaskPlaceholder": "Tìm mã công việc trong dự án",
+      "dueDatePlaceholder": "Ngày giờ hạn",
+      "taskCategoryPlaceholder": "vd: FEATURE, BUG",
+      "storyPointPlaceholder": "Điểm",
+      "blockedReasonPlaceholder": "Lý do khi bị chặn / chờ",
       "statusPlaceholder": "Chọn trạng thái",
       "priorityPlaceholder": "Chọn ưu tiên",
       "labelPlaceholder": "Nhãn",
@@ -294,6 +364,20 @@
       "createdBy": "Người thực hiện",
       "createdDate": "Thời gian"
     },
+    "checklist": {
+      "title": "Checklist công việc",
+      "addRow": "Thêm bước",
+      "colDone": "Xong",
+      "colTitle": "Nội dung bước",
+      "colHours": "Giờ ước tính",
+      "empty": "Chưa có bước nào trong checklist.",
+      "sumHint": "Tổng giờ từ checklist",
+      "titleRequired": "Mỗi bước có giờ hoặc đánh dấu xong cần có tiêu đề."
+    },
+    "predecessors": {
+      "title": "Công việc tiên quyết (phải Done trước khi bắt đầu)",
+      "placeholder": "Chọn các công việc phải hoàn thành trước"
+    },
     "messages": {
       "missingId": "Thiếu mã công việc.",
       "loadFailed": "Không tải được công việc.",
@@ -313,7 +397,8 @@
       "userPlaceholder": "Người dùng",
       "rolePlaceholder": "Vai trò",
       "monthPlaceholder": "Tháng",
-      "searchButton": "Tìm kiếm"
+      "searchButton": "Tìm kiếm",
+      "exportExcelButton": "Xuất Excel"
     },
     "fields": {
       "user": "Nhân sự",
@@ -348,7 +433,8 @@
       "roleRequired": "Vui lòng chọn vai trò.",
       "monthRequired": "Vui lòng chọn tháng.",
       "percentInvalid": "% phân bổ phải từ 0 đến 100.",
-      "dateRangeInvalid": "Ngày kết thúc phải sau hoặc trùng ngày bắt đầu."
+      "dateRangeInvalid": "Ngày kết thúc phải sau hoặc trùng ngày bắt đầu.",
+      "exportMonthRequired": "Vui lòng chọn tháng trong bộ lọc trước khi xuất Excel."
     }
   },
   "employeeOt": {
@@ -428,7 +514,8 @@
     "load": "Tải",
     "saving": "Đang lưu...",
     "messages": {
-      "projectRequired": "Vui lòng chọn dự án."
+      "projectRequired": "Vui lòng chọn dự án.",
+      "savePrerequisite": "Không thể chuyển công việc: cần hoàn thành các công việc tiên quyết trước."
     }
   }
 }

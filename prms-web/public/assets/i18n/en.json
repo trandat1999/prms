@@ -29,7 +29,8 @@
     "resourceAllocation": "Resource allocation",
     "employeeOt": "Employee OT",
     "kanban": "Kanban",
-    "report": "Report"
+    "report": "Report",
+    "projectTeam": "Project Team"
   },
   "dashboard": {
     "title": "PRMS Dashboard",
@@ -141,7 +142,9 @@
     "english": "English",
     "vietnamese": "Vietnamese",
     "profile": "Profile",
-    "logout": "Logout"
+    "logout": "Logout",
+    "notificationsLoading": "Loading…",
+    "notificationsEmpty": "No notifications"
   },
   "auth": {
     "username": "Username",
@@ -175,7 +178,8 @@
     },
     "actions": {
       "view": "View",
-      "tasks": "Tasks"
+      "tasks": "Tasks",
+      "team": "Team"
     },
     "tasks": {
       "title": "Tasks",
@@ -183,6 +187,57 @@
     },
     "view": {
       "title": "Project detail"
+    }
+  },
+  "projectMember": {
+    "title": "Project Team",
+    "forProject": "Project",
+    "list": {
+      "searchPlaceholder": "Search by user or project",
+      "rolePlaceholder": "Role",
+      "activePlaceholder": "Status",
+      "searchButton": "Search"
+    },
+    "fields": {
+      "user": "Member",
+      "role": "Role",
+      "allocationPercent": "Allocation %",
+      "isLead": "Lead",
+      "active": "Status",
+      "startDate": "Start date",
+      "endDate": "End date"
+    },
+    "actions": {
+      "view": "View"
+    },
+    "form": {
+      "createTitle": "Add member",
+      "editTitle": "Edit member",
+      "userPlaceholder": "Search user",
+      "rolePlaceholder": "Select role",
+      "percentPlaceholder": "0-100"
+    },
+    "view": {
+      "title": "Member detail"
+    },
+    "labels": {
+      "yes": "Yes",
+      "no": "No",
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "messages": {
+      "missingProjectId": "Missing project id.",
+      "missingId": "Missing member id.",
+      "loadFailed": "Unable to load member.",
+      "confirmDeleteTitle": "Confirm delete",
+      "confirmDeleteContent": "Are you sure you want to delete \"{{label}}\"?",
+      "deleteFailed": "Unable to delete.",
+      "invalidTitle": "Invalid data",
+      "userRequired": "Please select a member.",
+      "roleRequired": "Please select a role.",
+      "percentInvalid": "Allocation percent must be between 0 and 100.",
+      "dateRangeInvalid": "End date must be after or equal to start date."
     }
   },
   "user": {
@@ -272,6 +327,13 @@
       "name": "Name",
       "project": "Project",
       "assigned": "Assignee",
+      "reporter": "Reporter",
+      "reviewer": "Reviewer",
+      "parentTask": "Parent task",
+      "dueDate": "Due date",
+      "blockedReason": "Blocked reason",
+      "taskCategory": "Category",
+      "storyPoint": "Story points",
       "status": "Status",
       "priority": "Priority",
       "type": "Type",
@@ -293,6 +355,14 @@
       "projectIdPlaceholder": "Project id (UUID)",
       "projectPlaceholder": "Search project by code or name",
       "assignedPlaceholder": "Search by name/email/username",
+      "projectMemberPlaceholder": "Search project member",
+      "reporterPlaceholder": "Reporter (project member if project selected)",
+      "reviewerPlaceholder": "Reviewer (project member if project selected)",
+      "parentTaskPlaceholder": "Search task code in this project",
+      "dueDatePlaceholder": "Due date & time",
+      "taskCategoryPlaceholder": "e.g. FEATURE, BUG",
+      "storyPointPlaceholder": "Points",
+      "blockedReasonPlaceholder": "Reason when blocked / waiting",
       "statusPlaceholder": "Select status",
       "priorityPlaceholder": "Select priority",
       "labelPlaceholder": "Label",
@@ -316,6 +386,20 @@
       "createdBy": "By",
       "createdDate": "At"
     },
+    "checklist": {
+      "title": "Work checklist",
+      "addRow": "Add item",
+      "colDone": "Done",
+      "colTitle": "Step",
+      "colHours": "Est. hours",
+      "empty": "No checklist items yet.",
+      "sumHint": "Total from checklist",
+      "titleRequired": "Each checklist item with hours or marked done needs a title."
+    },
+    "predecessors": {
+      "title": "Prerequisite tasks (must be Done before you start)",
+      "placeholder": "Select tasks that must finish first"
+    },
     "messages": {
       "missingId": "Missing id.",
       "loadFailed": "Cannot load task.",
@@ -335,7 +419,8 @@
       "userPlaceholder": "User",
       "rolePlaceholder": "Role",
       "monthPlaceholder": "Month",
-      "searchButton": "Search"
+      "searchButton": "Search",
+      "exportExcelButton": "Export Excel"
     },
     "fields": {
       "user": "User",
@@ -370,7 +455,8 @@
       "roleRequired": "Please select a role.",
       "monthRequired": "Please select a month.",
       "percentInvalid": "Allocation % must be between 0 and 100.",
-      "dateRangeInvalid": "End date must be on or after start date."
+      "dateRangeInvalid": "End date must be on or after start date.",
+      "exportMonthRequired": "Select the month filter before exporting Excel."
     }
   },
   "employeeOt": {
@@ -450,7 +536,8 @@
     "load": "Load",
     "saving": "Saving...",
     "messages": {
-      "projectRequired": "Please select a project."
+      "projectRequired": "Please select a project.",
+      "savePrerequisite": "Cannot move task: prerequisite tasks must be completed first."
     }
   }
 }

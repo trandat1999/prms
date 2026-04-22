@@ -100,6 +100,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (StringUtils.hasText(token) && token.startsWith("Bearer ")) {
             return token.substring(7);
         }
+        // SSE/EventSource không set được Authorization header; cho phép truyền token qua query param cho stream endpoint.
+        String uri = arg0.getRequestURI();
+        if ("/api/v1/notifications/stream".equals(uri)) {
+            String qp = arg0.getParameter("accessToken");
+            if (StringUtils.hasText(qp)) {
+                return qp;
+            }
+        }
         return null;
     }
 }

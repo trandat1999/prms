@@ -17,4 +17,11 @@ public interface ResourceAllocationService {
     BaseResponse getById(UUID id);
 
     BaseResponse getPage(ResourceAllocationSearchRequest request);
+
+    /**
+     * Xuất Excel theo template; chỉ lọc theo tháng của {@code request.getMonth()} (bắt buộc).
+     *
+     * @throws IllegalArgumentException nếu tháng null
+     */
+    byte[] exportResourceEmployeeExcel(ResourceAllocationSearchRequest request);
 }

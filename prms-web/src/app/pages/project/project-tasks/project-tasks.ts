@@ -2,7 +2,7 @@ import { CommonModule, DatePipe } from '@angular/common';
 import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
-import { FormsModule } from '@angular/forms';
+import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { NzButtonComponent } from 'ng-zorro-antd/button';
 import { NzIconDirective } from 'ng-zorro-antd/icon';
@@ -13,25 +13,21 @@ import { NzTableModule } from 'ng-zorro-antd/table';
 import { NzTagComponent } from 'ng-zorro-antd/tag';
 import { InputCommon } from '../../../shared/input/input';
 import { ApiResponse } from '../../../shared/utils/api-response';
+import {
+  applyServerFieldErrorsToFormGroup,
+  clearServerErrorsOnFormGroup,
+  parseServerFieldErrorMap,
+  SERVER_FORM_ERROR_KEY,
+} from '../../../shared/utils/form-server-errors';
 import { Page } from '../models/page.model';
-import { Task, TaskLog, TaskWritePayload } from '../../management/tasks/models/task.model';
-import { TaskSearchRequest } from '../../management/tasks/models/task-search.request';
-import { TaskStatus } from '../../management/tasks/models/task.types';
-import { TaskService } from '../../management/tasks/services/task.service';
+import { Task, TaskChecklistItem, TaskLog, TaskWritePayload } from '../models/task.model';
+import { TaskSearchRequest } from '../models/task-search.request';
+import { TaskStatus } from '../models/task.types';
+import { TaskService } from '../services/task.service';
+import { StoreService } from '../../../core/services/store-service';
+import { ProjectService } from '../services/project.service';
 
-type TaskFormState = {
-  code: string;
-  name: string;
-  shortDescription: string;
-  description: string;
-  status: TaskStatus | null;
-  priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT' | null;
-  estimatedHours: number | null;
-  actualHours: number | null;
-  assignedId: string | null;
-  label: string;
-  type: string | null;
-};
+type TaskChecklistRow = { title: string; estimatedHours: number | null; checked: boolean };
 
 @Component({
   selector: 'app-project-tasks',
@@ -39,6 +35,7 @@ type TaskFormState = {
     CommonModule,
     DatePipe,
     FormsModule,
+    ReactiveFormsModule,
     NzTableModule,
     NzTagComponent,
     NzButtonComponent,
@@ -76,7 +73,26 @@ export class ProjectTasks implements OnInit {
   editingId: string | null = null;
   submitting = false;
   loading = false;
-  form: TaskFormState = this.emptyForm();
+  checklistRows: TaskChecklistRow[] = [];
+  readonly taskModalForm = new FormGroup({
+    code: new FormControl<string>(''),
+    name: new FormControl<string>(''),
+    shortDescription: new FormControl<string>(''),
+    description: new FormControl<string>(''),
+    status: new FormControl<TaskStatus | null>('TODO'),
+    priority: new FormControl<'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT' | null>('MEDIUM'),
+    estimatedHours: new FormControl<number | null>(null),
+    actualHours: new FormControl<number | null>(null),
+    assignedId: new FormControl<string | null>(null),
+    label: new FormControl<string>(''),
+    type: new FormControl<string | null>(null),
+    predecessorIds: new FormControl<string[]>([]),
+    /** Chỉ để map lỗi BE field `checklists` (không bind UI). */
+    checklists: new FormControl<unknown>(null),
+  });
+  readonly assignModalForm = new FormGroup({
+    assignedId: new FormControl<string | null>(null),
+  });
 
   /** Modal xem + log */
   viewVisible = false;
@@ -89,13 +105,19 @@ export class ProjectTasks implements OnInit {
   assignVisible = false;
   assignSubmitting = false;
   assignTaskId: string | null = null;
-  assignUserId: string | null = null;
 
   readonly userAutocompleteUrl = '/api/v1/autocomplete/users';
   readonly labelAppParamUrl = '/api/v1/app-params/page';
   readonly labelAppParamFilters = { paramGroup: 'MODULE_TASK', paramType: 'TASK_LABLE' };
   readonly typeAppParamUrl = '/api/v1/app-params/page';
   readonly typeAppParamFilters = { paramGroup: 'MODULE_TASK', paramType: 'TASK_TYPE' };
+
+  /** Ứng viên cho multiselect tiên quyết (cùng dự án) */
+  predecessorTaskCandidates: Task[] = [];
+
+  /** Chỉ PM (PROJECT_MANAGER) mới được tạo/sửa/xoá/assign */
+  isProjectManager = false;
+  private currentUserId: string | null = null;
 
   readonly statusOptions: { label: string; value: TaskStatus }[] = [
     { label: 'Todo', value: 'TODO' },
@@ -116,10 +138,20 @@ export class ProjectTasks implements OnInit {
     private service: TaskService,
     private translate: TranslateService,
     private notification: NzNotificationService,
-    private modal: NzModalService
+    private modal: NzModalService,
+    private store: StoreService,
+    private projectService: ProjectService
   ) {}
 
   ngOnInit(): void {
+    this.store
+      .getCurrentUser()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((u) => {
+        this.currentUserId = u?.id ?? null;
+        this.resolveProjectRole();
+      });
+
     this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((pm) => {
       const id = pm.get('projectId');
       if (!id) {
@@ -138,6 +170,8 @@ export class ProjectTasks implements OnInit {
         this.displayProjectName = name ? name : null;
         this.effectiveProjectId = id;
         this.pageIndex = 1;
+        this.loadPredecessorCandidates();
+        this.resolveProjectRole();
       }
       this.fetch();
     });
@@ -166,14 +200,18 @@ export class ProjectTasks implements OnInit {
   }
 
   onCreate(): void {
+    if (!this.isProjectManager) return;
     this.formMode = 'create';
     this.editingId = null;
     this.loading = false;
-    this.form = this.emptyForm();
+    this.resetTaskModalForm();
+    this.loadPredecessorCandidates();
+    clearServerErrorsOnFormGroup(this.taskModalForm);
     this.formVisible = true;
   }
 
   onEdit(row: Task): void {
+    if (!this.isProjectManager) return;
     const id = row?.id;
     if (!id) {
       this.notification.warning(this.translate.instant('common.error'), this.translate.instant('task.messages.missingId'));
@@ -183,7 +221,9 @@ export class ProjectTasks implements OnInit {
     this.editingId = id;
     this.formVisible = true;
     this.loading = true;
-    this.form = this.emptyForm();
+    this.resetTaskModalForm();
+    clearServerErrorsOnFormGroup(this.taskModalForm);
+    this.loadPredecessorCandidates();
     this.service.getById(id).subscribe({
       next: ({ raw, task }) => {
         this.loading = false;
@@ -227,6 +267,7 @@ export class ProjectTasks implements OnInit {
   }
 
   onDelete(row: Task): void {
+    if (!this.isProjectManager) return;
     const id = row?.id;
     if (!id) {
       this.notification.warning(this.translate.instant('common.error'), this.translate.instant('task.messages.missingId'));
@@ -259,10 +300,12 @@ export class ProjectTasks implements OnInit {
   }
 
   onOpenAssign(row: Task): void {
+    if (!this.isProjectManager) return;
     const id = row?.id;
     if (!id) return;
     this.assignTaskId = id;
-    this.assignUserId = row.assignedId ?? null;
+    this.assignModalForm.reset({ assignedId: row.assignedId ?? null });
+    clearServerErrorsOnFormGroup(this.assignModalForm);
     this.assignVisible = true;
   }
 
@@ -270,12 +313,13 @@ export class ProjectTasks implements OnInit {
     this.assignVisible = false;
     this.assignSubmitting = false;
     this.assignTaskId = null;
-    this.assignUserId = null;
+    clearServerErrorsOnFormGroup(this.assignModalForm);
   }
 
   saveAssign(): void {
     const id = this.assignTaskId;
-    const assignedId = this.assignUserId;
+    const assignedId = this.assignModalForm.get('assignedId')?.value;
+    clearServerErrorsOnFormGroup(this.assignModalForm);
     if (!id || !assignedId) {
       this.notification.warning(this.translate.instant('task.messages.invalidTitle'), this.translate.instant('task.messages.assigneeRequired'));
       return;
@@ -290,7 +334,7 @@ export class ProjectTasks implements OnInit {
           this.fetch();
           return;
         }
-        this.handleWriteError(raw);
+        this.handleWriteError(raw, 'assign');
       },
       error: () => (this.assignSubmitting = false),
     });
@@ -298,6 +342,7 @@ export class ProjectTasks implements OnInit {
 
   closeModal(): void {
     this.formVisible = false;
+    clearServerErrorsOnFormGroup(this.taskModalForm);
   }
 
   closeView(): void {
@@ -307,22 +352,28 @@ export class ProjectTasks implements OnInit {
   }
 
   save(): void {
+    if (!this.isProjectManager) return;
     if (this.formMode === 'edit' && this.loading) return;
+    clearServerErrorsOnFormGroup(this.taskModalForm);
     if (!this.validate()) return;
+    this.syncEstimatedFromChecklist();
 
+    const f = this.taskModalForm.getRawValue();
     const payload: TaskWritePayload = {
-      code: this.form.code.trim(),
-      name: this.form.name.trim(),
-      shortDescription: this.form.shortDescription?.trim() ? this.form.shortDescription.trim() : null,
-      description: this.form.description?.trim() ? this.form.description.trim() : null,
+      code: f.code!.trim(),
+      name: f.name!.trim(),
+      shortDescription: f.shortDescription?.trim() ? f.shortDescription.trim() : null,
+      description: f.description?.trim() ? f.description.trim() : null,
       projectId: this.effectiveProjectId,
-      status: this.form.status,
-      priority: this.form.priority,
-      type: this.form.type?.trim() ? this.form.type.trim() : null,
-      estimatedHours: this.form.estimatedHours,
-      actualHours: this.form.actualHours,
-      assignedId: this.form.assignedId,
-      label: this.form.label?.trim() ? this.form.label.trim() : null,
+      status: f.status,
+      priority: f.priority,
+      type: f.type?.trim() ? f.type.trim() : null,
+      estimatedHours: f.estimatedHours,
+      actualHours: f.actualHours,
+      assignedId: f.assignedId,
+      label: f.label?.trim() ? f.label.trim() : null,
+      checklists: this.buildChecklistPayload(),
+      predecessorTaskIds: [...(f.predecessorIds ?? [])],
     };
 
     if (this.formMode === 'create') {
@@ -332,6 +383,7 @@ export class ProjectTasks implements OnInit {
           this.submitting = false;
           if (raw?.code === 201) {
             this.notification.success(this.translate.instant('common.button.done'), raw?.message ?? '');
+            clearServerErrorsOnFormGroup(this.taskModalForm);
             this.formVisible = false;
             this.fetch();
             return;
@@ -354,6 +406,7 @@ export class ProjectTasks implements OnInit {
         this.submitting = false;
         if (raw?.code === 200) {
           this.notification.success(this.translate.instant('common.button.done'), raw?.message ?? '');
+          clearServerErrorsOnFormGroup(this.taskModalForm);
           this.formVisible = false;
           this.fetch();
           return;
@@ -389,6 +442,23 @@ export class ProjectTasks implements OnInit {
     });
   }
 
+  private resolveProjectRole(): void {
+    if (!this.effectiveProjectId || !this.currentUserId) {
+      this.isProjectManager = false;
+      return;
+    }
+    this.projectService.getById(this.effectiveProjectId).subscribe({
+      next: ({ raw, project }) => {
+        if (raw?.code === 200 && project?.managerId) {
+          this.isProjectManager = project.managerId === this.currentUserId;
+          return;
+        }
+        this.isProjectManager = false;
+      },
+      error: () => (this.isProjectManager = false),
+    });
+  }
+
   private fetchLogs(taskId: string): void {
     this.logsLoading = true;
     this.service.getLogs(taskId).subscribe({
@@ -402,8 +472,78 @@ export class ProjectTasks implements OnInit {
     });
   }
 
-  private emptyForm(): TaskFormState {
-    return {
+  get checklistHoursSum(): number {
+    return (this.checklistRows ?? []).reduce((s, c) => s + (Number(c?.estimatedHours) || 0), 0);
+  }
+
+  get taskChecklistServerError(): string | null {
+    const err = this.taskModalForm.controls.checklists.errors;
+    const msg = err?.[SERVER_FORM_ERROR_KEY];
+    return typeof msg === 'string' && msg.trim() ? msg : null;
+  }
+
+  get predecessorSelectItems(): { id: string; label: string }[] {
+    return (this.predecessorTaskCandidates ?? [])
+      .filter((t) => t.id && t.id !== this.editingId)
+      .map((t) => ({
+        id: t.id as string,
+        label: `${t.code ?? ''} — ${t.name ?? ''}`.trim(),
+      }));
+  }
+
+  addChecklistRow(): void {
+    this.checklistRows = [...(this.checklistRows ?? []), { title: '', estimatedHours: null, checked: false }];
+  }
+
+  removeChecklistRow(index: number): void {
+    const next = [...(this.checklistRows ?? [])];
+    next.splice(index, 1);
+    this.checklistRows = next;
+    this.syncEstimatedFromChecklist();
+  }
+
+  onChecklistChanged(): void {
+    this.syncEstimatedFromChecklist();
+  }
+
+  private loadPredecessorCandidates(): void {
+    if (!this.effectiveProjectId) {
+      this.predecessorTaskCandidates = [];
+      return;
+    }
+    this.service
+      .getPage({
+        projectId: this.effectiveProjectId,
+        pageIndex: 0,
+        pageSize: 500,
+        voided: false,
+      })
+      .subscribe(({ page }) => {
+        this.predecessorTaskCandidates = page?.content ?? [];
+      });
+  }
+
+  private syncEstimatedFromChecklist(): void {
+    const s = this.checklistHoursSum;
+    if (s > 0) {
+      this.taskModalForm.patchValue({ estimatedHours: s });
+    }
+  }
+
+  private buildChecklistPayload(): TaskChecklistItem[] {
+    return (this.checklistRows ?? [])
+      .map((row, i) => ({
+        title: row.title?.trim() ?? '',
+        checked: !!row.checked,
+        sortOrder: i,
+        estimatedHours: row.estimatedHours != null ? Number(row.estimatedHours) : null,
+      }))
+      .filter((x) => x.title.length > 0);
+  }
+
+  private resetTaskModalForm(): void {
+    this.checklistRows = [];
+    this.taskModalForm.reset({
       code: '',
       name: '',
       shortDescription: '',
@@ -415,43 +555,83 @@ export class ProjectTasks implements OnInit {
       actualHours: null,
       assignedId: null,
       label: '',
-    };
+      predecessorIds: [],
+      checklists: null,
+    });
   }
 
   private applyToForm(t: Task): void {
-    this.form = {
+    const predIds =
+      (t.predecessorTaskIds?.length ? t.predecessorTaskIds : t.predecessors?.map((p) => p.id).filter(Boolean)) ?? [];
+    this.taskModalForm.patchValue({
       code: t.code ?? '',
       name: t.name ?? '',
       shortDescription: (t.shortDescription ?? '') as string,
       description: (t.description ?? '') as string,
       status: (t.status ?? 'TODO') as TaskStatus,
-      priority: (t.priority ?? 'MEDIUM') as any,
+      priority: (t.priority ?? 'MEDIUM') as 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT',
       type: (t.type ?? null) as string | null,
       estimatedHours: t.estimatedHours ?? null,
       actualHours: t.actualHours ?? null,
       assignedId: (t.assignedId ?? null) as string | null,
       label: (t.label ?? '') as string,
-    };
+      predecessorIds: predIds as string[],
+      checklists: null,
+    });
+    this.checklistRows = (t.checklists ?? []).map((c) => ({
+      title: c.title ?? '',
+      estimatedHours: c.estimatedHours ?? null,
+      checked: !!c.checked,
+    }));
   }
 
   private validate(): boolean {
-    if (!this.form.code?.trim()) {
+    const f = this.taskModalForm.getRawValue();
+    if (!f.code?.trim()) {
       this.notification.warning(this.translate.instant('task.messages.invalidTitle'), this.translate.instant('task.messages.codeRequired'));
       return false;
     }
-    if (!this.form.name?.trim()) {
+    if (!f.name?.trim()) {
       this.notification.warning(this.translate.instant('task.messages.invalidTitle'), this.translate.instant('task.messages.nameRequired'));
       return false;
+    }
+    for (const row of this.checklistRows ?? []) {
+      if (!row) continue;
+      const hasTitle = !!row.title?.trim();
+      const hasHours = row.estimatedHours != null && !Number.isNaN(Number(row.estimatedHours));
+      if ((hasHours || row.checked) && !hasTitle) {
+        this.notification.warning(
+          this.translate.instant('task.messages.invalidTitle'),
+          this.translate.instant('task.checklist.titleRequired')
+        );
+        return false;
+      }
     }
     return true;
   }
 
-  private handleWriteError(raw: ApiResponse | undefined): void {
-    const errBody = raw?.body;
-    if (raw?.code === 400 && errBody && typeof errBody === 'object' && !Array.isArray(errBody)) {
-      const msg = Object.values(errBody as Record<string, string>).filter(Boolean).join(' ');
-      this.notification.warning(this.translate.instant('task.messages.invalidTitle'), msg || raw?.message || '');
+  private handleWriteError(raw: ApiResponse | undefined, target: 'task' | 'assign' = 'task'): void {
+    const map = parseServerFieldErrorMap(raw);
+    if (map) {
+      if (target === 'assign') {
+        const normalized = { ...map };
+        if (!normalized['assignedId'] && normalized['assignUserId']) {
+          normalized['assignedId'] = normalized['assignUserId'];
+        }
+        applyServerFieldErrorsToFormGroup(this.assignModalForm, normalized);
+      } else {
+        const normalized = { ...map };
+        if (!normalized['predecessorIds'] && normalized['predecessorTaskIds']) {
+          normalized['predecessorIds'] = normalized['predecessorTaskIds'];
+        }
+        applyServerFieldErrorsToFormGroup(this.taskModalForm, normalized);
+      }
       return;
+    }
+    if (target === 'assign') {
+      clearServerErrorsOnFormGroup(this.assignModalForm);
+    } else {
+      clearServerErrorsOnFormGroup(this.taskModalForm);
     }
     this.notification.warning(this.translate.instant('common.error'), raw?.message ?? '');
   }

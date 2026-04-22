@@ -19,6 +19,7 @@ import lombok.experimental.FieldDefaults;
 import lombok.experimental.SuperBuilder;
 
 import java.math.BigDecimal;
+import java.util.Date;
 import java.util.UUID;
 
 @Entity
@@ -61,6 +62,45 @@ public class Task extends BaseInformation {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "assigned_id", insertable = false, updatable = false)
     User assigned;
+
+    @Column(name = "reporter_id")
+    UUID reporterId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "reporter_id", insertable = false, updatable = false)
+    User reporter;
+
+    @Column(name = "reviewer_id")
+    UUID reviewerId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "reviewer_id", insertable = false, updatable = false)
+    User reviewer;
+
+    @Column(name = "parent_task_id")
+    UUID parentTaskId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_task_id", insertable = false, updatable = false)
+    Task parentTask;
+
+    @Column(name = "due_date")
+    Date dueDate;
+
+    @Column(name = "started_at")
+    Date startedAt;
+
+    @Column(name = "completed_at")
+    Date completedAt;
+
+    @Column(name = "blocked_reason")
+    String blockedReason;
+
+    @Column(name = "task_category", length = 50)
+    String taskCategory;
+
+    @Column(name = "story_point")
+    Integer storyPoint;
 
     @Column(name = "label", length = 50)
     String label;

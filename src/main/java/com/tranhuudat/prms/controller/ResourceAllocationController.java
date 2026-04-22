@@ -4,13 +4,20 @@ import com.tranhuudat.prms.dto.BaseResponse;
 import com.tranhuudat.prms.dto.resource_allocation.ResourceAllocationDto;
 import com.tranhuudat.prms.dto.resource_allocation.ResourceAllocationSearchRequest;
 import com.tranhuudat.prms.service.ResourceAllocationService;
+import com.tranhuudat.prms.util.DateUtil;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
+import java.nio.charset.StandardCharsets;
+import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
 @RestController
@@ -44,5 +51,26 @@ public class ResourceAllocationController {
     @PostMapping("/page")
     public ResponseEntity<BaseResponse> getPage(@RequestBody ResourceAllocationSearchRequest request) {
         return ResponseEntity.ok(resourceAllocationService.getPage(request));
+    }
+
+    @PostMapping(
+            value = "/export/excel",
+            produces = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    public ResponseEntity<byte[]> exportExcel(@RequestBody ResourceAllocationSearchRequest request) {
+        try {
+            byte[] body = resourceAllocationService.exportResourceEmployeeExcel(request);
+            String ym =
+                    DateUtil.toLocalDate(request.getMonth()).format(DateTimeFormatter.ofPattern("MM-yyyy"));
+            ContentDisposition disposition = ContentDisposition.attachment()
+                    .filename("phan-bo-nguon-luc-" + ym + ".xlsx", StandardCharsets.UTF_8)
+                    .build();
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, disposition.toString())
+                    .contentType(MediaType.parseMediaType(
+                            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                    .body(body);
+        } catch (IllegalArgumentException ex) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ex.getMessage());
+        }
     }
 }

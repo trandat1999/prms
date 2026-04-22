@@ -5,6 +5,7 @@ import com.tranhuudat.prms.dto.autocomplete.ProjectAutocompleteDto;
 import com.tranhuudat.prms.dto.project.ProjectDTO;
 import com.tranhuudat.prms.dto.project.ProjectSearchRequest;
 import com.tranhuudat.prms.entity.Project;
+import com.tranhuudat.prms.enums.ProjectStatusEnum;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.TypedQuery;
 import org.springframework.data.domain.Page;
@@ -80,6 +81,10 @@ public interface ProjectRepository extends JpaRepository<Project, UUID>, JpaSpec
                 where.add("(lower(entity.code) like :kw or lower(entity.name) like :kw)");
                 params.put("kw", "%" + request.getKeyword().trim().toLowerCase() + "%");
             }
+            if (Objects.nonNull(request.getProjectStatus())) {
+                where.add("entity.status = :st");
+                params.put("st", request.getProjectStatus());
+            }
         }
 
         String jpqlWhere = " where " + String.join(" and ", where);
@@ -100,5 +105,71 @@ public interface ProjectRepository extends JpaRepository<Project, UUID>, JpaSpec
         List<ProjectAutocompleteDto> content = query.getResultList();
         Long total = countQuery.getSingleResult();
         return new PageImpl<>(content, pageable, Objects.nonNull(total) ? total : 0L);
+    }
+
+    default Page<ProjectAutocompleteDto> autocompleteVisibleProjectsForUser(
+            EntityManager entityManager, AutocompleteSearchRequest request, Pageable pageable, UUID userId) {
+        String select =
+                "select new com.tranhuudat.prms.dto.autocomplete.ProjectAutocompleteDto(entity) from Project entity ";
+        String count = "select count(entity) from Project entity ";
+
+        List<String> where = new ArrayList<>();
+        Map<String, Object> params = new HashMap<>();
+        where.add("(entity.voided is null or entity.voided = false)");
+
+        if (Objects.nonNull(userId)) {
+            where.add("(entity.managerId = :uid or exists (select 1 from ProjectMember m "
+                    + "where m.projectId = entity.id and m.userId = :uid "
+                    + "and (m.voided is null or m.voided = false) and (m.active is null or m.active = true)))");
+            params.put("uid", userId);
+        }
+
+        if (Objects.nonNull(request)) {
+            if (request.getIds() != null && !request.getIds().isEmpty()) {
+                where.add("entity.id in :ids");
+                params.put("ids", request.getIds());
+            }
+            if (StringUtils.hasText(request.getKeyword())) {
+                where.add("(lower(entity.code) like :kw or lower(entity.name) like :kw)");
+                params.put("kw", "%" + request.getKeyword().trim().toLowerCase() + "%");
+            }
+            if (Objects.nonNull(request.getProjectStatus())) {
+                where.add("entity.status = :st");
+                params.put("st", request.getProjectStatus());
+            }
+        }
+
+        String jpqlWhere = " where " + String.join(" and ", where);
+        String orderBy = " order by entity.createdDate desc";
+
+        TypedQuery<ProjectAutocompleteDto> query =
+                entityManager.createQuery(select + jpqlWhere + orderBy, ProjectAutocompleteDto.class);
+        TypedQuery<Long> countQuery = entityManager.createQuery(count + jpqlWhere, Long.class);
+
+        for (Map.Entry<String, Object> e : params.entrySet()) {
+            query.setParameter(e.getKey(), e.getValue());
+            countQuery.setParameter(e.getKey(), e.getValue());
+        }
+
+        query.setFirstResult((int) pageable.getOffset());
+        query.setMaxResults(pageable.getPageSize());
+
+        List<ProjectAutocompleteDto> content = query.getResultList();
+        Long total = countQuery.getSingleResult();
+        return new PageImpl<>(content, pageable, Objects.nonNull(total) ? total : 0L);
+    }
+
+    default List<UUID> findVisibleProjectIdsForUser(
+            EntityManager entityManager, UUID userId, ProjectStatusEnum status) {
+        if (userId == null) return List.of();
+        String jpql = "select entity.id from Project entity where (entity.voided is null or entity.voided = false) "
+                + "and (:st is null or entity.status = :st) "
+                + "and (entity.managerId = :uid or exists (select 1 from ProjectMember m "
+                + "where m.projectId = entity.id and m.userId = :uid "
+                + "and (m.voided is null or m.voided = false) and (m.active is null or m.active = true)))";
+        TypedQuery<UUID> q = entityManager.createQuery(jpql, UUID.class);
+        q.setParameter("uid", userId);
+        q.setParameter("st", status);
+        return q.getResultList();
     }
 }

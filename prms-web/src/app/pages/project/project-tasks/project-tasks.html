@@ -45,10 +45,12 @@
     </div>
 
     <div class="d-flex align-items-center gap-2 justify-content-end">
-      <button nz-button nzType="primary" (click)="onCreate()">
-        <span nz-icon nzType="plus"></span>
-        {{ 'common.button.create' | translate }}
-      </button>
+      @if (isProjectManager) {
+        <button nz-button nzType="primary" (click)="onCreate()">
+          <span nz-icon nzType="plus"></span>
+          {{ 'common.button.create' | translate }}
+        </button>
+      }
       <button nz-button (click)="onSearch()">
         <span nz-icon nzType="search"></span>
         {{ 'task.list.searchButton' | translate }}
@@ -92,15 +94,17 @@
             <button nz-button nzType="text" (click)="onView(item)" [title]="'task.actions.view' | translate">
               <span nz-icon nzType="eye"></span>
             </button>
-            <button nz-button nzType="text" (click)="onOpenAssign(item)" [title]="'task.actions.assign' | translate">
-              <span nz-icon nzType="user-add"></span>
-            </button>
-            <button nz-button nzType="text" (click)="onEdit(item)" [title]="'common.button.edit' | translate">
-              <span nz-icon nzType="edit"></span>
-            </button>
-            <button nz-button nzType="text" (click)="onDelete(item)" [title]="'common.button.delete' | translate">
-              <span nz-icon nzType="delete"></span>
-            </button>
+            @if (isProjectManager) {
+              <button nz-button nzType="text" (click)="onOpenAssign(item)" [title]="'task.actions.assign' | translate">
+                <span nz-icon nzType="user-add"></span>
+              </button>
+              <button nz-button nzType="text" (click)="onEdit(item)" [title]="'common.button.edit' | translate">
+                <span nz-icon nzType="edit"></span>
+              </button>
+              <button nz-button nzType="text" (click)="onDelete(item)" [title]="'common.button.delete' | translate">
+                <span nz-icon nzType="delete"></span>
+              </button>
+            }
           </td>
         </tr>
       }
@@ -121,14 +125,14 @@
         <nz-spin nzSimple></nz-spin>
       </div>
     } @else {
-      <div class="row g-3">
+      <div class="row g-3" [formGroup]="taskModalForm">
         <div class="col-md-4">
           <app-input
             label="{{ 'task.fields.code' | translate }}"
             [labelSpan]="24"
             [inputSpan]="24"
             [placeHolder]="'task.form.codePlaceholder' | translate"
-            [(ngModel)]="form.code"
+            formControlName="code"
           ></app-input>
         </div>
         <div class="col-md-8">
@@ -137,7 +141,7 @@
             [labelSpan]="24"
             [inputSpan]="24"
             [placeHolder]="'task.form.namePlaceholder' | translate"
-            [(ngModel)]="form.name"
+            formControlName="name"
           ></app-input>
         </div>
         <div class="col-md-6">
@@ -153,7 +157,7 @@
             bindValue="id"
             [allowClear]="true"
             [placeHolder]="'task.form.assignedPlaceholder' | translate"
-            [(ngModel)]="form.assignedId"
+            formControlName="assignedId"
           ></app-input>
         </div>
         <div class="col-md-4">
@@ -167,7 +171,7 @@
             bindValue="value"
             [allowClear]="true"
             [placeHolder]="'task.form.statusPlaceholder' | translate"
-            [(ngModel)]="form.status"
+            formControlName="status"
           ></app-input>
         </div>
         <div class="col-md-4">
@@ -181,7 +185,7 @@
             bindValue="value"
             [allowClear]="true"
             [placeHolder]="'task.form.priorityPlaceholder' | translate"
-            [(ngModel)]="form.priority"
+            formControlName="priority"
           ></app-input>
         </div>
         <div class="col-md-4">
@@ -198,7 +202,7 @@
             bindValue="paramValue"
             [allowClear]="true"
             [placeHolder]="'task.form.labelPlaceholder' | translate"
-            [(ngModel)]="form.label"
+            formControlName="label"
           ></app-input>
         </div>
         <div class="col-md-4">
@@ -215,9 +219,18 @@
             bindValue="paramValue"
             [allowClear]="true"
             [placeHolder]="'task.form.typePlaceholder' | translate"
-            [(ngModel)]="form.type"
+            formControlName="type"
           ></app-input>
         </div>
+        @if (checklistHoursSum > 0) {
+          <div class="col-12">
+            <div class="alert alert-info py-2 small mb-0">
+              {{ 'task.checklist.sumHint' | translate }}:
+              <b>{{ checklistHoursSum }}</b>
+              ({{ 'task.fields.estimatedHours' | translate }})
+            </div>
+          </div>
+        }
         <div class="col-md-6">
           <app-input
             label="{{ 'task.fields.estimatedHours' | translate }}"
@@ -226,8 +239,9 @@
             type="number"
             [min]="0"
             [step]="0.5"
+            [isDisabled]="checklistHoursSum > 0"
             [placeHolder]="'task.form.estimatedHoursPlaceholder' | translate"
-            [(ngModel)]="form.estimatedHours"
+            formControlName="estimatedHours"
           ></app-input>
         </div>
         <div class="col-md-6">
@@ -239,7 +253,7 @@
             [min]="0"
             [step]="0.5"
             [placeHolder]="'task.form.actualHoursPlaceholder' | translate"
-            [(ngModel)]="form.actualHours"
+            formControlName="actualHours"
           ></app-input>
         </div>
         <div class="col-12">
@@ -248,7 +262,7 @@
             [labelSpan]="24"
             [inputSpan]="24"
             [placeHolder]="'task.form.shortDescriptionPlaceholder' | translate"
-            [(ngModel)]="form.shortDescription"
+            formControlName="shortDescription"
           ></app-input>
         </div>
         <div class="col-12">
@@ -259,7 +273,90 @@
             type="textarea"
             [textareaRows]="3"
             [placeHolder]="'task.form.descriptionPlaceholder' | translate"
-            [(ngModel)]="form.description"
+            formControlName="description"
+          ></app-input>
+        </div>
+
+        @if (taskChecklistServerError) {
+          <div class="col-12">
+            <div class="text-danger small">{{ taskChecklistServerError }}</div>
+          </div>
+        }
+        <div class="col-12">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="fw-semibold">{{ 'task.checklist.title' | translate }}</span>
+            <button nz-button nzType="dashed" nzSize="small" type="button" (click)="addChecklistRow()">
+              <span nz-icon nzType="plus"></span>
+              {{ 'task.checklist.addRow' | translate }}
+            </button>
+          </div>
+          <div class="table-responsive border rounded">
+            <table class="table table-sm mb-0 align-middle">
+              <thead>
+                <tr>
+                  <th style="width: 44px">{{ 'task.checklist.colDone' | translate }}</th>
+                  <th>{{ 'task.checklist.colTitle' | translate }}</th>
+                  <th style="width: 120px">{{ 'task.checklist.colHours' | translate }}</th>
+                  <th style="width: 48px"></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of checklistRows; track $index) {
+                  <tr>
+                    <td>
+                      <input
+                        type="checkbox"
+                        class="form-check-input"
+                        [(ngModel)]="row.checked"
+                        (ngModelChange)="onChecklistChanged()"
+                      />
+                    </td>
+                    <td>
+                      <input
+                        class="form-control form-control-sm"
+                        [(ngModel)]="row.title"
+                        (ngModelChange)="onChecklistChanged()"
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="number"
+                        class="form-control form-control-sm"
+                        [min]="0"
+                        [step]="0.25"
+                        [(ngModel)]="row.estimatedHours"
+                        (ngModelChange)="onChecklistChanged()"
+                      />
+                    </td>
+                    <td class="text-end">
+                      <button nz-button nzType="text" nzDanger type="button" (click)="removeChecklistRow($index)">
+                        <span nz-icon nzType="delete"></span>
+                      </button>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="4" class="text-muted small px-3 py-2">{{ 'task.checklist.empty' | translate }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="col-12">
+          <app-input
+            label="{{ 'task.predecessors.title' | translate }}"
+            [labelSpan]="24"
+            [inputSpan]="24"
+            type="select"
+            selectMode="multiple"
+            [items]="predecessorSelectItems"
+            bindLabel="label"
+            bindValue="id"
+            [allowClear]="true"
+            [placeHolder]="'task.predecessors.placeholder' | translate"
+            formControlName="predecessorIds"
           ></app-input>
         </div>
       </div>
@@ -282,7 +379,7 @@
   (nzOnCancel)="closeAssign()"
   [nzMaskClosable]="!assignSubmitting"
 >
-  <div *nzModalContent>
+  <div *nzModalContent [formGroup]="assignModalForm">
     <app-input
       label="{{ 'task.fields.assigned' | translate }}"
       [labelSpan]="24"
@@ -295,7 +392,7 @@
       bindValue="id"
       [allowClear]="true"
       [placeHolder]="'task.form.assignedPlaceholder' | translate"
-      [(ngModel)]="assignUserId"
+      formControlName="assignedId"
     ></app-input>
   </div>
   <ng-container *nzModalFooter>
@@ -332,7 +429,39 @@
         <dd class="col-sm-8">{{ viewDetail.assignedDisplay || '—' }}</dd>
         <dt class="col-sm-4 text-muted">{{ 'task.fields.status' | translate }}</dt>
         <dd class="col-sm-8">{{ statusLabel(viewDetail.status) }}</dd>
+        @if (viewDetail.predecessors?.length) {
+          <dt class="col-sm-4 text-muted">{{ 'task.predecessors.title' | translate }}</dt>
+          <dd class="col-sm-8">
+            @for (p of viewDetail.predecessors; track p.id) {
+              <div>{{ p.code }} — {{ p.name }}</div>
+            }
+          </dd>
+        }
       </dl>
+
+      @if (viewDetail.checklists?.length) {
+        <div class="fw-semibold mb-2">{{ 'task.checklist.title' | translate }}</div>
+        <div class="table-responsive border rounded mb-3">
+          <table class="table table-sm mb-0">
+            <thead>
+              <tr>
+                <th style="width: 44px">{{ 'task.checklist.colDone' | translate }}</th>
+                <th>{{ 'task.checklist.colTitle' | translate }}</th>
+                <th style="width: 100px">{{ 'task.checklist.colHours' | translate }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (c of viewDetail.checklists; track $index) {
+                <tr>
+                  <td>{{ c.checked ? '✓' : '—' }}</td>
+                  <td>{{ c.title }}</td>
+                  <td>{{ c.estimatedHours ?? '—' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
 
       <hr class="my-3" />
 
