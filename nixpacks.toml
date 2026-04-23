@@ -1,5 +1,0 @@
-[phases.setup]
-nixPkgs = ["jdk17", "maven", "nodejs_22"]
-
-[start]
-cmd = "java -jar target/*.jar"
