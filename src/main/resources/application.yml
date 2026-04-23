@@ -1,8 +1,8 @@
 spring:
   datasource:
-    url: ${DATASOURCE_URL:jdbc:postgresql://localhost:5432/prms}
-    username: ${DATASOURCE_USERNAME:postgres}
-    password: ${DATASOURCE_PASSWORD:123456}
+    url: ${PRMS_DATASOURCE_URL:jdbc:postgresql://localhost:5432/prms}
+    username: ${PRMS_DATASOURCE_USERNAME:postgres}
+    password: ${PRMS_DATASOURCE_PASSWORD:123456}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
@@ -17,12 +17,12 @@ spring:
       client:
         registration:
           google:
-            client-id: ${GOOGLE_CLIENT_ID}
-            client-secret: ${GOOGLE_CLIENT_SECRET}
+            client-id: ${PRMS_GOOGLE_CLIENT_ID:a}
+            client-secret: ${PRMS_GOOGLE_CLIENT_SECRET:a}
             scope:
               - profile
               - email
-            redirect-uri: http://localhost:8080/api/v1/auth/login-google
+            redirect-uri: ${PRMS_GOOGLE_REDIRECT_URI:http://localhost:8080/api/v1/auth/login-google}
             authorization-grant-type: authorization_code
         provider:
           google:
@@ -34,10 +34,10 @@ spring:
     basename: i18n/messages
     encoding: UTF-8
   mail:
-    host: ${MAIL_HOST:smtp.gmail.com}
-    port: ${MAIL_PORT:587}
-    username: ${MAIL_USERNAME}
-    password: ${MAIL_PASSWORD}
+    host: ${PRMS_MAIL_HOST:smtp.gmail.com}
+    port: ${PRMS_MAIL_PORT:587}
+    username: ${PRMS_MAIL_USERNAME:a}
+    password: ${PRMS_MAIL_PASSWORD:a}
     properties:
       mail:
         smtp:
@@ -48,7 +48,7 @@ spring:
           protocol: smtp
 
 server:
-  port: 9999
+  port: ${PRMS_SERVER_PORT:9999}
 
 logging:
   level:
@@ -62,8 +62,8 @@ logging:
 
 app:
   mail:
-    enabled: ${APP_MAIL_ENABLED:false}
-    from: ${APP_MAIL_FROM:${MAIL_USERNAME}}
+    enabled: ${PRMS_APP_MAIL_ENABLED:false}
+    from: ${PRMS_APP_MAIL_FROM:${PRMS_MAIL_USERNAME:a}}
   notification:
     job:
       enabled: ${APP_NOTIFICATION_JOB_ENABLED:true}
@@ -76,10 +76,10 @@ app:
     expiration-refresh-token: 604800000
   push:
     # VAPID keys cho Web Push (generate 1 lần, set qua env cho production)
-    vapid-public-key: ${APP_PUSH_VAPID_PUBLIC_KEY}
-    vapid-private-key: ${APP_PUSH_VAPID_PRIVATE_KEY}
-    subject: ${APP_PUSH_SUBJECT:mailto:admin@localhost}
+    vapid-public-key: ${PRMS_APP_PUSH_VAPID_PUBLIC_KEY:a}
+    vapid-private-key: ${PRMS_APP_PUSH_VAPID_PRIVATE_KEY:a}
+    subject: ${PRMS_APP_PUSH_SUBJECT:mailto:admin@localhost}
   client:
-    base-url: ${APP_CLIENT_BASE_URL:http://localhost:4200}
+    base-url: ${PRMS_APP_CLIENT_BASE_URL:http://localhost:4200}
   server:
-    base-url: ${APP_SERVER_BASE_URL:http://localhost:9999}
+    base-url: ${PRMS_APP_SERVER_BASE_URL:http://localhost:9999}

@@ -10,7 +10,7 @@
     </parent>
     <groupId>com.tranhuudat</groupId>
     <artifactId>prms</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>1.0</version>
     <name>prms</name>
     <description>prms</description>
     <url/>
