@@ -119,7 +119,7 @@ public class TaskServiceImpl extends BaseService implements TaskService {
                 if (Objects.nonNull(project) && !Boolean.TRUE.equals(project.getVoided())) {
                     boolean isPm = Objects.equals(project.getManagerId(), currentUserId);
                     if (!isPm) {
-            errors.put(SystemVariable.PROJECT_ID, getMessage(SystemMessage.FORBIDDEN));
+                        errors.put(SystemVariable.PROJECT_ID, getMessage(SystemMessage.FORBIDDEN));
                     }
                 }
             }
@@ -818,20 +818,31 @@ public class TaskServiceImpl extends BaseService implements TaskService {
     }
 
     private void replacePredecessors(UUID taskId, UUID projectId, List<UUID> predecessorIds) {
-        List<TaskDependency> prevActive = taskDependencyRepository.findBySuccessorTaskIdAndVoidedFalse(taskId);
-        for (TaskDependency d : prevActive) {
-            d.setVoided(true);
-        }
-        if (!prevActive.isEmpty()) {
-            taskDependencyRepository.saveAll(prevActive);
-        }
         List<UUID> preds = normalizePredecessorIds(predecessorIds);
+        List<TaskDependency> prevActive = taskDependencyRepository.findBySuccessorTaskIdAndVoidedFalse(taskId);
+        Map<UUID, TaskDependency> currentByPred = prevActive.stream()
+                .filter(Objects::nonNull)
+                .filter(d -> d.getPredecessorTaskId() != null)
+                .collect(Collectors.toMap(
+                        TaskDependency::getPredecessorTaskId,
+                        d -> d,
+                        (left, right) -> left));
+
+        List<TaskDependency> toVoid = prevActive.stream()
+                .filter(Objects::nonNull)
+                .filter(d -> !preds.contains(d.getPredecessorTaskId()))
+                .peek(d -> d.setVoided(true))
+                .toList();
+        if (!toVoid.isEmpty()) {
+            taskDependencyRepository.saveAll(toVoid);
+        }
+
         if (preds.isEmpty()) {
             return;
         }
         List<TaskDependency> created = new ArrayList<>();
         for (UUID predId : preds) {
-            if (predId == null) {
+            if (predId == null || currentByPred.containsKey(predId)) {
                 continue;
             }
             TaskDependency d = TaskDependency.builder()

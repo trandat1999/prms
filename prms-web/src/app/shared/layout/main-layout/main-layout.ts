@@ -57,11 +57,12 @@ import { Title } from '@angular/platform-browser';
 export class MainLayout {
   private readonly destroyRef = inject(DestroyRef);
   private readonly baseTabTitle = document.title || 'PRMS';
+  private readonly fullNavigation = navigation;
 
   isCollapsed = false;
   currentLanguage = "en";
   currentUser: any;
-  navigation = navigation;
+  navigation: NavigationItem[] = [];
 
   notifUnread = 0;
   notifLoading = false;
@@ -84,6 +85,7 @@ export class MainLayout {
     this.currentLanguage = this.storage.getLanguage();
     this.store.getCurrentUser().subscribe(user => {
       this.currentUser = user;
+      this.navigation = this.filterNavigationByRoles(user?.roles);
     });
     this.signalService.subscribeToSignal().subscribe(signal => {
       if(signal.type === 'navCollapsed'){
@@ -187,12 +189,18 @@ export class MainLayout {
   logout(): void {
     void (async () => {
       this.userNotificationStream.disconnect();
-      await this.userNotificationPushService.unsubscribeFromServer();
-      this.authService.logout().subscribe(() => {});
-      this.storage.signOut();
-      this.store.setCurrentUser(null);
-      this.title.setTitle(this.baseTabTitle);
-      this.router.navigate(['/login']);
+      try {
+        await Promise.race([
+          this.userNotificationPushService.unsubscribeFromServer(),
+          new Promise<void>((resolve) => setTimeout(resolve, 1000)),
+        ]);
+      } finally {
+        this.authService.logout().subscribe({ error: () => {} });
+        this.storage.signOut();
+        this.store.setCurrentUser(null);
+        this.title.setTitle(this.baseTabTitle);
+        void this.router.navigate(['/login']);
+      }
     })();
   }
 
@@ -226,5 +234,31 @@ export class MainLayout {
       }
     }
     return false;
+  }
+
+  private filterNavigationByRoles(roles: string[] | null | undefined): NavigationItem[] {
+    const roleSet = new Set((roles ?? []).map((role) => role?.trim()).filter(Boolean));
+
+    return this.fullNavigation
+      .map((item) => {
+        if (!this.canAccessMenuItem(item, roleSet)) {
+          return null;
+        }
+
+        if (!item.children?.length) {
+          return item;
+        }
+
+        const children = item.children.filter((child) => this.canAccessMenuItem(child, roleSet));
+        return children.length ? { ...item, children } : null;
+      })
+      .filter((item): item is NavigationItem => item !== null);
+  }
+
+  private canAccessMenuItem(item: NavigationItem, roles: Set<string>): boolean {
+    if (!item.allowedRoles?.length) {
+      return true;
+    }
+    return item.allowedRoles.some((role) => roles.has(role));
   }
 }

@@ -33,6 +33,7 @@ import {
   clearServerErrorsOnFormGroup,
   parseServerFieldErrorMap,
 } from '../../../shared/utils/form-server-errors';
+import { markFormControlsTouched, trimRequiredValidator } from '../../../shared/utils/form-validation';
 
 @Component({
   selector: 'app-project-list',
@@ -76,17 +77,17 @@ export class ProjectList {
   projectFormSubmitting = false;
   projectFormLoading = false;
   readonly projectModalForm = new FormGroup({
-    code: new FormControl<string>('',[Validators.required]),
-    name: new FormControl<string>('',[Validators.required]),
+    code: new FormControl<string>('', [Validators.required, trimRequiredValidator]),
+    name: new FormControl<string>('', [Validators.required, trimRequiredValidator]),
     shortDescription: new FormControl<string>(''),
     description: new FormControl<string>(''),
     managerId: new FormControl<string | null>(null),
-    projectValue: new FormControl<number | null>(null),
+    projectValue: new FormControl<number | null>(null, [Validators.min(0)]),
     priority: new FormControl<PriorityEnum | null>('MEDIUM'),
     startDate: new FormControl<Date | null>(null),
     endDate: new FormControl<Date | null>(null),
     status: new FormControl<ProjectStatusEnum | null>('NOT_STARTED'),
-    progressPercentage: new FormControl<number | null>(0),
+    progressPercentage: new FormControl<number | null>(0, [Validators.min(0), Validators.max(100)]),
   });
 
   /** Modal xem */
@@ -217,7 +218,7 @@ export class ProjectList {
       return;
     }
     const projectName = row?.name?.trim() || row?.code || id;
-    void this.router.navigate(['/project', id, 'tasks'], { state: { projectName } });
+    void this.router.navigate(['/project', id], { state: { projectName } });
   }
 
   onOpenProjectMembers(row: Project): void {
@@ -227,7 +228,7 @@ export class ProjectList {
       return;
     }
     const projectName = row?.name?.trim() || row?.code || id;
-    void this.router.navigate(['/project', id, 'team'], { state: { projectName } });
+    void this.router.navigate(['/project', id], { queryParams: { tab: 'members' }, state: { projectName } });
   }
 
   closeProjectFormModal(): void {
@@ -245,7 +246,8 @@ export class ProjectList {
       return;
     }
     clearServerErrorsOnFormGroup(this.projectModalForm);
-    if (!this.validateCreateForm()) {
+    if (this.projectModalForm.invalid) {
+      markFormControlsTouched(this.projectModalForm);
       return;
     }
     const payload = this.buildCreatePayload();
@@ -336,6 +338,7 @@ export class ProjectList {
     if (map) {
       clearServerErrorsOnFormGroup(this.projectModalForm);
       applyServerFieldErrorsToFormGroup(this.projectModalForm, map);
+      markFormControlsTouched(this.projectModalForm);
       return;
     }
     clearServerErrorsOnFormGroup(this.projectModalForm);
@@ -380,21 +383,6 @@ export class ProjectList {
           ? 0
           : Number(p.progressPercentage),
     });
-  }
-
-  private validateCreateForm(): boolean {
-    const f = this.projectModalForm.getRawValue();
-    const code = f.code?.trim();
-    const name = f.name?.trim();
-    if (!code) {
-      this.notification.warning('Thiếu dữ liệu', 'Vui lòng nhập mã dự án.');
-      return false;
-    }
-    if (!name) {
-      this.notification.warning('Thiếu dữ liệu', 'Vui lòng nhập tên dự án.');
-      return false;
-    }
-    return true;
   }
 
   private buildCreatePayload(): ProjectWritePayload {

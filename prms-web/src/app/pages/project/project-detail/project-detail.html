@@ -1,0 +1,14 @@
+<div class="project-detail">
+  <nz-tabset
+    [nzSelectedIndex]="selectedIndex"
+    [nzDestroyInactiveTabPane]="false"
+    (nzSelectedIndexChange)="onTabChange($event)"
+  >
+    <nz-tab [nzTitle]="'project.tasks.title' | translate">
+      <app-project-tasks [projectId]="projectId" [projectName]="projectDisplayName"></app-project-tasks>
+    </nz-tab>
+    <nz-tab [nzTitle]="'projectMember.title' | translate">
+      <app-project-members [projectId]="projectId" [projectName]="projectDisplayName"></app-project-members>
+    </nz-tab>
+  </nz-tabset>
+</div>

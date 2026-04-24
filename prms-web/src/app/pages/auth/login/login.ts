@@ -5,6 +5,7 @@ import {
   clearServerErrorsOnFormGroup,
   parseServerFieldErrorMap,
 } from '../../../shared/utils/form-server-errors';
+import { markFormControlsTouched } from '../../../shared/utils/form-validation';
 import {FormControl, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
 import {AuthService} from '../auth-service';
 import {StorageService} from '../../../core/services/storage-service';
@@ -54,6 +55,11 @@ export class Login implements OnInit {
   }
 
   login() {
+    clearServerErrorsOnFormGroup(this.formGroup);
+    if (this.formGroup.invalid) {
+      markFormControlsTouched(this.formGroup);
+      return;
+    }
     this.isSubmitting = true;
     this.authService.login(this.formGroup.getRawValue()).subscribe((data) => {
       this.isSubmitting = false;
@@ -62,6 +68,7 @@ export class Login implements OnInit {
         if (map) {
           clearServerErrorsOnFormGroup(this.formGroup);
           applyServerFieldErrorsToFormGroup(this.formGroup, map);
+          markFormControlsTouched(this.formGroup);
         }
         return;
       } else {

@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
-import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { NzButtonComponent } from 'ng-zorro-antd/button';
 import { NzIconDirective } from 'ng-zorro-antd/icon';
@@ -15,6 +15,7 @@ import {
   clearServerErrorsOnFormGroup,
   parseServerFieldErrorMap,
 } from '../../../../shared/utils/form-server-errors';
+import { markFormControlsTouched, trimRequiredValidator } from '../../../../shared/utils/form-validation';
 import { Page } from '../../../project/models/page.model';
 import { AppParam, AppParamWritePayload } from '../models/app-param.model';
 import { AppParamSearchRequest } from '../models/app-param-search.request';
@@ -55,8 +56,8 @@ export class AppParamList {
   submitting = false;
   loading = false;
   readonly modalForm = new FormGroup({
-    paramGroup: new FormControl<string>(''),
-    paramName: new FormControl<string>(''),
+    paramGroup: new FormControl<string>('', [Validators.required, trimRequiredValidator]),
+    paramName: new FormControl<string>('', [Validators.required, trimRequiredValidator]),
     paramValue: new FormControl<string>(''),
     paramType: new FormControl<string>(''),
     description: new FormControl<string>(''),
@@ -173,7 +174,10 @@ export class AppParamList {
   save(): void {
     if (this.formMode === 'edit' && this.loading) return;
     clearServerErrorsOnFormGroup(this.modalForm);
-    if (!this.validate()) return;
+    if (this.modalForm.invalid) {
+      markFormControlsTouched(this.modalForm);
+      return;
+    }
 
     const v = this.modalForm.getRawValue();
     const payload: AppParamWritePayload = {
@@ -262,24 +266,12 @@ export class AppParamList {
     });
   }
 
-  private validate(): boolean {
-    const f = this.modalForm.getRawValue();
-    if (!f.paramGroup?.trim()) {
-      this.notification.warning(this.t('appParam.messages.invalidTitle'), this.t('appParam.messages.groupRequired'));
-      return false;
-    }
-    if (!f.paramName?.trim()) {
-      this.notification.warning(this.t('appParam.messages.invalidTitle'), this.t('appParam.messages.nameRequired'));
-      return false;
-    }
-    return true;
-  }
-
   private handleWriteError(raw: ApiResponse | undefined): void {
     const map = parseServerFieldErrorMap(raw);
     if (map) {
       clearServerErrorsOnFormGroup(this.modalForm);
       applyServerFieldErrorsToFormGroup(this.modalForm, map);
+      markFormControlsTouched(this.modalForm);
       return;
     }
     clearServerErrorsOnFormGroup(this.modalForm);
@@ -295,4 +287,3 @@ export class AppParamList {
     return this.translate.instant(key);
   }
 }
-

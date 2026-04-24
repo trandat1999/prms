@@ -111,7 +111,7 @@
             {{ selected.nzLabel }}
           </ng-template>
           <nz-avatar nz-dropdown [nzDropdownMenu]="menu" nzPlacement="bottomLeft"
-                     nzSize="large" nzIcon="user" [nzSrc]="currentUser.photoUrl"></nz-avatar>
+                     nzSize="large" nzIcon="user" [nzSrc]="currentUser?.photoUrl"></nz-avatar>
           <nz-dropdown-menu #menu="nzDropdownMenu">
             <ul nz-menu>
               <li nz-menu-item><span nz-icon nzType="user"  nzTheme="outline"></span>&nbsp;&nbsp;{{'layout.profile' |translate}}</li>

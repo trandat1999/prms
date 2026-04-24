@@ -30,7 +30,8 @@
     "employeeOt": "Employee OT",
     "kanban": "Kanban",
     "report": "Report",
-    "projectTeam": "Project Team"
+    "projectTeam": "Project Team",
+    "projectDetail": "Project detail"
   },
   "dashboard": {
     "title": "PRMS Dashboard",
@@ -130,11 +131,14 @@
   "validation": {
     "required": "{{label}} is required",
     "maxlength": "{{label}} must be at most {{requiredLength}} characters",
-    "minlength": "{{label}} must be at most {{requiredLength}} characters",
+    "minlength": "{{label}} must be at least {{requiredLength}} characters",
     "maxValue": "{{label}} maximum value is {{max}}",
     "max": "{{label}} maximum value is {{max}}",
     "min": "{{label}} minimum value is {{min}}",
     "email": "{{label}} must be a valid email address",
+    "dateRange": "End date must be on or after start date",
+    "timeRange": "End time must be on or after start time",
+    "checklistTitleRequired": "Each checklist item with hours or marked done needs a title",
     "greaterValue": "{{label}} must be greater than {{greaterValue}}",
     "phoneNumber": "{{label}} is invalid"
   },

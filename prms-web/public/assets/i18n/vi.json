@@ -30,7 +30,8 @@
     "employeeOt": "Đăng ký OT",
     "kanban": "Kanban",
     "report": "Báo cáo",
-    "projectTeam": "Thành viên dự án"
+    "projectTeam": "Thành viên dự án",
+    "projectDetail": "Chi tiết dự án"
   },
   "dashboard": {
     "title": "Dashboard PRMS",
@@ -126,6 +127,20 @@
     "employeeOt": "Đăng ký OT",
     "projectRequest": "Dự án",
     "kanban": "Kanban"
+  },
+  "validation": {
+    "required": "{{label}} là bắt buộc",
+    "maxlength": "{{label}} tối đa {{requiredLength}} ký tự",
+    "minlength": "{{label}} tối thiểu {{requiredLength}} ký tự",
+    "maxValue": "{{label}} tối đa là {{max}}",
+    "max": "{{label}} tối đa là {{max}}",
+    "min": "{{label}} tối thiểu là {{min}}",
+    "email": "{{label}} không đúng định dạng email",
+    "dateRange": "Ngày kết thúc phải sau hoặc trùng ngày bắt đầu",
+    "timeRange": "Giờ kết thúc phải sau hoặc trùng giờ bắt đầu",
+    "checklistTitleRequired": "Mỗi bước có giờ hoặc đánh dấu xong cần có tiêu đề",
+    "greaterValue": "{{label}} phải lớn hơn {{greaterValue}}",
+    "phoneNumber": "{{label}} không hợp lệ"
   },
   "layout": {
     "english": "English",

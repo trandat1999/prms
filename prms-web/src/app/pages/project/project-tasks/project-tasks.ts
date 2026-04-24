@@ -1,8 +1,16 @@
 import { CommonModule, DatePipe } from '@angular/common';
-import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { Component, DestroyRef, Input, OnChanges, OnInit, SimpleChanges, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
-import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import {
+  AbstractControl,
+  FormControl,
+  FormGroup,
+  FormsModule,
+  ReactiveFormsModule,
+  ValidationErrors,
+  Validators,
+} from '@angular/forms';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { NzButtonComponent } from 'ng-zorro-antd/button';
 import { NzIconDirective } from 'ng-zorro-antd/icon';
@@ -19,6 +27,12 @@ import {
   parseServerFieldErrorMap,
   SERVER_FORM_ERROR_KEY,
 } from '../../../shared/utils/form-server-errors';
+import {
+  CHECKLIST_TITLE_REQUIRED_ERROR_KEY,
+  isInvalidAndTouched,
+  markFormControlsTouched,
+  trimRequiredValidator,
+} from '../../../shared/utils/form-validation';
 import { Page } from '../models/page.model';
 import { Task, TaskChecklistItem, TaskLog, TaskWritePayload } from '../models/task.model';
 import { TaskSearchRequest } from '../models/task-search.request';
@@ -48,15 +62,20 @@ type TaskChecklistRow = { title: string; estimatedHours: number | null; checked:
   templateUrl: './project-tasks.html',
   styleUrls: ['./project-tasks.scss'],
 })
-export class ProjectTasks implements OnInit {
+export class ProjectTasks implements OnChanges, OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
+  private syncingEstimatedHours = false;
+  private estimatedHoursDerivedFromChecklist = false;
 
   /** projectId từ URL `/project/:projectId/tasks` */
   effectiveProjectId = '';
 
   /** Tên dự án (optional) từ `navigate(..., { state: { projectName } })` */
   displayProjectName: string | null = null;
+
+  @Input() projectId: string | null = null;
+  @Input() projectName: string | null = null;
 
   keyword = '';
   status: TaskStatus | null = null;
@@ -75,23 +94,23 @@ export class ProjectTasks implements OnInit {
   loading = false;
   checklistRows: TaskChecklistRow[] = [];
   readonly taskModalForm = new FormGroup({
-    code: new FormControl<string>(''),
-    name: new FormControl<string>(''),
+    code: new FormControl<string>('', [Validators.required, trimRequiredValidator]),
+    name: new FormControl<string>('', [Validators.required, trimRequiredValidator]),
     shortDescription: new FormControl<string>(''),
     description: new FormControl<string>(''),
-    status: new FormControl<TaskStatus | null>('TODO'),
-    priority: new FormControl<'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT' | null>('MEDIUM'),
-    estimatedHours: new FormControl<number | null>(null),
-    actualHours: new FormControl<number | null>(null),
+    status: new FormControl<TaskStatus | null>('TODO', [Validators.required]),
+    priority: new FormControl<'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT' | null>('MEDIUM', [Validators.required]),
+    estimatedHours: new FormControl<number | null>(null, [Validators.min(0)]),
+    actualHours: new FormControl<number | null>(null, [Validators.min(0)]),
     assignedId: new FormControl<string | null>(null),
     label: new FormControl<string>(''),
     type: new FormControl<string | null>(null),
     predecessorIds: new FormControl<string[]>([]),
     /** Chỉ để map lỗi BE field `checklists` (không bind UI). */
-    checklists: new FormControl<unknown>(null),
+    checklists: new FormControl<unknown>(null, [this.checklistValidator()]),
   });
   readonly assignModalForm = new FormGroup({
-    assignedId: new FormControl<string | null>(null),
+    assignedId: new FormControl<string | null>(null, [Validators.required]),
   });
 
   /** Modal xem + log */
@@ -143,7 +162,25 @@ export class ProjectTasks implements OnInit {
     private projectService: ProjectService
   ) {}
 
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['projectName']) {
+      const name = this.projectName?.trim();
+      this.displayProjectName = name ? name : null;
+    }
+    if (changes['projectId'] && this.projectId) {
+      this.activateProject(this.projectId, this.projectName, true);
+    }
+  }
+
   ngOnInit(): void {
+    this.taskModalForm.controls.estimatedHours.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        if (!this.syncingEstimatedHours) {
+          this.estimatedHoursDerivedFromChecklist = false;
+        }
+      });
+
     this.store
       .getCurrentUser()
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -151,6 +188,11 @@ export class ProjectTasks implements OnInit {
         this.currentUserId = u?.id ?? null;
         this.resolveProjectRole();
       });
+
+    if (this.projectId) {
+      this.activateProject(this.projectId, this.projectName);
+      return;
+    }
 
     this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((pm) => {
       const id = pm.get('projectId');
@@ -161,19 +203,9 @@ export class ProjectTasks implements OnInit {
         );
         return;
       }
-      const prev = this.effectiveProjectId;
-      const changed = id !== prev;
-      if (changed) {
-        const state =
-          typeof history !== 'undefined' ? (history.state as { projectName?: string } | null) : null;
-        const name = state?.projectName?.trim();
-        this.displayProjectName = name ? name : null;
-        this.effectiveProjectId = id;
-        this.pageIndex = 1;
-        this.loadPredecessorCandidates();
-        this.resolveProjectRole();
-      }
-      this.fetch();
+      const state =
+        typeof history !== 'undefined' ? (history.state as { projectName?: string } | null) : null;
+      this.activateProject(id, state?.projectName, true);
     });
   }
 
@@ -320,12 +352,15 @@ export class ProjectTasks implements OnInit {
     const id = this.assignTaskId;
     const assignedId = this.assignModalForm.get('assignedId')?.value;
     clearServerErrorsOnFormGroup(this.assignModalForm);
-    if (!id || !assignedId) {
-      this.notification.warning(this.translate.instant('task.messages.invalidTitle'), this.translate.instant('task.messages.assigneeRequired'));
+    if (!id) {
+      return;
+    }
+    if (this.assignModalForm.invalid) {
+      markFormControlsTouched(this.assignModalForm);
       return;
     }
     this.assignSubmitting = true;
-    this.service.assign(id, { assignedId }).subscribe({
+    this.service.assign(id, { assignedId: assignedId as string }).subscribe({
       next: ({ raw }) => {
         this.assignSubmitting = false;
         if (raw?.code === 200) {
@@ -355,8 +390,12 @@ export class ProjectTasks implements OnInit {
     if (!this.isProjectManager) return;
     if (this.formMode === 'edit' && this.loading) return;
     clearServerErrorsOnFormGroup(this.taskModalForm);
-    if (!this.validate()) return;
     this.syncEstimatedFromChecklist();
+    this.taskModalForm.controls.checklists.updateValueAndValidity();
+    if (this.taskModalForm.invalid) {
+      markFormControlsTouched(this.taskModalForm);
+      return;
+    }
 
     const f = this.taskModalForm.getRawValue();
     const payload: TaskWritePayload = {
@@ -442,6 +481,23 @@ export class ProjectTasks implements OnInit {
     });
   }
 
+  private activateProject(id: string, projectName?: string | null, fetchAfterChange = false): void {
+    const name = projectName?.trim();
+    if (name) {
+      this.displayProjectName = name;
+    }
+    const changed = id !== this.effectiveProjectId;
+    if (changed) {
+      this.effectiveProjectId = id;
+      this.pageIndex = 1;
+      this.loadPredecessorCandidates();
+      this.resolveProjectRole();
+    }
+    if (changed || fetchAfterChange) {
+      this.fetch();
+    }
+  }
+
   private resolveProjectRole(): void {
     if (!this.effectiveProjectId || !this.currentUserId) {
       this.isProjectManager = false;
@@ -473,13 +529,27 @@ export class ProjectTasks implements OnInit {
   }
 
   get checklistHoursSum(): number {
-    return (this.checklistRows ?? []).reduce((s, c) => s + (Number(c?.estimatedHours) || 0), 0);
+    return this.buildChecklistPayload().reduce((sum, item) => sum + (Number(item.estimatedHours) || 0), 0);
   }
 
   get taskChecklistServerError(): string | null {
-    const err = this.taskModalForm.controls.checklists.errors;
+    const ctrl = this.taskModalForm.controls.checklists;
+    if (!isInvalidAndTouched(ctrl)) {
+      return null;
+    }
+    const err = ctrl.errors;
     const msg = err?.[SERVER_FORM_ERROR_KEY];
     return typeof msg === 'string' && msg.trim() ? msg : null;
+  }
+
+  get taskChecklistValidationError(): string | null {
+    const ctrl = this.taskModalForm.controls.checklists;
+    if (!isInvalidAndTouched(ctrl)) {
+      return null;
+    }
+    return ctrl.errors?.[CHECKLIST_TITLE_REQUIRED_ERROR_KEY]
+      ? this.translate.instant('task.checklist.titleRequired')
+      : this.taskChecklistServerError;
   }
 
   get predecessorSelectItems(): { id: string; label: string }[] {
@@ -493,6 +563,7 @@ export class ProjectTasks implements OnInit {
 
   addChecklistRow(): void {
     this.checklistRows = [...(this.checklistRows ?? []), { title: '', estimatedHours: null, checked: false }];
+    this.taskModalForm.controls.checklists.updateValueAndValidity();
   }
 
   removeChecklistRow(index: number): void {
@@ -500,10 +571,26 @@ export class ProjectTasks implements OnInit {
     next.splice(index, 1);
     this.checklistRows = next;
     this.syncEstimatedFromChecklist();
+    this.taskModalForm.controls.checklists.updateValueAndValidity();
   }
 
-  onChecklistChanged(): void {
-    this.syncEstimatedFromChecklist();
+  onChecklistCheckedChange(index: number, checked: boolean): void {
+    this.updateChecklistRow(index, { checked });
+  }
+
+  onChecklistTitleChange(index: number, title: string): void {
+    this.updateChecklistRow(index, { title });
+  }
+
+  onChecklistHoursChange(index: number, estimatedHours: string | number | null): void {
+    const normalized = estimatedHours === '' || estimatedHours == null ? null : Number(estimatedHours);
+    this.updateChecklistRow(index, {
+      estimatedHours: normalized != null && !Number.isNaN(normalized) ? normalized : null,
+    });
+  }
+
+  isChecklistTitleInvalid(index: number): boolean {
+    return isInvalidAndTouched(this.taskModalForm.controls.checklists) && this.isChecklistRowTitleRequired(index);
   }
 
   private loadPredecessorCandidates(): void {
@@ -526,7 +613,11 @@ export class ProjectTasks implements OnInit {
   private syncEstimatedFromChecklist(): void {
     const s = this.checklistHoursSum;
     if (s > 0) {
-      this.taskModalForm.patchValue({ estimatedHours: s });
+      this.setEstimatedHoursFromChecklist(s);
+      return;
+    }
+    if (this.estimatedHoursDerivedFromChecklist) {
+      this.setEstimatedHoursFromChecklist(null);
     }
   }
 
@@ -541,8 +632,27 @@ export class ProjectTasks implements OnInit {
       .filter((x) => x.title.length > 0);
   }
 
+  private checklistValidator(): (control: AbstractControl) => ValidationErrors | null {
+    return () => {
+      return (this.checklistRows ?? []).some((_, index) => this.isChecklistRowTitleRequired(index))
+        ? { [CHECKLIST_TITLE_REQUIRED_ERROR_KEY]: true }
+        : null;
+    };
+  }
+
+  private isChecklistRowTitleRequired(index: number): boolean {
+    const row = this.checklistRows?.[index];
+    if (!row) {
+      return false;
+    }
+    const hasTitle = !!row.title?.trim();
+    const hasHours = row.estimatedHours != null && !Number.isNaN(Number(row.estimatedHours));
+    return !hasTitle && (hasHours || row.checked);
+  }
+
   private resetTaskModalForm(): void {
     this.checklistRows = [];
+    this.estimatedHoursDerivedFromChecklist = false;
     this.taskModalForm.reset({
       code: '',
       name: '',
@@ -558,6 +668,7 @@ export class ProjectTasks implements OnInit {
       predecessorIds: [],
       checklists: null,
     });
+    this.taskModalForm.controls.checklists.updateValueAndValidity();
   }
 
   private applyToForm(t: Task): void {
@@ -583,31 +694,8 @@ export class ProjectTasks implements OnInit {
       estimatedHours: c.estimatedHours ?? null,
       checked: !!c.checked,
     }));
-  }
-
-  private validate(): boolean {
-    const f = this.taskModalForm.getRawValue();
-    if (!f.code?.trim()) {
-      this.notification.warning(this.translate.instant('task.messages.invalidTitle'), this.translate.instant('task.messages.codeRequired'));
-      return false;
-    }
-    if (!f.name?.trim()) {
-      this.notification.warning(this.translate.instant('task.messages.invalidTitle'), this.translate.instant('task.messages.nameRequired'));
-      return false;
-    }
-    for (const row of this.checklistRows ?? []) {
-      if (!row) continue;
-      const hasTitle = !!row.title?.trim();
-      const hasHours = row.estimatedHours != null && !Number.isNaN(Number(row.estimatedHours));
-      if ((hasHours || row.checked) && !hasTitle) {
-        this.notification.warning(
-          this.translate.instant('task.messages.invalidTitle'),
-          this.translate.instant('task.checklist.titleRequired')
-        );
-        return false;
-      }
-    }
-    return true;
+    this.syncEstimatedFromChecklist();
+    this.taskModalForm.controls.checklists.updateValueAndValidity();
   }
 
   private handleWriteError(raw: ApiResponse | undefined, target: 'task' | 'assign' = 'task'): void {
@@ -619,12 +707,14 @@ export class ProjectTasks implements OnInit {
           normalized['assignedId'] = normalized['assignUserId'];
         }
         applyServerFieldErrorsToFormGroup(this.assignModalForm, normalized);
+        markFormControlsTouched(this.assignModalForm);
       } else {
         const normalized = { ...map };
         if (!normalized['predecessorIds'] && normalized['predecessorTaskIds']) {
           normalized['predecessorIds'] = normalized['predecessorTaskIds'];
         }
         applyServerFieldErrorsToFormGroup(this.taskModalForm, normalized);
+        markFormControlsTouched(this.taskModalForm);
       }
       return;
     }
@@ -639,5 +729,23 @@ export class ProjectTasks implements OnInit {
   private notifyFromResponse(raw: ApiResponse | undefined, fallback: string): void {
     this.notification.warning(this.translate.instant('common.error'), raw?.message ?? fallback);
   }
-}
 
+  private updateChecklistRow(index: number, patch: Partial<TaskChecklistRow>): void {
+    const next = [...(this.checklistRows ?? [])];
+    const row = next[index];
+    if (!row) {
+      return;
+    }
+    next[index] = { ...row, ...patch };
+    this.checklistRows = next;
+    this.syncEstimatedFromChecklist();
+    this.taskModalForm.controls.checklists.updateValueAndValidity();
+  }
+
+  private setEstimatedHoursFromChecklist(value: number | null): void {
+    this.syncingEstimatedHours = true;
+    this.taskModalForm.controls.estimatedHours.setValue(value);
+    this.syncingEstimatedHours = false;
+    this.estimatedHoursDerivedFromChecklist = value != null;
+  }
+}

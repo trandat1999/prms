@@ -1,0 +1,12 @@
+.project-detail {
+  .project-detail__header {
+    align-items: center;
+    display: flex;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .project-detail__title {
+    min-width: 0;
+  }
+}

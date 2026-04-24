@@ -1,6 +1,7 @@
 import { CommonModule, DatePipe } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
-import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { NzButtonComponent } from 'ng-zorro-antd/button';
 import { NzIconDirective } from 'ng-zorro-antd/icon';
@@ -15,6 +16,11 @@ import {
   clearServerErrorsOnFormGroup,
   parseServerFieldErrorMap,
 } from '../../../shared/utils/form-server-errors';
+import {
+  markFormControlsTouched,
+  siblingDateRangeValidator,
+  TIME_RANGE_ERROR_KEY,
+} from '../../../shared/utils/form-validation';
 import { Page } from '../../project/models/page.model';
 import { EmployeeOt, EmployeeOtWritePayload } from '../models/employee-ot.model';
 import { EmployeeOtSearchRequest } from '../models/employee-ot-search.request';
@@ -40,6 +46,8 @@ import { EmployeeOtService } from '../services/employee-ot.service';
   styleUrls: ['./employee-ot-list.scss'],
 })
 export class EmployeeOtList implements OnInit {
+  private readonly destroyRef = inject(DestroyRef);
+
   keyword = '';
   filterUserId: string | null = null;
   filterProjectId: string | null = null;
@@ -90,15 +98,15 @@ export class EmployeeOtList implements OnInit {
   submitting = false;
   loading = false;
   readonly modalForm = new FormGroup({
-    userId: new FormControl<string | null>(null),
+    userId: new FormControl<string | null>(null, [Validators.required]),
     projectId: new FormControl<string | null>(null),
-    otDate: new FormControl<Date | null>(null),
+    otDate: new FormControl<Date | null>(null, [Validators.required]),
     startTime: new FormControl<Date | null>(null),
-    endTime: new FormControl<Date | null>(null),
-    otHours: new FormControl<number | null>(null),
-    otType: new FormControl<EmployeeOtType | null>(EmployeeOtType.WEEKDAY),
+    endTime: new FormControl<Date | null>(null, [siblingDateRangeValidator('startTime', TIME_RANGE_ERROR_KEY)]),
+    otHours: new FormControl<number | null>(null, [Validators.min(0)]),
+    otType: new FormControl<EmployeeOtType | null>(EmployeeOtType.WEEKDAY, [Validators.required]),
     reason: new FormControl<string | null>(null),
-    status: new FormControl<EmployeeOtStatus | null>(EmployeeOtStatus.DRAFT),
+    status: new FormControl<EmployeeOtStatus | null>(EmployeeOtStatus.DRAFT, [Validators.required]),
   });
 
   viewVisible = false;
@@ -113,6 +121,11 @@ export class EmployeeOtList implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.modalForm.controls.startTime.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.modalForm.controls.endTime.updateValueAndValidity();
+      });
     this.fetch();
   }
 
@@ -312,7 +325,10 @@ export class EmployeeOtList implements OnInit {
   save(): void {
     if (this.formMode === 'edit' && this.loading) return;
     clearServerErrorsOnFormGroup(this.modalForm);
-    if (!this.validate()) return;
+    if (this.modalForm.invalid) {
+      markFormControlsTouched(this.modalForm);
+      return;
+    }
 
     const v = this.modalForm.getRawValue();
     const payload: EmployeeOtWritePayload = {
@@ -426,58 +442,12 @@ export class EmployeeOtList implements OnInit {
     });
   }
 
-  private validate(): boolean {
-    const f = this.modalForm.getRawValue();
-    if (!f.userId) {
-      this.notification.warning(
-        this.translate.instant('employeeOt.messages.invalidTitle'),
-        this.translate.instant('employeeOt.messages.userRequired')
-      );
-      return false;
-    }
-    if (!f.otDate) {
-      this.notification.warning(
-        this.translate.instant('employeeOt.messages.invalidTitle'),
-        this.translate.instant('employeeOt.messages.otDateRequired')
-      );
-      return false;
-    }
-    if (!f.otType) {
-      this.notification.warning(
-        this.translate.instant('employeeOt.messages.invalidTitle'),
-        this.translate.instant('employeeOt.messages.otTypeRequired')
-      );
-      return false;
-    }
-    if (f.otHours != null && f.otHours < 0) {
-      this.notification.warning(
-        this.translate.instant('employeeOt.messages.invalidTitle'),
-        this.translate.instant('employeeOt.messages.otHoursInvalid')
-      );
-      return false;
-    }
-    if (f.startTime && f.endTime && f.startTime > f.endTime) {
-      this.notification.warning(
-        this.translate.instant('employeeOt.messages.invalidTitle'),
-        this.translate.instant('employeeOt.messages.timeRangeInvalid')
-      );
-      return false;
-    }
-    if (!f.status) {
-      this.notification.warning(
-        this.translate.instant('employeeOt.messages.invalidTitle'),
-        this.translate.instant('employeeOt.messages.statusRequired')
-      );
-      return false;
-    }
-    return true;
-  }
-
   private handleWriteError(raw: ApiResponse | undefined): void {
     const map = parseServerFieldErrorMap(raw);
     if (map) {
       clearServerErrorsOnFormGroup(this.modalForm);
       applyServerFieldErrorsToFormGroup(this.modalForm, map);
+      markFormControlsTouched(this.modalForm);
       return;
     }
     clearServerErrorsOnFormGroup(this.modalForm);

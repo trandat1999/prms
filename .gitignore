@@ -46,3 +46,4 @@ prms-web/node_modules/
 
 # TypeScript build info
 *.tsbuildinfo
+/logs/

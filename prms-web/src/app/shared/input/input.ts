@@ -34,6 +34,11 @@ import { NzIconDirective } from 'ng-zorro-antd/icon';
 import { NzDatePickerComponent } from 'ng-zorro-antd/date-picker';
 import { NzInputNumberComponent } from 'ng-zorro-antd/input-number';
 import { SERVER_FORM_ERROR_KEY } from '../utils/form-server-errors';
+import {
+  CHECKLIST_TITLE_REQUIRED_ERROR_KEY,
+  DATE_RANGE_ERROR_KEY,
+  TIME_RANGE_ERROR_KEY,
+} from '../utils/form-validation';
 
 @Component({
   selector: 'app-input',
@@ -367,6 +372,11 @@ export class InputCommon implements OnInit, OnDestroy {
         label: this.label || '',
         requiredLength: errors?.['maxlength'].requiredLength,
       });
+    } else if (errors?.['minlength']) {
+      this.errorText = this.translate.instant('validation.minlength', {
+        label: this.label || '',
+        requiredLength: errors?.['minlength'].requiredLength,
+      });
     } else if (errors?.['required']) {
       this.errorText = this.translate.instant('validation.required', {
         label: this.label || '',
@@ -385,6 +395,12 @@ export class InputCommon implements OnInit, OnDestroy {
       this.errorText = this.translate.instant('validation.email', {
         label: this.label || '',
       });
+    } else if (errors?.[DATE_RANGE_ERROR_KEY]) {
+      this.errorText = this.translate.instant('validation.dateRange');
+    } else if (errors?.[TIME_RANGE_ERROR_KEY]) {
+      this.errorText = this.translate.instant('validation.timeRange');
+    } else if (errors?.[CHECKLIST_TITLE_REQUIRED_ERROR_KEY]) {
+      this.errorText = this.translate.instant('validation.checklistTitleRequired');
     } else {
       const firstKey = Object.keys(errors)[0];
       const v = errors[firstKey];

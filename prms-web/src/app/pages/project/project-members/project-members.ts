@@ -1,8 +1,8 @@
 import { CommonModule, DatePipe } from '@angular/common';
-import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { Component, DestroyRef, Input, OnChanges, OnInit, SimpleChanges, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
-import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { NzButtonComponent } from 'ng-zorro-antd/button';
 import { NzIconDirective } from 'ng-zorro-antd/icon';
@@ -18,6 +18,7 @@ import {
   clearServerErrorsOnFormGroup,
   parseServerFieldErrorMap,
 } from '../../../shared/utils/form-server-errors';
+import { markFormControlsTouched, siblingDateRangeValidator } from '../../../shared/utils/form-validation';
 import { Page } from '../models/page.model';
 import { PROJECT_MEMBER_ROLE_OPTIONS } from '../models/project-member.const';
 import { ProjectMember, ProjectMemberWritePayload } from '../models/project-member.model';
@@ -48,12 +49,14 @@ import { ProjectService } from '../services/project.service';
   templateUrl: './project-members.html',
   styleUrls: ['./project-members.scss'],
 })
-export class ProjectMembers implements OnInit {
+export class ProjectMembers implements OnChanges, OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
 
   effectiveProjectId = '';
   displayProjectName: string | null = null;
+  @Input() projectId: string | null = null;
+  @Input() projectName: string | null = null;
   isProjectManager = false;
   private currentUserId: string | null = null;
 
@@ -84,12 +87,12 @@ export class ProjectMembers implements OnInit {
   submitting = false;
   loading = false;
   readonly modalForm = new FormGroup({
-    userId: new FormControl<string | null>(null),
-    roleInProject: new FormControl<ProjectMemberRole | null>('DEVELOPER'),
-    allocationPercent: new FormControl<number | null>(100),
+    userId: new FormControl<string | null>(null, [Validators.required]),
+    roleInProject: new FormControl<ProjectMemberRole | null>('DEVELOPER', [Validators.required]),
+    allocationPercent: new FormControl<number | null>(100, [Validators.min(0), Validators.max(100)]),
     isLead: new FormControl<boolean>(false),
     startDate: new FormControl<Date | null>(null),
-    endDate: new FormControl<Date | null>(null),
+    endDate: new FormControl<Date | null>(null, [siblingDateRangeValidator('startDate')]),
     active: new FormControl<boolean>(true),
   });
 
@@ -107,8 +110,23 @@ export class ProjectMembers implements OnInit {
     private modal: NzModalService
   ) {}
 
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['projectName']) {
+      const name = this.projectName?.trim();
+      this.displayProjectName = name ? name : null;
+    }
+    if (changes['projectId'] && this.projectId) {
+      this.activateProject(this.projectId, this.projectName, true);
+    }
+  }
+
   ngOnInit(): void {
     this.loadRoleOptions();
+    this.modalForm.controls.startDate.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.modalForm.controls.endDate.updateValueAndValidity();
+      });
     this.store
       .getCurrentUser()
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -116,6 +134,11 @@ export class ProjectMembers implements OnInit {
         this.currentUserId = u?.id ?? null;
         this.resolveProjectRole();
       });
+    if (this.projectId) {
+      this.activateProject(this.projectId, this.projectName);
+      return;
+    }
+
     this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((pm) => {
       const id = pm.get('projectId');
       if (!id) {
@@ -125,17 +148,9 @@ export class ProjectMembers implements OnInit {
         );
         return;
       }
-      const changed = id !== this.effectiveProjectId;
-      if (changed) {
-        const state =
-          typeof history !== 'undefined' ? (history.state as { projectName?: string } | null) : null;
-        const name = state?.projectName?.trim();
-        this.displayProjectName = name ? name : null;
-        this.effectiveProjectId = id;
-        this.pageIndex = 1;
-        this.resolveProjectRole();
-      }
-      this.fetch();
+      const state =
+        typeof history !== 'undefined' ? (history.state as { projectName?: string } | null) : null;
+      this.activateProject(id, state?.projectName, true);
     });
   }
 
@@ -277,7 +292,10 @@ export class ProjectMembers implements OnInit {
     if (!this.isProjectManager) return;
     if (this.formMode === 'edit' && this.loading) return;
     clearServerErrorsOnFormGroup(this.modalForm);
-    if (!this.validate()) return;
+    if (this.modalForm.invalid) {
+      markFormControlsTouched(this.modalForm);
+      return;
+    }
 
     const v = this.modalForm.getRawValue();
     const payload: ProjectMemberWritePayload = {
@@ -367,6 +385,22 @@ export class ProjectMembers implements OnInit {
     });
   }
 
+  private activateProject(id: string, projectName?: string | null, fetchAfterChange = false): void {
+    const name = projectName?.trim();
+    if (name) {
+      this.displayProjectName = name;
+    }
+    const changed = id !== this.effectiveProjectId;
+    if (changed) {
+      this.effectiveProjectId = id;
+      this.pageIndex = 1;
+      this.resolveProjectRole();
+    }
+    if (changed || fetchAfterChange) {
+      this.fetch();
+    }
+  }
+
   private resolveProjectRole(): void {
     if (!this.effectiveProjectId || !this.currentUserId) {
       this.isProjectManager = false;
@@ -431,47 +465,12 @@ export class ProjectMembers implements OnInit {
     });
   }
 
-  private validate(): boolean {
-    const f = this.modalForm.getRawValue();
-    if (!f.userId) {
-      this.notification.warning(
-        this.translate.instant('projectMember.messages.invalidTitle'),
-        this.translate.instant('projectMember.messages.userRequired')
-      );
-      return false;
-    }
-    if (!f.roleInProject) {
-      this.notification.warning(
-        this.translate.instant('projectMember.messages.invalidTitle'),
-        this.translate.instant('projectMember.messages.roleRequired')
-      );
-      return false;
-    }
-    if (
-      f.allocationPercent != null &&
-      (f.allocationPercent < 0 || f.allocationPercent > 100)
-    ) {
-      this.notification.warning(
-        this.translate.instant('projectMember.messages.invalidTitle'),
-        this.translate.instant('projectMember.messages.percentInvalid')
-      );
-      return false;
-    }
-    if (f.startDate && f.endDate && f.startDate > f.endDate) {
-      this.notification.warning(
-        this.translate.instant('projectMember.messages.invalidTitle'),
-        this.translate.instant('projectMember.messages.dateRangeInvalid')
-      );
-      return false;
-    }
-    return true;
-  }
-
   private handleWriteError(raw: ApiResponse | undefined): void {
     const map = parseServerFieldErrorMap(raw);
     if (map) {
       clearServerErrorsOnFormGroup(this.modalForm);
       applyServerFieldErrorsToFormGroup(this.modalForm, map);
+      markFormControlsTouched(this.modalForm);
       return;
     }
     clearServerErrorsOnFormGroup(this.modalForm);

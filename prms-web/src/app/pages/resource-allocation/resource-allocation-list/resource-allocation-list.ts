@@ -1,6 +1,7 @@
 import { CommonModule, DatePipe } from '@angular/common';
-import { Component } from '@angular/core';
-import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { Component, DestroyRef, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { NzButtonComponent } from 'ng-zorro-antd/button';
 import { NzIconDirective } from 'ng-zorro-antd/icon';
@@ -15,6 +16,11 @@ import {
   clearServerErrorsOnFormGroup,
   parseServerFieldErrorMap,
 } from '../../../shared/utils/form-server-errors';
+import {
+  markFormControlsTouched,
+  siblingDateRangeValidator,
+  trimRequiredValidator,
+} from '../../../shared/utils/form-validation';
 import { Page } from '../../project/models/page.model';
 import { ResourceAllocation, ResourceAllocationWritePayload } from '../models/resource-allocation.model';
 import { ResourceAllocationSearchRequest } from '../models/resource-allocation-search.request';
@@ -39,6 +45,8 @@ import { ResourceAllocationService } from '../services/resource-allocation.servi
   styleUrls: ['./resource-allocation-list.scss'],
 })
 export class ResourceAllocationList {
+  private readonly destroyRef = inject(DestroyRef);
+
   keyword = '';
   filterUserId: string | null = null;
   filterRole: string | null = null;
@@ -59,12 +67,12 @@ export class ResourceAllocationList {
   submitting = false;
   loading = false;
   readonly modalForm = new FormGroup({
-    userId: new FormControl<string | null>(null),
-    role: new FormControl<string | null>(null),
-    month: new FormControl<Date | null>(null),
+    userId: new FormControl<string | null>(null, [Validators.required]),
+    role: new FormControl<string | null>(null, [Validators.required, trimRequiredValidator]),
+    month: new FormControl<Date | null>(null, [Validators.required]),
     startDate: new FormControl<Date | null>(null),
-    endDate: new FormControl<Date | null>(null),
-    allocationPercent: new FormControl<number | null>(100),
+    endDate: new FormControl<Date | null>(null, [siblingDateRangeValidator('startDate')]),
+    allocationPercent: new FormControl<number | null>(100, [Validators.required, Validators.min(0), Validators.max(100)]),
   });
 
   viewVisible = false;
@@ -81,6 +89,11 @@ export class ResourceAllocationList {
   ) {}
 
   ngOnInit(): void {
+    this.modalForm.controls.startDate.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.modalForm.controls.endDate.updateValueAndValidity();
+      });
     this.fetch();
   }
 
@@ -246,7 +259,10 @@ export class ResourceAllocationList {
   save(): void {
     if (this.formMode === 'edit' && this.loading) return;
     clearServerErrorsOnFormGroup(this.modalForm);
-    if (!this.validate()) return;
+    if (this.modalForm.invalid) {
+      markFormControlsTouched(this.modalForm);
+      return;
+    }
 
     const v = this.modalForm.getRawValue();
     const payload: ResourceAllocationWritePayload = {
@@ -345,51 +361,12 @@ export class ResourceAllocationList {
     });
   }
 
-  private validate(): boolean {
-    const f = this.modalForm.getRawValue();
-    if (!f.userId) {
-      this.notification.warning(
-        this.translate.instant('resourceAllocation.messages.invalidTitle'),
-        this.translate.instant('resourceAllocation.messages.userRequired')
-      );
-      return false;
-    }
-    if (!f.role?.trim()) {
-      this.notification.warning(
-        this.translate.instant('resourceAllocation.messages.invalidTitle'),
-        this.translate.instant('resourceAllocation.messages.roleRequired')
-      );
-      return false;
-    }
-    if (!f.month) {
-      this.notification.warning(
-        this.translate.instant('resourceAllocation.messages.invalidTitle'),
-        this.translate.instant('resourceAllocation.messages.monthRequired')
-      );
-      return false;
-    }
-    if (f.allocationPercent == null || f.allocationPercent < 0 || f.allocationPercent > 100) {
-      this.notification.warning(
-        this.translate.instant('resourceAllocation.messages.invalidTitle'),
-        this.translate.instant('resourceAllocation.messages.percentInvalid')
-      );
-      return false;
-    }
-    if (f.startDate && f.endDate && f.startDate > f.endDate) {
-      this.notification.warning(
-        this.translate.instant('resourceAllocation.messages.invalidTitle'),
-        this.translate.instant('resourceAllocation.messages.dateRangeInvalid')
-      );
-      return false;
-    }
-    return true;
-  }
-
   private handleWriteError(raw: ApiResponse | undefined): void {
     const map = parseServerFieldErrorMap(raw);
     if (map) {
       clearServerErrorsOnFormGroup(this.modalForm);
       applyServerFieldErrorsToFormGroup(this.modalForm, map);
+      markFormControlsTouched(this.modalForm);
       return;
     }
     clearServerErrorsOnFormGroup(this.modalForm);

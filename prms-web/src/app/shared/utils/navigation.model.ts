@@ -5,6 +5,7 @@ export interface NavigationItem {
   iconType?: string;
   iconClass?: string;
   iconLink?: string;
+  allowedRoles?: string[];
   children?: NavigationItem[];
 }
 
@@ -18,6 +19,7 @@ export const navigation: NavigationItem[] = [
     translateKey: 'navigation.report',
     iconType: 'bar-chart',
     link: '/report',
+    allowedRoles: ['SUPPER_ADMIN'],
   },
   {
     translateKey: 'navigation.projectRequest',
@@ -28,6 +30,7 @@ export const navigation: NavigationItem[] = [
     translateKey: 'navigation.resourceAllocation',
     iconType: 'team',
     link: '/resource-allocation',
+    allowedRoles: ['SUPPER_ADMIN'],
   },
   {
     translateKey: 'navigation.employeeOt',
@@ -42,14 +45,17 @@ export const navigation: NavigationItem[] = [
   {
     translateKey: 'navigation.management',
     iconType: 'setting',
+    allowedRoles: ['SUPPER_ADMIN'],
     children: [
       {
         translateKey: 'navigation.users',
         link: '/management/users',
+        allowedRoles: ['SUPPER_ADMIN'],
       },
       {
         translateKey: 'navigation.appParams',
         link: '/management/app-params',
+        allowedRoles: ['SUPPER_ADMIN'],
       },
     ],
   }
