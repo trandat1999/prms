@@ -1,6 +1,6 @@
 <div class="w-100 vh-100 d-flex align-items-center justify-content-center bg-body-secondary">
   <div class="card login-form">
-    <div (submit)="login()" [formGroup]="formGroup" class="card-body">
+    <form (submit)="login()" [formGroup]="formGroup" class="card-body">
       <div class="text-center mb-3">
         <h3>{{'auth.signIn' | translate}}</h3>
         <span class="form-control-color">{{'auth.loginWelcomeBack' | translate}}</span>
@@ -16,8 +16,8 @@
           <a routerLink="/forgot-password" class="float-end">{{'auth.forgotPassword' | translate}}</a>
         </div>
       </div>
-      <button [disabled]="formGroup.invalid || isSubmitting" nz-button type="submit" (click)="login()" class="w-100 mt-3 mb-2" [nzType]="'primary'">Log in</button>
+      <button [disabled]="formGroup.invalid || isSubmitting" nz-button type="submit" class="w-100 mt-3 mb-2" [nzType]="'primary'">Log in</button>
       <span>{{'auth.dontHaveAccount' |translate}}<a routerLink="/register">{{'auth.signUpNow' |translate}}</a></span>
-    </div>
+    </form>
   </div>
 </div>

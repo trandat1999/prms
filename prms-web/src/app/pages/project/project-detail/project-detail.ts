@@ -1,24 +1,18 @@
-import { CommonModule } from '@angular/common';
-import { Component, DestroyRef, OnInit, inject } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, Router } from '@angular/router';
-import { TranslatePipe } from '@ngx-translate/core';
-import { NzButtonComponent } from 'ng-zorro-antd/button';
-import { NzIconDirective } from 'ng-zorro-antd/icon';
-import { NzSpinComponent } from 'ng-zorro-antd/spin';
-import { NzTabsModule } from 'ng-zorro-antd/tabs';
-import { Project } from '../models/project.model';
-import { ProjectService } from '../services/project.service';
-import { ProjectMembers } from '../project-members/project-members';
-import { ProjectTasks } from '../project-tasks/project-tasks';
+import {CommonModule} from '@angular/common';
+import {Component, DestroyRef, inject, OnInit} from '@angular/core';
+import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
+import {ActivatedRoute, Router} from '@angular/router';
+import {TranslatePipe} from '@ngx-translate/core';
+import {NzTabsModule} from 'ng-zorro-antd/tabs';
+import {Project} from '../models/project.model';
+import {ProjectMembers} from '../project-members/project-members';
+import {ProjectTasks} from '../project-tasks/project-tasks';
+import {ProjectService} from '../services/project.service';
 
 @Component({
   selector: 'app-project-detail',
   imports: [
     CommonModule,
-    NzButtonComponent,
-    NzIconDirective,
-    NzSpinComponent,
     NzTabsModule,
     ProjectTasks,
     ProjectMembers,
