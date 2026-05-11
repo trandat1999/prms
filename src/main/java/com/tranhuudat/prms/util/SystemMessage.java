@@ -38,6 +38,9 @@ public class SystemMessage {
     public static final String TASK_DEPENDENCY_CYCLE = "app.message.taskDependencyCycle";
     public static final String TASK_DEPENDENCY_SELF = "app.message.taskDependencySelf";
 
+    /** Mật khẩu hiện tại không đúng khi đổi mật khẩu */
+    public static final String INVALID_CURRENT_PASSWORD = "app.message.invalidCurrentPassword";
+
     /** Tham số: {0} mã task tiên quyết, {1} mã task kế tiếp */
     public static final String NOTIFICATION_TASK_PREDECESSOR_DONE = "app.notification.taskPredecessorDone";
 

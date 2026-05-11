@@ -1,15 +1,8 @@
 import { Injectable } from '@angular/core';
-import { map } from 'rxjs';
 import { BaseService } from '../../../core/services/base-service';
-import { ApiResponse } from '../../../shared/utils/api-response';
-import { Page } from '../models/page.model';
 import {
-  Task,
   TaskAssignPayload,
-  TaskChecklistItem,
-  TaskKanbanBoard,
   TaskKanbanBoardUpdatePayload,
-  TaskLog,
   TaskStatusPayload,
   TaskWritePayload,
 } from '../models/task.model';
@@ -24,111 +17,51 @@ export class TaskService {
   constructor(private base: BaseService) {}
 
   getPage(request: TaskSearchRequest) {
-    return this.base.post(this.apiUrl + '/page', request).pipe(
-      map((res: ApiResponse) => ({
-        raw: res,
-        page: (res?.body ?? null) as Page<Task> | null,
-      }))
-    );
+    return this.base.post(this.apiUrl + '/page', request);
   }
 
   getById(id: string) {
-    return this.base.get(`${this.apiUrl}/${id}`).pipe(
-      map((res: ApiResponse) => ({
-        raw: res,
-        task: (res?.body ?? null) as Task | null,
-      }))
-    );
+    return this.base.get(`${this.apiUrl}/${id}`);
   }
 
   create(request: TaskWritePayload) {
-    return this.base.post(this.apiUrl, request).pipe(
-      map((res: ApiResponse) => ({
-        raw: res,
-        task: (res?.body ?? null) as Task | null,
-      }))
-    );
+    return this.base.post(this.apiUrl, request);
   }
 
   update(id: string, request: TaskWritePayload) {
-    return this.base.put(`${this.apiUrl}/${id}`, request).pipe(
-      map((res: ApiResponse) => ({
-        raw: res,
-        task: (res?.body ?? null) as Task | null,
-      }))
-    );
+    return this.base.put(`${this.apiUrl}/${id}`, request);
   }
 
   delete(id: string) {
-    return this.base.delete(`${this.apiUrl}/${id}`).pipe(
-      map((res: ApiResponse) => ({
-        raw: res,
-        task: (res?.body ?? null) as Task | null,
-      }))
-    );
+    return this.base.delete(`${this.apiUrl}/${id}`);
   }
 
   assign(id: string, request: TaskAssignPayload) {
-    return this.base.patch(`${this.apiUrl}/${id}/assign`, request).pipe(
-      map((res: ApiResponse) => ({
-        raw: res,
-        task: (res?.body ?? null) as Task | null,
-      }))
-    );
+    return this.base.patch(`${this.apiUrl}/${id}/assign`, request);
   }
 
   updateStatus(id: string, request: TaskStatusPayload) {
-    return this.base.patch(`${this.apiUrl}/${id}/status`, request).pipe(
-      map((res: ApiResponse) => ({
-        raw: res,
-        task: (res?.body ?? null) as Task | null,
-      }))
-    );
+    return this.base.patch(`${this.apiUrl}/${id}/status`, request);
   }
 
   getLogs(id: string) {
-    return this.base.get(`${this.apiUrl}/${id}/logs`).pipe(
-      map((res: ApiResponse) => ({
-        raw: res,
-        logs: (res?.body ?? []) as TaskLog[],
-      }))
-    );
+    return this.base.get(`${this.apiUrl}/${id}/logs`);
   }
 
   getKanbanBoard(projectId: string) {
     const qs = projectId ? `?projectId=${projectId}` : '';
-    return this.base.get(`${this.apiUrl}/kanban/board${qs}`).pipe(
-      map((res: ApiResponse) => ({
-        raw: res,
-        board: (res?.body ?? null) as TaskKanbanBoard | null,
-      }))
-    );
+    return this.base.get(`${this.apiUrl}/kanban/board${qs}`);
   }
 
   updateKanbanBoard(request: TaskKanbanBoardUpdatePayload) {
-    return this.base.put(`${this.apiUrl}/kanban/board`, request).pipe(
-      map((res: ApiResponse) => ({
-        raw: res,
-        ok: (res?.body ?? null) as boolean | null,
-      }))
-    );
+    return this.base.put(`${this.apiUrl}/kanban/board`, request);
   }
 
   getChecklists(taskId: string) {
-    return this.base.get(`${this.apiUrl}/${taskId}/checklists`).pipe(
-      map((res: ApiResponse) => ({
-        raw: res,
-        items: (res?.body ?? []) as TaskChecklistItem[],
-      }))
-    );
+    return this.base.get(`${this.apiUrl}/${taskId}/checklists`);
   }
 
   toggleChecklist(taskId: string, checklistId: string, checked: boolean) {
-    return this.base.patch(`${this.apiUrl}/${taskId}/checklists/${checklistId}`, { checked }).pipe(
-      map((res: ApiResponse) => ({
-        raw: res,
-        items: (res?.body ?? []) as TaskChecklistItem[],
-      }))
-    );
+    return this.base.patch(`${this.apiUrl}/${taskId}/checklists/${checklistId}`, { checked });
   }
 }

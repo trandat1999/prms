@@ -1,10 +1,6 @@
 import {Component, OnInit} from '@angular/core';
 import {API_CODE_BAD_REQUEST, GUTTER_H, GUTTER_V} from '../../../shared/utils/const';
-import {
-  applyServerFieldErrorsToFormGroup,
-  clearServerErrorsOnFormGroup,
-  parseServerFieldErrorMap,
-} from '../../../shared/utils/form-server-errors';
+import { clearServerErrorsOnFormGroup, SERVER_FORM_ERROR_KEY } from '../../../shared/utils/form-server-errors';
 import { markFormControlsTouched } from '../../../shared/utils/form-validation';
 import {FormControl, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
 import {AuthService} from '../auth-service';
@@ -64,11 +60,15 @@ export class Login implements OnInit {
     this.authService.login(this.formGroup.getRawValue()).subscribe((data) => {
       this.isSubmitting = false;
       if (data.code == API_CODE_BAD_REQUEST) {
-        const map = parseServerFieldErrorMap(data);
-        if (map) {
-          clearServerErrorsOnFormGroup(this.formGroup);
-          applyServerFieldErrorsToFormGroup(this.formGroup, map);
-          markFormControlsTouched(this.formGroup);
+        if (data.body && typeof data.body === 'object' && !Array.isArray(data.body)) {
+          const body = data.body as Record<string, unknown>;
+          Object.keys(body).forEach((key) => {
+            const msg = body[key];
+            if (typeof msg !== 'string' || !msg.trim()) {
+              return;
+            }
+            this.formGroup.controls[key]?.setErrors({ [SERVER_FORM_ERROR_KEY]: msg });
+          });
         }
         return;
       } else {

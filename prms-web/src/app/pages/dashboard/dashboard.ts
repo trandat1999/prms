@@ -68,8 +68,9 @@ export class Dashboard implements OnInit {
       .getOverview()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: ({ overview }) => {
+        next: (res) => {
           this.loadError = false;
+          const overview = (res?.body ?? null) as DashboardOverview | null;
           this.overview = overview;
           if (overview) {
             this.rebuildCharts(overview);

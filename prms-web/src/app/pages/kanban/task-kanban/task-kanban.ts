@@ -10,7 +10,14 @@ import { NzSpinComponent } from 'ng-zorro-antd/spin';
 import { NzTagComponent } from 'ng-zorro-antd/tag';
 import { NzPopoverDirective } from 'ng-zorro-antd/popover';
 import { InputCommon } from '../../../shared/input/input';
-import { TaskChecklistItem, TaskKanbanBoardUpdatePayload, TaskKanbanColumn, Task } from '../../project/models/task.model';
+import {
+  TaskChecklistItem,
+  TaskKanbanBoard,
+  TaskKanbanBoardUpdatePayload,
+  TaskKanbanColumn,
+  Task,
+} from '../../project/models/task.model';
+import { Project } from '../../project/models/project.model';
 import { TaskService } from '../../project/services/task.service';
 import { TaskStatus } from '../../project/models/task.types';
 import { StoreService } from '../../../core/services/store-service';
@@ -103,7 +110,8 @@ export class TaskKanban {
     }
     this.checklistByTaskId[id] = { loading: true, items: [] };
     this.taskService.getChecklists(id).subscribe({
-      next: ({ raw, items }) => {
+      next: (raw) => {
+        const items = (raw?.body ?? []) as TaskChecklistItem[];
         this.checklistByTaskId[id] = { loading: false, items: raw?.code === 200 ? items ?? [] : [] };
         // gắn vào task để hiện summary nếu muốn
         (t as any).checklists = this.checklistByTaskId[id].items;
@@ -119,8 +127,9 @@ export class TaskKanban {
     const checklistId = item?.id as string | undefined;
     if (!taskId || !checklistId) return;
     this.taskService.toggleChecklist(taskId, checklistId, checked).subscribe({
-      next: ({ raw, items }) => {
+      next: (raw) => {
         if (raw?.code === 200) {
+          const items = (raw?.body ?? []) as TaskChecklistItem[];
           this.checklistByTaskId[taskId] = { loading: false, items: items ?? [] };
           (t as any).checklists = items ?? [];
           (t as any).checklistTotalCount = (items ?? []).length;
@@ -137,8 +146,9 @@ export class TaskKanban {
     this.resolveProjectContext();
     this.loading = true;
     this.taskService.getKanbanBoard(this.projectId ?? '').subscribe({
-      next: ({ raw, board }) => {
+      next: (raw) => {
         this.loading = false;
+        const board = (raw?.body ?? null) as TaskKanbanBoard | null;
         if (raw?.code === 200 && board?.columns?.length) {
           // đảm bảo đủ 5 cột
           const base = this.emptyColumns();
@@ -208,9 +218,10 @@ export class TaskKanban {
     if (moved?.id && evt.previousContainer !== evt.container) {
       this.saving = true;
       this.taskService.updateStatus(moved.id, { status: toStatus }).subscribe({
-        next: ({ raw, task: updated }) => {
+        next: (raw) => {
           this.saving = false;
           if (raw?.code === 200) {
+            const updated = (raw?.body ?? null) as Task | null;
             moved.status = (updated?.status ?? toStatus) as TaskStatus;
             return;
           }
@@ -285,7 +296,7 @@ export class TaskKanban {
     };
     this.saving = true;
     this.taskService.updateKanbanBoard(payload).subscribe({
-      next: ({ raw }) => {
+      next: (raw) => {
         this.saving = false;
         if (raw?.code === 200) {
           return;
@@ -322,11 +333,12 @@ export class TaskKanban {
     if (!next) return;
 
     this.taskService.updateStatus(t.id, { status: next }).subscribe({
-      next: ({ raw, task }) => {
+      next: (raw) => {
         if (raw?.code !== 200) {
           this.notification.warning(this.translate.instant('common.error'), raw?.message ?? '');
           return;
         }
+        const task = (raw?.body ?? null) as Task | null;
         // sync local status + move card to next column
         t.status = (task?.status ?? next) as TaskStatus;
         this.moveTaskToStatus(t, t.status as TaskStatus);
@@ -459,8 +471,9 @@ export class TaskKanban {
     }
     const pid = this.projectId;
     this.projectService.getById(pid).subscribe({
-      next: ({ raw, project }) => {
-        this.projectManagerId = raw?.code === 200 ? ((project?.managerId ?? null) as any) : null;
+      next: (raw) => {
+        const project = (raw?.body ?? null) as Project | null;
+        this.projectManagerId = raw?.code === 200 ? ((project?.managerId ?? null) as string | null) : null;
       },
       error: () => (this.projectManagerId = null),
     });

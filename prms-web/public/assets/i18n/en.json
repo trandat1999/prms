@@ -10,7 +10,8 @@
       "done": "Done",
       "close": "Close",
       "create": "Create",
-      "update": "Update"
+      "update": "Update",
+      "search": "Search"
     },
     "loading": "Loading",
     "loadingData": "Loading data",
@@ -31,7 +32,26 @@
     "kanban": "Kanban",
     "report": "Report",
     "projectTeam": "Project Team",
-    "projectDetail": "Project detail"
+    "projectDetail": "Project detail",
+    "profile": "My profile",
+    "skills": "Skills"
+  },
+  "profile": {
+    "sectionAccount": "Account information",
+    "sectionPassword": "Change password",
+    "username": "Username",
+    "email": "Email",
+    "fullName": "Full name",
+    "submitProfile": "Save profile",
+    "currentPassword": "Current password",
+    "newPassword": "New password",
+    "confirmNewPassword": "Confirm new password",
+    "submitPassword": "Update password",
+    "loadError": "Could not load your profile.",
+    "saveProfileSuccess": "Profile updated.",
+    "savePasswordSuccess": "Password updated.",
+    "passwordMismatch": "New password and confirmation do not match.",
+    "usernameLockedHint": "Username cannot be changed."
   },
   "dashboard": {
     "title": "PRMS Dashboard",
@@ -126,7 +146,35 @@
     "tasks": "Tasks",
     "resourceAllocation": "Resource allocation",
     "employeeOt": "Employee OT",
-    "kanban": "Kanban"
+    "kanban": "Kanban",
+    "skills": "Skills"
+  },
+  "skill": {
+    "list": {
+      "searchPlaceholder": "Search (code/name/category)",
+      "categoryPlaceholder": "Category"
+    },
+    "fields": {
+      "code": "Code",
+      "name": "Name",
+      "category": "Category",
+      "description": "Description"
+    },
+    "form": {
+      "createTitle": "Create skill",
+      "editTitle": "Edit skill"
+    },
+    "messages": {
+      "missingId": "Missing skill id.",
+      "loadFailed": "Could not load skill.",
+      "confirmDeleteTitle": "Confirm delete",
+      "confirmDeleteContent": "Are you sure you want to delete \"{{label}}\"?",
+      "deleteFailed": "Could not delete.",
+      "deleted": "Deleted.",
+      "created": "Created.",
+      "updated": "Updated.",
+      "actionFailed": "Action failed."
+    }
   },
   "validation": {
     "required": "{{label}} is required",

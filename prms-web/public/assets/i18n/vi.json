@@ -10,7 +10,8 @@
       "done": "Done",
       "close": "Close",
       "create": "Create",
-      "update": "Update"
+      "update": "Update",
+      "search": "Tìm kiếm"
     },
     "loading": "Loading",
     "loadingData": "Loading data",
@@ -31,7 +32,26 @@
     "kanban": "Kanban",
     "report": "Báo cáo",
     "projectTeam": "Thành viên dự án",
-    "projectDetail": "Chi tiết dự án"
+    "projectDetail": "Chi tiết dự án",
+    "profile": "Hồ sơ của tôi",
+    "skills": "Kỹ năng"
+  },
+  "profile": {
+    "sectionAccount": "Thông tin tài khoản",
+    "sectionPassword": "Đổi mật khẩu",
+    "username": "Tên đăng nhập",
+    "email": "Email",
+    "fullName": "Họ và tên",
+    "submitProfile": "Lưu thông tin",
+    "currentPassword": "Mật khẩu hiện tại",
+    "newPassword": "Mật khẩu mới",
+    "confirmNewPassword": "Xác nhận mật khẩu mới",
+    "submitPassword": "Cập nhật mật khẩu",
+    "loadError": "Không tải được thông tin tài khoản.",
+    "saveProfileSuccess": "Đã cập nhật thông tin.",
+    "savePasswordSuccess": "Đã cập nhật mật khẩu.",
+    "passwordMismatch": "Mật khẩu mới và xác nhận không khớp.",
+    "usernameLockedHint": "Tên đăng nhập không thể thay đổi."
   },
   "dashboard": {
     "title": "Dashboard PRMS",
@@ -126,7 +146,35 @@
     "resourceAllocation": "Phân bổ nguồn lực",
     "employeeOt": "Đăng ký OT",
     "projectRequest": "Dự án",
-    "kanban": "Kanban"
+    "kanban": "Kanban",
+    "skills": "Kỹ năng"
+  },
+  "skill": {
+    "list": {
+      "searchPlaceholder": "Tìm kiếm (mã/tên/nhóm)",
+      "categoryPlaceholder": "Nhóm kỹ năng"
+    },
+    "fields": {
+      "code": "Mã",
+      "name": "Tên kỹ năng",
+      "category": "Nhóm",
+      "description": "Mô tả"
+    },
+    "form": {
+      "createTitle": "Thêm kỹ năng",
+      "editTitle": "Sửa kỹ năng"
+    },
+    "messages": {
+      "missingId": "Thiếu mã kỹ năng.",
+      "loadFailed": "Không tải được kỹ năng.",
+      "confirmDeleteTitle": "Xác nhận xoá",
+      "confirmDeleteContent": "Bạn có chắc muốn xoá \"{{label}}\"?",
+      "deleteFailed": "Không xoá được.",
+      "deleted": "Đã xoá.",
+      "created": "Đã tạo.",
+      "updated": "Đã cập nhật.",
+      "actionFailed": "Thao tác thất bại."
+    }
   },
   "validation": {
     "required": "{{label}} là bắt buộc",
@@ -145,7 +193,7 @@
   "layout": {
     "english": "English",
     "vietnamese": "Vietnamese",
-    "profile": "Profile",
+    "profile": "Hồ sơ",
     "logout": "Logout",
     "notificationsLoading": "Đang tải…",
     "notificationsEmpty": "Không có thông báo"

@@ -1,9 +1,12 @@
 package com.tranhuudat.prms.controller;
 
 import com.tranhuudat.prms.dto.BaseResponse;
+import com.tranhuudat.prms.dto.user.CurrentUserPasswordUpdateRequest;
+import com.tranhuudat.prms.dto.user.CurrentUserProfileUpdateRequest;
 import com.tranhuudat.prms.dto.user.UserCreateRequest;
 import com.tranhuudat.prms.dto.user.UserPasswordUpdateRequest;
 import com.tranhuudat.prms.dto.user.UserSearchRequest;
+import com.tranhuudat.prms.dto.user.UserSkillsUpdateRequest;
 import com.tranhuudat.prms.dto.user.UserUpdateRequest;
 import com.tranhuudat.prms.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +40,16 @@ public class UserController {
         return ResponseEntity.ok(userService.getCurrentUser());
     }
 
+    @PatchMapping("/current/profile")
+    public ResponseEntity<BaseResponse> updateCurrentUserProfile(@RequestBody CurrentUserProfileUpdateRequest request) {
+        return ResponseEntity.ok(userService.updateCurrentUserProfile(request));
+    }
+
+    @PatchMapping("/current/password")
+    public ResponseEntity<BaseResponse> updateCurrentUserPassword(@RequestBody CurrentUserPasswordUpdateRequest request) {
+        return ResponseEntity.ok(userService.updateCurrentUserPassword(request));
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<BaseResponse> getById(@PathVariable UUID id) {
         return ResponseEntity.ok(userService.getById(id));
@@ -65,5 +78,15 @@ public class UserController {
     @DeleteMapping("/{id}")
     public ResponseEntity<BaseResponse> delete(@PathVariable UUID id) {
         return ResponseEntity.ok(userService.delete(id));
+    }
+
+    @GetMapping("/{id}/skills")
+    public ResponseEntity<BaseResponse> getSkills(@PathVariable UUID id) {
+        return ResponseEntity.ok(userService.getSkills(id));
+    }
+
+    @PutMapping("/{id}/skills")
+    public ResponseEntity<BaseResponse> updateSkills(@PathVariable UUID id, @RequestBody UserSkillsUpdateRequest request) {
+        return ResponseEntity.ok(userService.updateSkills(id, request));
     }
 }

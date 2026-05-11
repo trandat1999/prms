@@ -107,8 +107,9 @@ export class AppParamList {
     this.resetModalForm();
     clearServerErrorsOnFormGroup(this.modalForm);
     this.service.getById(id).subscribe({
-      next: ({ raw, item }) => {
+      next: (raw) => {
         this.loading = false;
+        const item = (raw?.body ?? null) as AppParam | null;
         if (raw?.code === 200 && item) {
           this.applyToForm(item);
         } else {
@@ -139,7 +140,7 @@ export class AppParamList {
       nzOnOk: () =>
         new Promise<void>((resolve, reject) => {
           this.service.delete(id).subscribe({
-            next: ({ raw }) => {
+            next: (raw) => {
               if (raw?.code === 200) {
                 this.notification.success(this.t('common.button.done'), raw?.message ?? this.t('appParam.messages.deleted'));
                 this.fetch();
@@ -191,7 +192,7 @@ export class AppParamList {
     if (this.formMode === 'create') {
       this.submitting = true;
       this.service.create(payload).subscribe({
-        next: ({ raw }) => {
+        next: (raw) => {
           this.submitting = false;
           if (raw?.code === 201) {
             this.notification.success(this.t('common.button.done'), raw?.message ?? this.t('appParam.messages.created'));
@@ -214,7 +215,7 @@ export class AppParamList {
     }
     this.submitting = true;
     this.service.update(id, payload).subscribe({
-      next: ({ raw }) => {
+      next: (raw) => {
         this.submitting = false;
         if (raw?.code === 200) {
           this.notification.success(this.t('common.button.done'), raw?.message ?? this.t('appParam.messages.updated'));
@@ -238,7 +239,8 @@ export class AppParamList {
       pageSize: this.pageSize,
       voided: false,
     };
-    this.service.getPage(req).subscribe(({ page }) => {
+    this.service.getPage(req).subscribe((res) => {
+      const page = (res?.body ?? null) as Page<AppParam> | null;
       this.page = page;
       this.rows = page?.content ?? [];
       this.pageSize = page?.size ?? this.pageSize;

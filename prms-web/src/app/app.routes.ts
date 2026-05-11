@@ -38,8 +38,12 @@ export const routes: Routes = [
         path: 'kanban',
         data: { breadcrumb: 'breadcrumb.kanban' },
         loadChildren: () => import('./pages/kanban/kanban.routes').then((m) => m.KANBAN_ROUTES),
-      }
-      ,
+      },
+      {
+        path: 'profile',
+        data: { breadcrumb: 'breadcrumb.profile' },
+        loadChildren: () => import('./pages/profile/profile.routes').then((m) => m.PROFILE_ROUTES),
+      },
       {
         path: 'management',
         data: { breadcrumb: 'breadcrumb.management' },

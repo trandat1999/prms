@@ -29,6 +29,7 @@ import { AppParamService } from '../../management/app-params/services/app-param.
 import { AppParam } from '../../management/app-params/models/app-param.model';
 import { StoreService } from '../../../core/services/store-service';
 import { ProjectService } from '../services/project.service';
+import { Project } from '../models/project.model';
 
 @Component({
   selector: 'app-project-members',
@@ -203,8 +204,9 @@ export class ProjectMembers implements OnChanges, OnInit {
     this.resetModalForm();
     clearServerErrorsOnFormGroup(this.modalForm);
     this.service.getById(id).subscribe({
-      next: ({ raw, row }) => {
+      next: (raw) => {
         this.loading = false;
+        const row = (raw?.body ?? null) as ProjectMember | null;
         if (raw?.code === 200 && row) {
           this.applyToForm(row);
         } else {
@@ -226,8 +228,9 @@ export class ProjectMembers implements OnChanges, OnInit {
     this.viewDetail = null;
     this.viewLoading = true;
     this.service.getById(id).subscribe({
-      next: ({ raw, row }) => {
+      next: (raw) => {
         this.viewLoading = false;
+        const row = (raw?.body ?? null) as ProjectMember | null;
         if (raw?.code === 200 && row) {
           this.viewDetail = row;
         } else {
@@ -262,7 +265,7 @@ export class ProjectMembers implements OnChanges, OnInit {
       nzOnOk: () =>
         new Promise<void>((resolve, reject) => {
           this.service.delete(id).subscribe({
-            next: ({ raw }) => {
+            next: (raw) => {
               if (raw?.code === 200) {
                 this.notification.success(this.translate.instant('common.button.done'), raw?.message ?? '');
                 this.fetch();
@@ -312,7 +315,7 @@ export class ProjectMembers implements OnChanges, OnInit {
     if (this.formMode === 'create') {
       this.submitting = true;
       this.service.create(payload).subscribe({
-        next: ({ raw }) => {
+        next: (raw) => {
           this.submitting = false;
           if (raw?.code === 201) {
             this.notification.success(this.translate.instant('common.button.done'), raw?.message ?? '');
@@ -338,7 +341,7 @@ export class ProjectMembers implements OnChanges, OnInit {
     }
     this.submitting = true;
     this.service.update(id, payload).subscribe({
-      next: ({ raw }) => {
+      next: (raw) => {
         this.submitting = false;
         if (raw?.code === 200) {
           this.notification.success(this.translate.instant('common.button.done'), raw?.message ?? '');
@@ -377,7 +380,8 @@ export class ProjectMembers implements OnChanges, OnInit {
       pageSize: this.pageSize,
       voided: false,
     };
-    this.service.getPage(req).subscribe(({ page }) => {
+    this.service.getPage(req).subscribe((res) => {
+      const page = (res?.body ?? null) as Page<ProjectMember> | null;
       this.page = page;
       this.rows = page?.content ?? [];
       this.pageSize = page?.size ?? this.pageSize;
@@ -407,7 +411,8 @@ export class ProjectMembers implements OnChanges, OnInit {
       return;
     }
     this.projectService.getById(this.effectiveProjectId).subscribe({
-      next: ({ raw, project }) => {
+      next: (raw) => {
+        const project = (raw?.body ?? null) as Project | null;
         if (raw?.code === 200 && project?.managerId) {
           this.isProjectManager = project.managerId === this.currentUserId;
           return;
@@ -439,8 +444,9 @@ export class ProjectMembers implements OnChanges, OnInit {
         paramGroup: 'MODULE_PROJECT_TEAM',
         paramType: 'PROJECT_TEAM',
       })
-      .subscribe(({ raw, page }) => {
+      .subscribe((raw) => {
         if (raw?.code !== 200) return;
+        const page = (raw?.body ?? null) as Page<AppParam> | null;
         const content = page?.content ?? [];
         const options = content
           .filter((x) => !!x?.paramValue)

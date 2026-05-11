@@ -10,5 +10,7 @@ public interface AutoCompleteService {
 
     /** Thành viên dự án đang hoạt động (cần {@link AutocompleteSearchRequest#getProjectId()}). */
     BaseResponse projectMembers(AutocompleteSearchRequest request);
+
+    BaseResponse skills(AutocompleteSearchRequest request);
 }
 

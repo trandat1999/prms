@@ -1,9 +1,10 @@
 import { Injectable } from '@angular/core';
-import { map } from 'rxjs';
 import { BaseService } from '../../../../core/services/base-service';
-import { ApiResponse } from '../../../../shared/utils/api-response';
-import { Page } from '../../../project/models/page.model';
-import { User, UserCreatePayload, UserDetail, UserUpdatePayload } from '../models/user.model';
+import {
+  CurrentUserProfilePayload,
+  UserCreatePayload,
+  UserUpdatePayload,
+} from '../models/user.model';
 import { UserSearchRequest } from '../models/user-search.request';
 
 @Injectable({
@@ -14,58 +15,47 @@ export class UserService {
 
   constructor(private base: BaseService) {}
 
+  getCurrent() {
+    return this.base.get(`${this.apiUrl}/current`);
+  }
+
+  updateCurrentProfile(request: CurrentUserProfilePayload) {
+    return this.base.patch(`${this.apiUrl}/current/profile`, request);
+  }
+
+  updateCurrentPassword(currentPassword: string, newPassword: string) {
+    return this.base.patch(`${this.apiUrl}/current/password`, { currentPassword, newPassword });
+  }
+
   getPage(request: UserSearchRequest) {
-    return this.base.post(this.apiUrl + '/page', request).pipe(
-      map((res: ApiResponse) => ({
-        raw: res,
-        page: (res?.body ?? null) as Page<User> | null,
-      }))
-    );
+    return this.base.post(this.apiUrl + '/page', request);
   }
 
   getById(id: string) {
-    return this.base.get(`${this.apiUrl}/${id}`).pipe(
-      map((res: ApiResponse) => ({
-        raw: res,
-        user: (res?.body ?? null) as UserDetail | null,
-      }))
-    );
+    return this.base.get(`${this.apiUrl}/${id}`);
   }
 
   create(request: UserCreatePayload) {
-    return this.base.post(this.apiUrl, request).pipe(
-      map((res: ApiResponse) => ({
-        raw: res,
-        user: (res?.body ?? null) as UserDetail | null,
-      }))
-    );
+    return this.base.post(this.apiUrl, request);
   }
 
   update(id: string, request: UserUpdatePayload) {
-    return this.base.put(`${this.apiUrl}/${id}`, request).pipe(
-      map((res: ApiResponse) => ({
-        raw: res,
-        user: (res?.body ?? null) as UserDetail | null,
-      }))
-    );
+    return this.base.put(`${this.apiUrl}/${id}`, request);
   }
 
   delete(id: string) {
-    return this.base.delete(`${this.apiUrl}/${id}`).pipe(
-      map((res: ApiResponse) => ({
-        raw: res,
-        user: (res?.body ?? null) as User | null,
-      }))
-    );
+    return this.base.delete(`${this.apiUrl}/${id}`);
   }
 
   updatePassword(id: string, newPassword: string) {
-    return this.base.patch(`${this.apiUrl}/${id}/password`, { newPassword }).pipe(
-      map((res: ApiResponse) => ({
-        raw: res,
-        ok: (res?.body ?? null) as boolean | null,
-      }))
-    );
+    return this.base.patch(`${this.apiUrl}/${id}/password`, { newPassword });
+  }
+
+  getSkills(id: string) {
+    return this.base.get(`${this.apiUrl}/${id}/skills`);
+  }
+
+  updateSkills(id: string, items: any[]) {
+    return this.base.put(`${this.apiUrl}/${id}/skills`, { items });
   }
 }
-

@@ -88,6 +88,14 @@
             <button
               nz-button
               nzType="text"
+              (click)="onEditSkills(item)"
+              title="Gán kỹ năng"
+            >
+              <span nz-icon nzType="tags"></span>
+            </button>
+            <button
+              nz-button
+              nzType="text"
               (click)="onChangePassword(item)"
               [title]="'user.actions.changePassword' | translate"
             >
@@ -222,6 +230,106 @@
       [disabled]="userFormLoading"
       (click)="saveUserForm()"
     >
+      {{ 'common.button.submit' | translate }}
+    </button>
+  </ng-container>
+</nz-modal>
+
+<nz-modal
+  [(nzVisible)]="skillsVisible"
+  nzTitle="Gán kỹ năng"
+  [nzWidth]="640"
+  (nzOnCancel)="closeSkillsModal()"
+  [nzMaskClosable]="!skillsSubmitting"
+>
+  <div *nzModalContent class="user-skill-modal" [formGroup]="skillsForm">
+    <div class="mb-2 text-muted">
+      Nhân sự: <b>{{ skillsUserLabel }}</b>
+    </div>
+
+    <div class="d-flex align-items-center justify-content-between mb-2">
+      <div class="fw-semibold">Danh sách kỹ năng</div>
+      <button nz-button nzType="dashed" type="button" (click)="addSkillRow()">
+        <span nz-icon nzType="plus"></span>
+        Thêm dòng
+      </button>
+    </div>
+
+    <div formArrayName="items" class="d-flex flex-column gap-2">
+      @for (g of skillItems.controls; track $index) {
+        <div class="border rounded p-2" [formGroupName]="$index">
+          <div class="row g-2 align-items-end">
+            <div class="col-md-5">
+              <app-input
+                label="Kỹ năng"
+                [labelSpan]="24"
+                [inputSpan]="24"
+                type="select"
+                [allowClear]="true"
+                [items]="skillOptions"
+                bindLabel="label"
+                bindValue="id"
+                placeHolder="Chọn kỹ năng"
+                formControlName="skillId"
+              ></app-input>
+            </div>
+            <div class="col-md-4">
+              <app-input
+                label="Mức độ"
+                [labelSpan]="24"
+                [inputSpan]="24"
+                type="select"
+                [isServerSearch]="true"
+                [urlSearch]="skillLevelAppParamUrl"
+                [extraSearchParams]="skillLevelAppParamFilters"
+                bindLabel="paramName"
+                bindLabelFallback="paramValue"
+                bindValue="paramValue"
+                placeHolder="Chọn mức độ"
+                formControlName="level"
+              ></app-input>
+            </div>
+            <div class="col-md-3">
+              <app-input
+                label="Số năm KN"
+                [labelSpan]="24"
+                [inputSpan]="24"
+                type="number"
+                [min]="0"
+                [step]="0.5"
+                placeHolder="0"
+                formControlName="experienceYear"
+              ></app-input>
+            </div>
+            <div class="col-md-4">
+              <app-input
+                label="Dùng gần nhất"
+                [labelSpan]="24"
+                [inputSpan]="24"
+                type="date"
+                placeHolder="Chọn ngày"
+                formControlName="lastUsedDate"
+              ></app-input>
+            </div>
+            <div class="col-md-4 d-flex align-items-center gap-2">
+              <label class="mb-0 small text-muted">Primary</label>
+              <label nz-checkbox formControlName="isPrimary"></label>
+            </div>
+            <div class="col-md-4 text-end">
+              <button nz-button nzType="text" type="button" nzDanger (click)="removeSkillRow($index)">
+                <span nz-icon nzType="delete"></span>
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+  <ng-container *nzModalFooter>
+    <button nz-button type="button" [disabled]="skillsSubmitting" (click)="closeSkillsModal()">
+      {{ 'common.button.cancel' | translate }}
+    </button>
+    <button nz-button nzType="primary" type="button" [nzLoading]="skillsSubmitting" (click)="saveSkills()">
       {{ 'common.button.submit' | translate }}
     </button>
   </ng-container>

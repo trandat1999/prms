@@ -114,7 +114,7 @@
                      nzSize="large" nzIcon="user" [nzSrc]="currentUser?.photoUrl"></nz-avatar>
           <nz-dropdown-menu #menu="nzDropdownMenu">
             <ul nz-menu>
-              <li nz-menu-item><span nz-icon nzType="user"  nzTheme="outline"></span>&nbsp;&nbsp;{{'layout.profile' |translate}}</li>
+              <li nz-menu-item (click)="goToProfile()"><span nz-icon nzType="user"  nzTheme="outline"></span>&nbsp;&nbsp;{{'layout.profile' |translate}}</li>
               <li nz-menu-item (click)="logout()"><span nz-icon nzType="logout" nzTheme="outline"></span>&nbsp;&nbsp;{{'layout.logout' |translate}}</li>
             </ul>
           </nz-dropdown-menu>

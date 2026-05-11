@@ -1,6 +1,7 @@
 import { AbstractControl, FormGroup } from '@angular/forms';
 import { ApiResponse } from './api-response';
 import { API_CODE_BAD_REQUEST } from './const';
+import { markFormControlsTouched } from './form-validation';
 
 export const SERVER_FORM_ERROR_KEY = 'serverError';
 
@@ -49,5 +50,48 @@ export function applyServerFieldErrorsToFormGroup(form: FormGroup, map: Record<s
     const existing = { ...(c.errors ?? {}) };
     existing[SERVER_FORM_ERROR_KEY] = message;
     c.setErrors(existing);
+  }
+}
+
+/** Lấy payload `ApiResponse` từ lỗi HTTP (sau `catchError` của BaseService). */
+export function getApiResponseFromHttpError(err: unknown): ApiResponse | undefined {
+  if (typeof err !== 'object' || err === null || !('error' in err)) {
+    return undefined;
+  }
+  const e = (err as { error: unknown }).error;
+  return e && typeof e === 'object' ? (e as ApiResponse) : undefined;
+}
+
+/**
+ * 400: map field → control; nếu không parse được map thì gán một thông báo chung lên `fallbackControlKeys`.
+ */
+export function applyBadRequestResponseToFormGroup(
+  form: FormGroup,
+  raw: ApiResponse | undefined,
+  opts?: { fallbackControlKeys?: string[] }
+): void {
+  const map = parseServerFieldErrorMap(raw);
+  if (map) {
+    applyServerFieldErrorsToFormGroup(form, map);
+    markFormControlsTouched(form);
+    return;
+  }
+  const msg =
+    typeof raw?.body === 'string' && raw.body.trim()
+      ? raw.body.trim()
+      : typeof raw?.message === 'string' && raw.message.trim()
+        ? raw.message.trim()
+        : null;
+  if (msg && opts?.fallbackControlKeys?.length) {
+    for (const key of opts.fallbackControlKeys) {
+      const c = form.controls[key];
+      if (!c) {
+        continue;
+      }
+      const existing = { ...(c.errors ?? {}) };
+      existing[SERVER_FORM_ERROR_KEY] = msg;
+      c.setErrors(existing);
+    }
+    markFormControlsTouched(form);
   }
 }

@@ -234,8 +234,9 @@ export class EmployeeOtList implements OnInit {
     this.resetModalForm();
     clearServerErrorsOnFormGroup(this.modalForm);
     this.service.getById(id).subscribe({
-      next: ({ raw, row: r }) => {
+      next: (raw) => {
         this.loading = false;
+        const r = (raw?.body ?? null) as EmployeeOt | null;
         if (raw?.code === 200 && r) {
           this.editingRowStatus = r.status ?? null;
           this.applyToForm(r);
@@ -261,8 +262,9 @@ export class EmployeeOtList implements OnInit {
     this.viewDetail = null;
     this.viewLoading = true;
     this.service.getById(id).subscribe({
-      next: ({ raw, row: r }) => {
+      next: (raw) => {
         this.viewLoading = false;
+        const r = (raw?.body ?? null) as EmployeeOt | null;
         if (raw?.code === 200 && r) {
           this.viewDetail = r;
         } else {
@@ -296,7 +298,7 @@ export class EmployeeOtList implements OnInit {
       nzOnOk: () =>
         new Promise<void>((resolve, reject) => {
           this.service.delete(id).subscribe({
-            next: ({ raw }) => {
+            next: (raw) => {
               if (raw?.code === 200) {
                 this.notification.success(this.translate.instant('common.button.done'), raw?.message ?? '');
                 this.fetch();
@@ -346,7 +348,7 @@ export class EmployeeOtList implements OnInit {
     if (this.formMode === 'create') {
       this.submitting = true;
       this.service.create(payload).subscribe({
-        next: ({ raw }) => {
+        next: (raw) => {
           this.submitting = false;
           if (raw?.code === 201) {
             this.notification.success(this.translate.instant('common.button.done'), raw?.message ?? '');
@@ -372,7 +374,7 @@ export class EmployeeOtList implements OnInit {
     }
     this.submitting = true;
     this.service.update(id, payload).subscribe({
-      next: ({ raw }) => {
+      next: (raw) => {
         this.submitting = false;
         if (raw?.code === 200) {
           this.notification.success(this.translate.instant('common.button.done'), raw?.message ?? '');
@@ -406,7 +408,8 @@ export class EmployeeOtList implements OnInit {
       pageSize: this.pageSize,
       voided: false,
     };
-    this.service.getPage(req).subscribe(({ page }) => {
+    this.service.getPage(req).subscribe((res) => {
+      const page = (res?.body ?? null) as Page<EmployeeOt> | null;
       this.page = page;
       this.rows = page?.content ?? [];
       this.pageSize = page?.size ?? this.pageSize;

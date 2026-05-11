@@ -38,5 +38,10 @@ public class AutoCompleteController {
     public ResponseEntity<BaseResponse> projectMembers(@RequestBody AutocompleteSearchRequest request) {
         return ResponseEntity.ok(autoCompleteService.projectMembers(request));
     }
+
+    @PostMapping("/skills")
+    public ResponseEntity<BaseResponse> skills(@RequestBody AutocompleteSearchRequest request) {
+        return ResponseEntity.ok(autoCompleteService.skills(request));
+    }
 }
 

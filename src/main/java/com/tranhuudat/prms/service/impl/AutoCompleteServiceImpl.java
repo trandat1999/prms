@@ -3,11 +3,13 @@ package com.tranhuudat.prms.service.impl;
 import com.tranhuudat.prms.dto.BaseResponse;
 import com.tranhuudat.prms.dto.autocomplete.AutocompleteSearchRequest;
 import com.tranhuudat.prms.dto.autocomplete.ProjectAutocompleteDto;
+import com.tranhuudat.prms.dto.autocomplete.SkillAutocompleteDto;
 import com.tranhuudat.prms.dto.autocomplete.UserAutocompleteDto;
 import com.tranhuudat.prms.entity.User;
 import com.tranhuudat.prms.enums.ProjectStatusEnum;
 import com.tranhuudat.prms.repository.ProjectMemberRepository;
 import com.tranhuudat.prms.repository.ProjectRepository;
+import com.tranhuudat.prms.repository.SkillRepository;
 import com.tranhuudat.prms.repository.UserRepository;
 import com.tranhuudat.prms.service.AutoCompleteService;
 import com.tranhuudat.prms.service.BaseService;
@@ -27,6 +29,7 @@ public class AutoCompleteServiceImpl extends BaseService implements AutoComplete
     private final UserRepository userRepository;
     private final ProjectRepository projectRepository;
     private final ProjectMemberRepository projectMemberRepository;
+    private final SkillRepository skillRepository;
     private final EntityManager entityManager;
 
     @Override
@@ -65,6 +68,14 @@ public class AutoCompleteServiceImpl extends BaseService implements AutoComplete
         Pageable pageable = getPageable(request);
         Page<UserAutocompleteDto> page =
                 projectMemberRepository.autocompleteActiveMembers(entityManager, request, pageable);
+        return getResponse200(page.getContent());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public BaseResponse skills(AutocompleteSearchRequest request) {
+        Pageable pageable = getPageable(request);
+        Page<SkillAutocompleteDto> page = skillRepository.autocompleteSkills(entityManager, request, pageable);
         return getResponse200(page.getContent());
     }
 

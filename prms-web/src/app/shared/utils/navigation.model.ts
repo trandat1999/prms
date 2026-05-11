@@ -57,6 +57,11 @@ export const navigation: NavigationItem[] = [
         link: '/management/app-params',
         allowedRoles: ['SUPPER_ADMIN'],
       },
+      {
+        translateKey: 'navigation.skills',
+        link: '/management/skills',
+        allowedRoles: ['SUPPER_ADMIN'],
+      },
     ],
   }
 ]

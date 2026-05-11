@@ -1,7 +1,5 @@
 import { Injectable } from '@angular/core';
-import { map } from 'rxjs';
 import { BaseService } from './base-service';
-import { ApiResponse } from '../../shared/utils/api-response';
 
 export type UserAutocompleteItem = {
   id: string;
@@ -10,11 +8,19 @@ export type UserAutocompleteItem = {
   fullName?: string;
 };
 
+export type SkillAutocompleteItem = {
+  id: string;
+  code?: string;
+  name?: string;
+  category?: string;
+};
+
 @Injectable({
   providedIn: 'root',
 })
 export class AutocompleteService {
   private readonly usersUrl = '/api/v1/autocomplete/users';
+  private readonly skillsUrl = '/api/v1/autocomplete/skills';
 
   constructor(private base: BaseService) {}
 
@@ -24,14 +30,15 @@ export class AutocompleteService {
       pageIndex,
       pageSize,
       voided: false,
-    }).pipe(
-      map((res: ApiResponse) => {
-        const b = res.body;
-        if (Array.isArray(b)) {
-          return b as UserAutocompleteItem[];
-        }
-        return ((b as { content?: UserAutocompleteItem[] })?.content ?? []) as UserAutocompleteItem[];
-      })
-    );
+    });
+  }
+
+  searchSkills(keyword: string | null | undefined, pageIndex = 0, pageSize = 20) {
+    return this.base.post(this.skillsUrl, {
+      keyword: keyword?.trim() ? keyword.trim() : null,
+      pageIndex,
+      pageSize,
+      voided: false,
+    });
   }
 }

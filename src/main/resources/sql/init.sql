@@ -320,3 +320,34 @@ CREATE TABLE employee_ot
     approved_by        UUID,
     approved_date      TIMESTAMP
 );
+
+CREATE TABLE tbl_skill (
+    id UUID PRIMARY KEY,
+    created_by VARCHAR(255),
+    created_date TIMESTAMP,
+    last_modified_by VARCHAR(255),
+    last_modified_date TIMESTAMP,
+    voided BOOLEAN DEFAULT FALSE,
+
+    name VARCHAR(255) NOT NULL,
+    category VARCHAR(100),
+    description TEXT,
+    code VARCHAR(100) UNIQUE NOT NULL
+);
+
+CREATE TABLE tbl_user_skill (
+    id UUID PRIMARY KEY,
+    created_by VARCHAR(255),
+    created_date TIMESTAMP,
+    last_modified_by VARCHAR(255),
+    last_modified_date TIMESTAMP,
+    voided BOOLEAN DEFAULT FALSE,
+
+    user_id UUID NOT NULL,
+    skill_id UUID NOT NULL,
+    level VARCHAR(50) NOT NULL,  -- enum  gồm (Biết cơ bản,Làm được task đơn giản,Làm độc lập,Mentor người khác,Expert / Architect)
+    experience_year NUMERIC, -- số năm kinh nghiệm
+    last_used_date DATE,
+    is_primary BOOLEAN DEFAULT FALSE,
+    UNIQUE (user_id, skill_id)
+);

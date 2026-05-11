@@ -9,6 +9,8 @@ import {StorageService} from '../../../core/services/storage-service';
 import {AppConfigService} from '../../../core/services/app-config-service';
 import {UserNotificationService, UserNotificationItem} from '../../../core/services/user-notification.service';
 import {BehaviorSubject, timer} from 'rxjs';
+import {ApiResponse} from '../../../shared/utils/api-response';
+import {Page} from '../../../pages/project/models/page.model';
 import {UserNotificationStreamService} from '../../../core/services/user-notification-stream.service';
 import {NzNotificationService} from 'ng-zorro-antd/notification';
 import {UserNotificationPushService} from '../../../core/services/user-notification-push.service';
@@ -134,8 +136,9 @@ export class MainLayout {
     this.notifLoading = true;
     this.userNotificationService
       .getPage({ pageIndex: 0, pageSize: 25, voided: false })
-      .subscribe(({ raw, page }) => {
+      .subscribe((raw) => {
         this.notifLoading = false;
+        const page = (raw?.body ?? null) as Page<UserNotificationItem> | null;
         if (raw?.code === 200) {
           this.notifItems = page?.content ?? [];
         }
@@ -148,7 +151,7 @@ export class MainLayout {
     if (local) {
       local.read = true;
     }
-    this.userNotificationService.markRead(item.id).subscribe(({ raw }) => {
+    this.userNotificationService.markRead(item.id).subscribe((raw) => {
       if (raw?.code === 200) {
         this.refreshUnreadCount();
       }
@@ -172,7 +175,8 @@ export class MainLayout {
   }
 
   private refreshUnreadCount(): void {
-    this.userNotificationService.unreadCount().subscribe(({ count }) => {
+    this.userNotificationService.unreadCount().subscribe((res: ApiResponse) => {
+      const count = typeof res?.body === 'number' ? (res.body as number) : 0;
       this.notifUnread = count;
       this.syncTabTitle();
     });
@@ -186,6 +190,10 @@ export class MainLayout {
     }
     this.title.setTitle(`(${n}) ${this.baseTabTitle}`);
   }
+  goToProfile(): void {
+    void this.router.navigate(['/profile']);
+  }
+
   logout(): void {
     void (async () => {
       this.userNotificationStream.disconnect();

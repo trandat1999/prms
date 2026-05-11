@@ -67,6 +67,10 @@ Important backend folders:
 
 - Standard flow: `page/component -> feature service -> core BaseService -> backend API`
 - API calls must stay in services; components must not call `HttpClient` directly.
+- **Feature services** chỉ delegate sang `BaseService` và **return trực tiếp** kết quả (`Observable<ApiResponse>` cho get/post/put/delete/patch; `postBlob` trả `Observable<HttpResponse<Blob>>`). **Không** bọc thêm `.pipe(map(...), catchError(...), finalize(...))` trên gọi `this.base.*` vì `BaseService` đã xử lý map → `ApiResponse`, spinner, toast lỗi HTTP, `finalize`.
+- **Components** subscribe nhận **`ApiResponse`**: dùng `res.code`, `res.message`, ép kiểu `res.body` (ví dụ `Page<T>`, entity, mảng). Không giả định service trả object đã map dạng `{ raw, page }`, `{ raw, task }`, …
+- Tham chiếu chuẩn: `prms-web/src/app/pages/auth/auth-service.ts` + `subscribe` trong `prms-web/src/app/pages/auth/login/login.ts`.
+- Ngoại lệ hiếm (ví dụ polling nhẹ, không bật spinner toàn cục): có thể dùng `HttpClient` trực tiếp trong service với tối thiểu operator cần thiết; ghi chú rõ trong code/service đó, không lan pattern đó ra toàn app.
 - Keep feature structure inside `pages/<feature>/...`.
 - Use existing app bootstrap, routing, layout, interceptor, and storage patterns.
 
@@ -74,7 +78,7 @@ Important frontend files:
 
 - routes: `prms-web/src/app/app.routes.ts`
 - app config: `prms-web/src/app/app.config.ts`
-- HTTP wrapper: `prms-web/src/app/core/services/base-service.ts`
+- HTTP wrapper: `prms-web/src/app/core/services/base-service.ts` (feature services delegate; pattern mẫu `prms-web/src/app/pages/auth/auth-service.ts`)
 - interceptor: `prms-web/src/app/core/guards/app-interceptor.ts`
 - token/storage: `prms-web/src/app/core/services/storage-service.ts`
 - main layout: `prms-web/src/app/shared/layout/main-layout/main-layout.ts`
@@ -224,6 +228,13 @@ Frontend auth request flow:
   - `prms-web/public/assets/i18n/en.json`
   - `prms-web/public/assets/i18n/vi.json`
 
+### Feature service + `BaseService` (pattern AuthService)
+
+- Mỗi method trong feature service (`pages/.../services/*.ts`, `core/services/*.ts` gọi API qua `BaseService`) **chỉ** `return this.base.get(...)`, `post`, `put`, `delete`, `patch`, hoặc `postBlob` với URL tương đối (`/api/v1/...`) và payload — **không** thêm `.pipe(map(...))` để gói `{ raw, body }` hay tách field; **không** lặp `catchError`/`finalize` đã có trong `BaseService`.
+- Component / layout: `featureService.xxx().subscribe((res) => { ... })` với `res: ApiResponse` (import từ `shared/utils/api-response`); dữ liệu nghiệp vụ lấy từ `res.body` (và kiểm tra `res.code` theo `const` dự án như `API_CODE_SUCCESS`, `API_CODE_BAD_REQUEST`).
+- **Map lỗi field từ BE (submit form):** luồng tối giản như `prms-web/src/app/pages/auth/login/login.ts` — mục **Form submit và lỗi validation từ BE**; không bắt buộc dùng thêm helper parse/apply trừ khi màn hình cũ đã dùng sẵn trong `form-server-errors.ts`.
+- Blob / export: `postBlob` giữ nguyên contract hiện tại của `BaseService` (Observable `HttpResponse<Blob>`).
+
 ### Shared input rule
 
 - Prefer `app-input` in `prms-web/src/app/shared/input/input.ts` for form/filter controls.
@@ -233,17 +244,18 @@ Frontend auth request flow:
 
 ### Form submit và lỗi validation từ BE (gán vào `FormControl`)
 
-- Luồng submit form gọi API: trong handler success (ví dụ `subscribe` sau feature service), **xử lý luôn** nhánh lỗi validation do BE trả (thường `data.code === API_CODE_BAD_REQUEST` hoặc mã tương đương với `BaseResponse.code` dùng cho 400).
-- Khi BE trả `body` là map **tên field → chuỗi lỗi** (khớp key với tên control / field DTO, đồng bộ với key BE như `SystemVariable`), duyệt `Object.keys(data.body)` và gán lỗi vào đúng control: `this.formGroup.controls[key]?.setErrors({ serverError: data.body[key] })` (giữ key `serverError` để đồng bộ với `app-input` / pattern hiện có).
-- Không bỏ qua map field lỗi: tránh chỉ toast chung nếu màn hình đã dùng reactive form và BE trả map theo field.
-- Form phẳng: key trong `body` trùng tên `FormControl`. Form lồng nhau: map key → path control hoặc helper set lỗi từng nhóm cho khớp contract BE.
-- Tham chiếu chuẩn: `prms-web/src/app/pages/auth/login/login.ts` (submit login, nhánh `API_CODE_BAD_REQUEST` + `setErrors`).
+- Trong **`next` của `subscribe`**, khi `res.code === API_CODE_BAD_REQUEST` (hoặc hằng tương đương): nếu `res.body` là object (map field → message string), duyệt `Object.keys`, mỗi key gán `form.controls[key]?.setErrors({ [SERVER_FORM_ERROR_KEY]: msg })` với `SERVER_FORM_ERROR_KEY` import từ `shared/utils/form-server-errors.ts` (**bắt buộc dùng computed key** `[SERVER_FORM_ERROR_KEY]`, không viết `{ SERVER_FORM_ERROR_KEY: ... }` vì sẽ sai tên property).
+- Trước submit: `clearServerErrorsOnFormGroup(form)` từ cùng file util (giữ pattern với `login.ts`).
+- Lỗi do client trên cùng form (ví dụ khớp mật khẩu): cũng dùng `[SERVER_FORM_ERROR_KEY]` cho đồng bộ `app-input`.
+- Nhánh **`error` của `subscribe`**: reset cờ như `login.ts`; không map field từ HTTP trong component (`BaseService` đã toast lỗi HTTP).
+- Form phẳng: key trong `body` trùng tên `FormControl`. Các màn/modal cũ có thể vẫn dùng `parseServerFieldErrorMap` / `applyServerFieldErrorsToFormGroup` trong util — màn mới ưu tiên vòng lặp trên như `login.ts`.
+- Tham chiếu: `prms-web/src/app/pages/auth/login/login.ts` (`login()`).
 
 ### Quy ước form ở FE: `formGroup` cho form lưu dữ liệu, `ngModel` cho filter/search
 
 - **Form tạo/sửa/lưu dữ liệu** (modal create/edit, submit/update password, các màn có nút “Submit/Save”): dùng **Reactive Forms**.
   - Template: bọc vùng form bằng `[formGroup]="..."` và trên `app-input` dùng `formControlName="..."` (không truyền `[formControl]` trực tiếp).
-  - Lý do: dễ mở rộng/đổi validator, dễ map lỗi từ BE vào từng field qua `setErrors({ serverError: ... })`, và đồng bộ `statusChanges` để `app-input` tự update error text.
+  - Lý do: dễ mở rộng validator, map lỗi BE bằng `Object.keys` + `setErrors({ [SERVER_FORM_ERROR_KEY]: ... })`, đồng bộ `app-input`.
   - Tham chiếu chuẩn: `prms-web/src/app/pages/auth/login/login.html`.
 - **Form filter/search** (keyword/status/type... để lọc list, không submit payload “ghi dữ liệu”): có thể tiếp tục dùng `[(ngModel)]` cho đơn giản.
 
@@ -275,8 +287,8 @@ Frontend auth request flow:
 - Any backend response shape change must be reflected on frontend in the same task.
 - Keep DTO/model/type/enum names aligned across both sides.
 - Do not rename payload fields on one side only.
-- Frontend list/search pages commonly read validation maps from `raw.body`.
-- Form submit: map `body` field → message vào `FormControl.setErrors` theo mục **Form submit và lỗi validation từ BE** ở §7.
+- Frontend list/search pages commonly read validation maps from **`ApiResponse.body`** (biến subscribe thường là `res` / `data`, không bắt buộc tên `raw`).
+- Form submit: map lỗi field từ `ApiResponse` như **§7 / `login.ts`** (`clearServerErrorsOnFormGroup` + vòng `Object.keys` + `[SERVER_FORM_ERROR_KEY]`).
 - Verify backend and frontend still agree on DTO/model field names after edits.
 - If both sides use the same enum, update both sides together.
 
@@ -363,7 +375,7 @@ Menu structure comes from `prms-web/src/app/shared/utils/navigation.model.ts`.
 
 1. Matching route file
 2. Matching page/component
-3. Matching feature service
+3. Matching feature service (theo §7 **Feature service + `BaseService`** + `prms-web/src/app/core/services/base-service.ts`)
 4. Related models/types/const
 5. Shared components used by the page such as `InputCommon`
 
@@ -419,6 +431,7 @@ Then frontend:
 
 - Create standalone pages under `pages/<feature>/`
 - Add service/model files in the feature folder using existing structure
+- API trong feature service: **return trực tiếp** `this.base.get/post/...` (mục **Feature service + `BaseService`** ở §7); component đọc `ApiResponse` / `res.body`.
 - Prefer extending shared/common input patterns instead of introducing one-off controls
 - Update i18n files when adding new user-facing text
 
@@ -445,7 +458,8 @@ Then frontend:
 4. Preserve existing API/auth/i18n/shared-input contracts unless the task explicitly changes them.
 5. If backend and frontend are both affected, update both in one pass.
 6. Keep DTO/model/type/enum names aligned across BE and FE.
-7. Add or adjust validation/error handling using current patterns.
-8. Do not widen auth/CORS/public endpoints unless explicitly requested.
-9. Run at least targeted verification for the touched side.
-10. Report changed files and explicitly mention any contract changes.
+7. Add or adjust validation/error handling theo pattern hiện có; form 400 map field: bám `login.ts` (forEach/`Object.keys` + `[SERVER_FORM_ERROR_KEY]`).
+8. FE gọi API: tuân **Feature service + `BaseService`** (§7) — không thêm pipe trùng với `BaseService`; caller xử lý `ApiResponse` / `body`.
+9. Do not widen auth/CORS/public endpoints unless explicitly requested.
+10. Run at least targeted verification for the touched side.
+11. Report changed files and explicitly mention any contract changes.

@@ -13,6 +13,11 @@ export const MANAGEMENT_ROUTES: Routes = [
       import('./app-params/app-param.routes').then((m) => m.APP_PARAM_ROUTES),
     data: { breadcrumb: 'breadcrumb.appParams' },
   },
+  {
+    path: 'skills',
+    loadChildren: () => import('./skills/skill.routes').then((m) => m.SKILL_ROUTES),
+    data: { breadcrumb: 'breadcrumb.skills' },
+  },
   { path: '', pathMatch: 'full', redirectTo: 'users' },
 ];
 

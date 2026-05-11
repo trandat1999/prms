@@ -73,8 +73,9 @@ export class ProjectDetail implements OnInit {
   private loadProject(id: string): void {
     this.loading = true;
     this.projectService.getById(id).subscribe({
-      next: ({ raw, project }) => {
+      next: (raw) => {
         this.loading = false;
+        const project = (raw?.body ?? null) as Project | null;
         if (raw?.code === 200 && project) {
           this.project = project;
         }

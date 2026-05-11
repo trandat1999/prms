@@ -17,6 +17,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.SuperBuilder;
@@ -64,6 +65,10 @@ public class User extends BaseEntity implements UserDetails {
             joinColumns = {@JoinColumn(name = "user_id")},
             inverseJoinColumns = {@JoinColumn(name = "role_id")})
     private Set<Role> roles = new HashSet<>();
+
+    @Builder.Default
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    private Set<UserSkill> userSkills = new HashSet<>();
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

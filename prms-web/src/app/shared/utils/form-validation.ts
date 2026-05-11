@@ -56,3 +56,17 @@ function updateControlTreeValidity(control: AbstractControl): void {
   }
   control.updateValueAndValidity({ onlySelf: true, emitEvent: true });
 }
+
+export function matchValueValidator(otherField: string): ValidatorFn{
+  return (control: AbstractControl): ValidationErrors | null => {
+    const parent = control.parent;
+    if (!parent) return null;
+    const compareToValue = parent.get(otherField)?.value;
+    const controlValue = control.value;
+    const isEmpty = controlValue === null || controlValue === undefined || controlValue === '';
+    if (isEmpty || controlValue === compareToValue) {
+      return null;
+    }
+    return { mismatch: true };
+  }
+}

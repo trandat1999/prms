@@ -1,0 +1,93 @@
+@if (pageLoading) {
+  <div class="d-flex justify-content-center py-5">
+    <nz-spin nzSimple [nzSize]="'large'"></nz-spin>
+  </div>
+} @else {
+  <div class="row g-3">
+    <div class="col-12 col-lg-6">
+      <nz-card [nzTitle]="'profile.sectionAccount' | translate">
+        <form [formGroup]="profileForm" (ngSubmit)="saveProfile()">
+          <div nz-form nzLayout="vertical" nz-row [nzGutter]="[GUTTER_H, GUTTER_V]">
+            <div nz-col nzSpan="24" class="mb-3">
+              <div class="text-secondary small mb-1">{{ 'profile.username' | translate }}</div>
+              <div class="fw-medium">{{ readonlyUsername || '—' }}</div>
+              <div class="text-secondary small mt-1">{{ 'profile.usernameLockedHint' | translate }}</div>
+            </div>
+            <app-input
+              nz-col
+              nzSpan="24"
+              formControlName="email"
+              [label]="'profile.email' | translate"
+              placeHolder="{{ 'profile.email' | translate }}"
+            ></app-input>
+            <app-input
+              nz-col
+              nzSpan="24"
+              formControlName="fullName"
+              [label]="'profile.fullName' | translate"
+              placeHolder="{{ 'profile.fullName' | translate }}"
+            ></app-input>
+            <div nz-col nzSpan="24">
+              <button
+                type="submit"
+                nz-button
+                nzType="primary"
+                [disabled]="profileSubmitting || profileForm.invalid"
+                [nzLoading]="profileSubmitting"
+              >
+                {{ 'profile.submitProfile' | translate }}
+              </button>
+            </div>
+          </div>
+        </form>
+      </nz-card>
+    </div>
+    <div class="col-12 col-lg-6">
+      <nz-card [nzTitle]="'profile.sectionPassword' | translate">
+        <div [formGroup]="passwordForm">
+          <div nz-form nzLayout="vertical" nz-row [nzGutter]="[GUTTER_H, GUTTER_V]">
+            <app-input
+              nz-col
+              nzSpan="24"
+              formControlName="currentPassword"
+              [label]="'profile.currentPassword' | translate"
+              placeHolder="{{ 'profile.currentPassword' | translate }}"
+              type="password"
+              [inputPassword]="true"
+            ></app-input>
+            <app-input
+              nz-col
+              nzSpan="24"
+              formControlName="newPassword"
+              [label]="'profile.newPassword' | translate"
+              placeHolder="{{ 'profile.newPassword' | translate }}"
+              type="password"
+              [inputPassword]="true"
+            ></app-input>
+            <app-input
+              nz-col
+              nzSpan="24"
+              formControlName="confirmNewPassword"
+              [label]="'profile.confirmNewPassword' | translate"
+              placeHolder="{{ 'profile.confirmNewPassword' | translate }}"
+              type="password"
+              [inputPassword]="true"
+            ></app-input>
+            <div nz-col nzSpan="24">
+              <button
+                type="button"
+                nz-button
+                nzType="primary"
+                [disabled]="passwordSubmitting"
+                [nzLoading]="passwordSubmitting"
+                (click)="savePassword()"
+              >
+                {{ 'profile.submitPassword' | translate }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </nz-card>
+    </div>
+  </div>
+}

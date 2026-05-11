@@ -1,9 +1,6 @@
 import { Injectable } from '@angular/core';
-import { map } from 'rxjs';
 import { BaseService } from '../../../core/services/base-service';
-import { ApiResponse } from '../../../shared/utils/api-response';
-import { Page } from '../../project/models/page.model';
-import { ResourceAllocation, ResourceAllocationWritePayload } from '../models/resource-allocation.model';
+import { ResourceAllocationWritePayload } from '../models/resource-allocation.model';
 import { ResourceAllocationSearchRequest } from '../models/resource-allocation-search.request';
 
 @Injectable({
@@ -15,48 +12,23 @@ export class ResourceAllocationService {
   constructor(private base: BaseService) {}
 
   getPage(request: ResourceAllocationSearchRequest) {
-    return this.base.post(this.apiUrl + '/page', request).pipe(
-      map((res: ApiResponse) => ({
-        raw: res,
-        page: (res?.body ?? null) as Page<ResourceAllocation> | null,
-      }))
-    );
+    return this.base.post(this.apiUrl + '/page', request);
   }
 
   getById(id: string) {
-    return this.base.get(`${this.apiUrl}/${id}`).pipe(
-      map((res: ApiResponse) => ({
-        raw: res,
-        row: (res?.body ?? null) as ResourceAllocation | null,
-      }))
-    );
+    return this.base.get(`${this.apiUrl}/${id}`);
   }
 
   create(request: ResourceAllocationWritePayload) {
-    return this.base.post(this.apiUrl, request).pipe(
-      map((res: ApiResponse) => ({
-        raw: res,
-        row: (res?.body ?? null) as ResourceAllocation | null,
-      }))
-    );
+    return this.base.post(this.apiUrl, request);
   }
 
   update(id: string, request: ResourceAllocationWritePayload) {
-    return this.base.put(`${this.apiUrl}/${id}`, request).pipe(
-      map((res: ApiResponse) => ({
-        raw: res,
-        row: (res?.body ?? null) as ResourceAllocation | null,
-      }))
-    );
+    return this.base.put(`${this.apiUrl}/${id}`, request);
   }
 
   delete(id: string) {
-    return this.base.delete(`${this.apiUrl}/${id}`).pipe(
-      map((res: ApiResponse) => ({
-        raw: res,
-        row: (res?.body ?? null) as ResourceAllocation | null,
-      }))
-    );
+    return this.base.delete(`${this.apiUrl}/${id}`);
   }
 
   /** Xuất Excel theo tháng; backend chỉ áp dụng trường `month`. */

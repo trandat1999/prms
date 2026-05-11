@@ -71,7 +71,9 @@ public class SecurityConfig {
             "/kanban",
             "/kanban/**",
             "/management",
-            "/management/**"
+            "/management/**",
+            "/profile",
+            "/profile/**"
     };
 
     private final UserDetailsService userDetailsService;

@@ -95,8 +95,9 @@ export class ReportPrms implements OnInit {
       .loadReport({ periodType: this.filter.periodType, year: this.filter.year })
       .pipe(take(1))
       .subscribe({
-        next: ({ data }) => {
+        next: (res) => {
           this.loadError = false;
+          const data = (res?.body ?? null) as ReportData | null;
           this.data = data;
           if (data) {
             this.chartCostRevenue = this.buildCostRevenueChart(data);

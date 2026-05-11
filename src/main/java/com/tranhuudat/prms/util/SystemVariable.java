@@ -21,6 +21,8 @@ public class SystemVariable {
     public static final String REVIEWER_ID = "reviewerId";
 
     public static final String PASSWORD = "password";
+    public static final String CURRENT_PASSWORD = "currentPassword";
+    public static final String NEW_PASSWORD = "newPassword";
     public static final String CONFIRM_PASSWORD = "confirmPassword";
     public static final String CORE_FIELDS = "coreFields";
     public static final String END_TIME = "endTime";
@@ -41,4 +43,7 @@ public class SystemVariable {
     public static final String CHECKLIST = "app.variable.checklist";
     public static final String NOTIFICATION = "app.variable.notification";
     public static final String SUBSCRIPTION = "app.variable.subscription";
+    public static final String SKILL = "app.variable.skill";
+
+    public static final String SKILL_IDS = "skillIds";
 }

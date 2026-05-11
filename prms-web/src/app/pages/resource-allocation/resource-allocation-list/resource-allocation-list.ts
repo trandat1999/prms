@@ -175,8 +175,9 @@ export class ResourceAllocationList {
     this.resetModalForm();
     clearServerErrorsOnFormGroup(this.modalForm);
     this.service.getById(id).subscribe({
-      next: ({ raw, row }) => {
+      next: (raw) => {
         this.loading = false;
+        const row = (raw?.body ?? null) as ResourceAllocation | null;
         if (raw?.code === 200 && row) {
           this.applyToForm(row);
         } else {
@@ -198,8 +199,9 @@ export class ResourceAllocationList {
     this.viewDetail = null;
     this.viewLoading = true;
     this.service.getById(id).subscribe({
-      next: ({ raw, row }) => {
+      next: (raw) => {
         this.viewLoading = false;
+        const row = (raw?.body ?? null) as ResourceAllocation | null;
         if (raw?.code === 200 && row) {
           this.viewDetail = row;
         } else {
@@ -230,7 +232,7 @@ export class ResourceAllocationList {
       nzOnOk: () =>
         new Promise<void>((resolve, reject) => {
           this.service.delete(id).subscribe({
-            next: ({ raw }) => {
+            next: (raw) => {
               if (raw?.code === 200) {
                 this.notification.success(this.translate.instant('common.button.done'), raw?.message ?? '');
                 this.fetch();
@@ -277,7 +279,7 @@ export class ResourceAllocationList {
     if (this.formMode === 'create') {
       this.submitting = true;
       this.service.create(payload).subscribe({
-        next: ({ raw }) => {
+        next: (raw) => {
           this.submitting = false;
           if (raw?.code === 201) {
             this.notification.success(this.translate.instant('common.button.done'), raw?.message ?? '');
@@ -300,7 +302,7 @@ export class ResourceAllocationList {
     }
     this.submitting = true;
     this.service.update(id, payload).subscribe({
-      next: ({ raw }) => {
+      next: (raw) => {
         this.submitting = false;
         if (raw?.code === 200) {
           this.notification.success(this.translate.instant('common.button.done'), raw?.message ?? '');
@@ -331,7 +333,8 @@ export class ResourceAllocationList {
       pageSize: this.pageSize,
       voided: false,
     };
-    this.service.getPage(req).subscribe(({ page }) => {
+    this.service.getPage(req).subscribe((res) => {
+      const page = (res?.body ?? null) as Page<ResourceAllocation> | null;
       this.page = page;
       this.rows = page?.content ?? [];
       this.pageSize = page?.size ?? this.pageSize;

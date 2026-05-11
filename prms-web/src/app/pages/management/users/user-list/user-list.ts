@@ -1,6 +1,6 @@
 import { CommonModule, DatePipe } from '@angular/common';
 import { Component } from '@angular/core';
-import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormArray, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { NzButtonComponent } from 'ng-zorro-antd/button';
 import { NzIconDirective } from 'ng-zorro-antd/icon';
 import { NzModalModule, NzModalService } from 'ng-zorro-antd/modal';
@@ -23,6 +23,8 @@ import { User, UserCreatePayload, UserDetail, UserUpdatePayload } from '../model
 import { UserSearchRequest } from '../models/user-search.request';
 import { RoleService } from '../services/role.service';
 import { UserService } from '../services/user.service';
+import { AutocompleteService, SkillAutocompleteItem } from '../../../../core/services/autocomplete.service';
+import {NzCheckboxComponent} from 'ng-zorro-antd/checkbox';
 
 @Component({
   selector: 'app-user-list',
@@ -39,6 +41,7 @@ import { UserService } from '../services/user.service';
     NzSpinComponent,
     InputCommon,
     TranslatePipe,
+    NzCheckboxComponent,
   ],
   templateUrl: './user-list.html',
   styleUrls: ['./user-list.scss'],
@@ -85,6 +88,22 @@ export class UserList {
   passwordUserId: string | null = null;
   passwordUserLabel: string | null = null;
 
+  /** Modal gán skill */
+  skillsVisible = false;
+  skillsSubmitting = false;
+  skillsUserId: string | null = null;
+  skillsUserLabel: string | null = null;
+  skillOptions: Array<SkillAutocompleteItem & { label: string }> = [];
+  readonly skillLevelAppParamUrl = '/api/v1/app-params/page';
+  readonly skillLevelAppParamFilters = { paramGroup: 'SKILL_LEVEL', paramType: 'SKILL_LEVEL' };
+  readonly skillsForm = new FormGroup({
+    items: new FormArray<FormGroup>([]),
+  });
+
+  get skillItems(): FormArray<FormGroup> {
+    return this.skillsForm.get('items') as FormArray<FormGroup>;
+  }
+
   readonly enabledOptions = [
     { label: 'Tất cả', value: null },
     { label: 'Đang hoạt động', value: true },
@@ -95,7 +114,8 @@ export class UserList {
     private userService: UserService,
     private roleService: RoleService,
     private notification: NzNotificationService,
-    private modal: NzModalService
+    private modal: NzModalService,
+    private autocomplete: AutocompleteService
   ) {}
 
   ngOnInit(): void {
@@ -149,8 +169,9 @@ export class UserList {
     clearServerErrorsOnFormGroup(this.userModalForm);
 
     this.userService.getById(id).subscribe({
-      next: ({ raw, user }) => {
+      next: (raw) => {
         this.userFormLoading = false;
+        const user = (raw?.body ?? null) as UserDetail | null;
         if (raw?.code === 200 && user) {
           this.applyUserToForm(user);
           this.ensureDefaultRoles();
@@ -176,8 +197,9 @@ export class UserList {
     this.viewDetail = null;
     this.viewLoading = true;
     this.userService.getById(id).subscribe({
-      next: ({ raw, user }) => {
+      next: (raw) => {
         this.viewLoading = false;
+        const user = (raw?.body ?? null) as UserDetail | null;
         if (raw?.code === 200 && user) {
           this.viewDetail = user;
         } else {
@@ -209,7 +231,7 @@ export class UserList {
       nzOnOk: () =>
         new Promise<void>((resolve, reject) => {
           this.userService.delete(id).subscribe({
-            next: ({ raw }) => {
+            next: (raw) => {
               if (raw?.code === 200) {
                 this.notification.success('Đã xoá', raw?.message ?? 'Xoá thành công.');
                 this.fetch();
@@ -222,6 +244,98 @@ export class UserList {
             error: () => reject(),
           });
         }),
+    });
+  }
+
+  onEditSkills(row: User): void {
+    const id = row?.id;
+    if (!id) {
+      this.notification.warning('Lỗi', 'Không có mã người dùng để gán kỹ năng.');
+      return;
+    }
+    this.skillsUserId = id;
+    this.skillsUserLabel = row.fullName?.trim() || row.username || id;
+    this.skillsVisible = true;
+    this.skillsSubmitting = false;
+    this.skillOptions = [];
+    this.skillItems.clear();
+
+    // load current user skills
+    this.userService.getSkills(id).subscribe({
+      next: (raw) => {
+        const list = (raw?.body ?? []) as any[];
+        if (raw?.code === 200 && Array.isArray(list)) {
+          for (const it of list) {
+            this.skillItems.push(this.createSkillItemForm(it));
+          }
+        }
+      },
+    });
+
+    // load skill options (autocomplete)
+    this.autocomplete.searchSkills('', 0, 200).subscribe({
+      next: (raw) => {
+        const items = (raw?.body ?? []) as SkillAutocompleteItem[] | undefined;
+        if (raw?.code === 200 && Array.isArray(items)) {
+          this.skillOptions = items.map((s) => ({
+            ...s,
+            label: `${s.code ?? ''}${s.code && s.name ? ' - ' : ''}${s.name ?? ''}`.trim() || s.id,
+          }));
+        }
+      },
+    });
+  }
+
+  closeSkillsModal(): void {
+    this.skillsVisible = false;
+    this.skillsSubmitting = false;
+    this.skillsUserId = null;
+    this.skillsUserLabel = null;
+    this.skillItems.clear();
+  }
+
+  addSkillRow(): void {
+    this.skillItems.push(this.createSkillItemForm(null));
+  }
+
+  removeSkillRow(i: number): void {
+    this.skillItems.removeAt(i);
+  }
+
+  saveSkills(): void {
+    const id = this.skillsUserId;
+    if (!id) return;
+    this.skillsSubmitting = true;
+    const items = this.skillItems.getRawValue().map((x: any) => ({
+      skillId: x.skillId || null,
+      level: x.level || null,
+      experienceYear: x.experienceYear ?? null,
+      lastUsedDate: x.lastUsedDate ?? null,
+      isPrimary: !!x.isPrimary,
+    }));
+    this.userService.updateSkills(id, items).subscribe({
+      next: (raw) => {
+        this.skillsSubmitting = false;
+        if (raw?.code === 200) {
+          this.notification.success('Thành công', raw?.message ?? 'Đã cập nhật kỹ năng.');
+          this.closeSkillsModal();
+          return;
+        }
+        this.notification.warning('Không thành công', raw?.message ?? 'Không cập nhật được kỹ năng.');
+      },
+      error: () => {
+        this.skillsSubmitting = false;
+      },
+    });
+  }
+
+  private createSkillItemForm(it: any | null): FormGroup {
+    return new FormGroup({
+      skillId: new FormControl<string>(it?.skillId ?? null, [Validators.required]),
+      level: new FormControl<string>(it?.level ?? null, [Validators.required]),
+      experienceYear: new FormControl<number | null>(it?.experienceYear ?? null),
+      lastUsedDate: new FormControl<any>(it?.lastUsedDate ?? null),
+      isPrimary: new FormControl<boolean>(!!it?.isPrimary),
     });
   }
 
@@ -266,7 +380,7 @@ export class UserList {
     }
     this.passwordSubmitting = true;
     this.userService.updatePassword(id, pwd).subscribe({
-      next: ({ raw }) => {
+      next: (raw) => {
         this.passwordSubmitting = false;
         if (raw?.code === 200) {
           this.notification.success('Thành công', raw?.message ?? 'Đã cập nhật mật khẩu.');
@@ -319,7 +433,8 @@ export class UserList {
       voided: false,
     };
 
-    this.userService.getPage(req).subscribe(({ page }) => {
+    this.userService.getPage(req).subscribe((res) => {
+      const page = (res?.body ?? null) as Page<User> | null;
       this.page = page;
       this.rows = page?.content ?? [];
       const backendSize = page?.size ?? this.pageSize;
@@ -373,7 +488,7 @@ export class UserList {
     };
     this.userFormSubmitting = true;
     this.userService.create(payload).subscribe({
-      next: ({ raw }) => {
+      next: (raw) => {
         this.userFormSubmitting = false;
         if (raw?.code === 201) {
           this.notification.success('Thành công', raw?.message ?? 'Đã tạo người dùng.');
@@ -401,7 +516,7 @@ export class UserList {
     };
     this.userFormSubmitting = true;
     this.userService.update(id, payload).subscribe({
-      next: ({ raw }) => {
+      next: (raw) => {
         this.userFormSubmitting = false;
         if (raw?.code === 200) {
           this.notification.success('Thành công', raw?.message ?? 'Đã cập nhật người dùng.');
@@ -444,7 +559,8 @@ export class UserList {
 
   private fetchRoles(): void {
     this.roleService.getAll().subscribe({
-      next: ({ raw, roles }) => {
+      next: (raw) => {
+        const roles = raw?.body as Role[] | undefined;
         if (raw?.code === 200 && Array.isArray(roles)) {
           this.roleOptions = roles;
         }

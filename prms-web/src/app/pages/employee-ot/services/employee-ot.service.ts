@@ -1,10 +1,6 @@
 import { Injectable } from '@angular/core';
-import { HttpResponse } from '@angular/common/http';
-import { map } from 'rxjs';
 import { BaseService } from '../../../core/services/base-service';
-import { ApiResponse } from '../../../shared/utils/api-response';
-import { Page } from '../../project/models/page.model';
-import { EmployeeOt, EmployeeOtWritePayload } from '../models/employee-ot.model';
+import { EmployeeOtWritePayload } from '../models/employee-ot.model';
 import { EmployeeOtSearchRequest } from '../models/employee-ot-search.request';
 
 @Injectable({
@@ -16,48 +12,23 @@ export class EmployeeOtService {
   constructor(private base: BaseService) {}
 
   getPage(request: EmployeeOtSearchRequest) {
-    return this.base.post(this.apiUrl + '/page', request).pipe(
-      map((res: ApiResponse) => ({
-        raw: res,
-        page: (res?.body ?? null) as Page<EmployeeOt> | null,
-      }))
-    );
+    return this.base.post(this.apiUrl + '/page', request);
   }
 
   getById(id: string) {
-    return this.base.get(`${this.apiUrl}/${id}`).pipe(
-      map((res: ApiResponse) => ({
-        raw: res,
-        row: (res?.body ?? null) as EmployeeOt | null,
-      }))
-    );
+    return this.base.get(`${this.apiUrl}/${id}`);
   }
 
   create(request: EmployeeOtWritePayload) {
-    return this.base.post(this.apiUrl, request).pipe(
-      map((res: ApiResponse) => ({
-        raw: res,
-        row: (res?.body ?? null) as EmployeeOt | null,
-      }))
-    );
+    return this.base.post(this.apiUrl, request);
   }
 
   update(id: string, request: EmployeeOtWritePayload) {
-    return this.base.put(`${this.apiUrl}/${id}`, request).pipe(
-      map((res: ApiResponse) => ({
-        raw: res,
-        row: (res?.body ?? null) as EmployeeOt | null,
-      }))
-    );
+    return this.base.put(`${this.apiUrl}/${id}`, request);
   }
 
   delete(id: string) {
-    return this.base.delete(`${this.apiUrl}/${id}`).pipe(
-      map((res: ApiResponse) => ({
-        raw: res,
-        row: (res?.body ?? null) as EmployeeOt | null,
-      }))
-    );
+    return this.base.delete(`${this.apiUrl}/${id}`);
   }
 
   exportMonthlyReport(request: {
@@ -68,6 +39,6 @@ export class EmployeeOtService {
     status?: string | null;
     otType?: string | null;
   }) {
-    return this.base.postBlob(this.apiUrl + '/report/monthly', request).pipe(map((res: HttpResponse<Blob>) => res));
+    return this.base.postBlob(this.apiUrl + '/report/monthly', request);
   }
 }

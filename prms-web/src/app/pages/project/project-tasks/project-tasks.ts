@@ -40,6 +40,7 @@ import { TaskStatus } from '../models/task.types';
 import { TaskService } from '../services/task.service';
 import { StoreService } from '../../../core/services/store-service';
 import { ProjectService } from '../services/project.service';
+import { Project } from '../models/project.model';
 
 type TaskChecklistRow = { title: string; estimatedHours: number | null; checked: boolean };
 
@@ -257,8 +258,9 @@ export class ProjectTasks implements OnChanges, OnInit {
     clearServerErrorsOnFormGroup(this.taskModalForm);
     this.loadPredecessorCandidates();
     this.service.getById(id).subscribe({
-      next: ({ raw, task }) => {
+      next: (raw) => {
         this.loading = false;
+        const task = (raw?.body ?? null) as Task | null;
         if (raw?.code === 200 && task) {
           this.applyToForm(task);
         } else {
@@ -281,8 +283,9 @@ export class ProjectTasks implements OnChanges, OnInit {
     this.logs = [];
     this.viewLoading = true;
     this.service.getById(id).subscribe({
-      next: ({ raw, task }) => {
+      next: (raw) => {
         this.viewLoading = false;
+        const task = (raw?.body ?? null) as Task | null;
         if (raw?.code === 200 && task) {
           this.viewDetail = task;
           this.fetchLogs(id);
@@ -315,7 +318,7 @@ export class ProjectTasks implements OnChanges, OnInit {
       nzOnOk: () =>
         new Promise<void>((resolve, reject) => {
           this.service.delete(id).subscribe({
-            next: ({ raw }) => {
+            next: (raw) => {
               if (raw?.code === 200) {
                 this.notification.success(this.translate.instant('common.button.done'), raw?.message ?? '');
                 this.fetch();
@@ -361,7 +364,7 @@ export class ProjectTasks implements OnChanges, OnInit {
     }
     this.assignSubmitting = true;
     this.service.assign(id, { assignedId: assignedId as string }).subscribe({
-      next: ({ raw }) => {
+      next: (raw) => {
         this.assignSubmitting = false;
         if (raw?.code === 200) {
           this.notification.success(this.translate.instant('common.button.done'), raw?.message ?? '');
@@ -418,7 +421,7 @@ export class ProjectTasks implements OnChanges, OnInit {
     if (this.formMode === 'create') {
       this.submitting = true;
       this.service.create(payload).subscribe({
-        next: ({ raw }) => {
+        next: (raw) => {
           this.submitting = false;
           if (raw?.code === 201) {
             this.notification.success(this.translate.instant('common.button.done'), raw?.message ?? '');
@@ -441,7 +444,7 @@ export class ProjectTasks implements OnChanges, OnInit {
     }
     this.submitting = true;
     this.service.update(id, payload).subscribe({
-      next: ({ raw }) => {
+      next: (raw) => {
         this.submitting = false;
         if (raw?.code === 200) {
           this.notification.success(this.translate.instant('common.button.done'), raw?.message ?? '');
@@ -473,7 +476,8 @@ export class ProjectTasks implements OnChanges, OnInit {
       pageSize: this.pageSize,
       voided: false,
     };
-    this.service.getPage(req).subscribe(({ page }) => {
+    this.service.getPage(req).subscribe((res) => {
+      const page = (res?.body ?? null) as Page<Task> | null;
       this.page = page;
       this.rows = page?.content ?? [];
       this.pageSize = page?.size ?? this.pageSize;
@@ -504,7 +508,8 @@ export class ProjectTasks implements OnChanges, OnInit {
       return;
     }
     this.projectService.getById(this.effectiveProjectId).subscribe({
-      next: ({ raw, project }) => {
+      next: (raw) => {
+        const project = (raw?.body ?? null) as Project | null;
         if (raw?.code === 200 && project?.managerId) {
           this.isProjectManager = project.managerId === this.currentUserId;
           return;
@@ -518,9 +523,10 @@ export class ProjectTasks implements OnChanges, OnInit {
   private fetchLogs(taskId: string): void {
     this.logsLoading = true;
     this.service.getLogs(taskId).subscribe({
-      next: ({ raw, logs }) => {
+      next: (raw) => {
         this.logsLoading = false;
         if (raw?.code === 200) {
+          const logs = (raw?.body ?? []) as TaskLog[];
           this.logs = Array.isArray(logs) ? logs : [];
         }
       },
@@ -605,7 +611,8 @@ export class ProjectTasks implements OnChanges, OnInit {
         pageSize: 500,
         voided: false,
       })
-      .subscribe(({ page }) => {
+      .subscribe((res) => {
+        const page = (res?.body ?? null) as Page<Task> | null;
         this.predecessorTaskCandidates = page?.content ?? [];
       });
   }

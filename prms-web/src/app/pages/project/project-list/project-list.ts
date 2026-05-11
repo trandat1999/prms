@@ -136,8 +136,9 @@ export class ProjectList {
     this.resetCreateForm();
     clearServerErrorsOnFormGroup(this.projectModalForm);
     this.projectService.getById(id).subscribe({
-      next: ({ raw, project }) => {
+      next: (raw) => {
         this.projectFormLoading = false;
+        const project = (raw?.body ?? null) as Project | null;
         if (raw?.code === 200 && project) {
           this.applyProjectToForm(project);
         } else {
@@ -162,8 +163,9 @@ export class ProjectList {
     this.viewDetail = null;
     this.viewLoading = true;
     this.projectService.getById(id).subscribe({
-      next: ({ raw, project }) => {
+      next: (raw) => {
         this.viewLoading = false;
+        const project = (raw?.body ?? null) as Project | null;
         if (raw?.code === 200 && project) {
           this.viewDetail = project;
         } else {
@@ -195,7 +197,7 @@ export class ProjectList {
       nzOnOk: () =>
         new Promise<void>((resolve, reject) => {
           this.projectService.delete(id).subscribe({
-            next: ({ raw }) => {
+            next: (raw) => {
               if (raw?.code === 200) {
                 this.notification.success('Đã xóa', raw?.message ?? 'Xóa dự án thành công.');
                 this.fetch();
@@ -296,7 +298,7 @@ export class ProjectList {
   private submitCreate(payload: ProjectWritePayload): void {
     this.projectFormSubmitting = true;
     this.projectService.create(payload).subscribe({
-      next: ({ raw }) => {
+      next: (raw) => {
         this.projectFormSubmitting = false;
         if (raw?.code === 201) {
           this.notification.success('Thành công', raw?.message ?? 'Đã tạo dự án.');
@@ -316,7 +318,7 @@ export class ProjectList {
   private submitUpdate(id: string, payload: ProjectWritePayload): void {
     this.projectFormSubmitting = true;
     this.projectService.update(id, payload).subscribe({
-      next: ({ raw }) => {
+      next: (raw) => {
         this.projectFormSubmitting = false;
         if (raw?.code === 200) {
           this.notification.success('Thành công', raw?.message ?? 'Đã cập nhật dự án.');
@@ -416,7 +418,8 @@ export class ProjectList {
       voided: false,
     };
 
-    this.projectService.getPage(req).subscribe(({ page }) => {
+    this.projectService.getPage(req).subscribe((res) => {
+      const page = (res?.body ?? null) as Page<Project> | null;
       this.page = page;
       const content = page?.content ?? [];
       this.rows = this.applyClientFilters(content);

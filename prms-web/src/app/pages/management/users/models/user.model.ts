@@ -31,3 +31,9 @@ export type UserUpdatePayload = {
   enabled?: boolean | null;
 };
 
+/** Cập nhật hồ sơ của user đăng nhập (API /users/current/profile) — không gồm username */
+export type CurrentUserProfilePayload = {
+  email: string;
+  fullName: string;
+};
+

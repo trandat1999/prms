@@ -1,8 +1,5 @@
 import { Injectable } from '@angular/core';
-import { map } from 'rxjs';
 import { BaseService } from '../../../core/services/base-service';
-import { ApiResponse } from '../../../shared/utils/api-response';
-import { DashboardOverview } from '../models/dashboard.model';
 
 @Injectable({ providedIn: 'root' })
 export class DashboardService {
@@ -11,11 +8,6 @@ export class DashboardService {
   constructor(private base: BaseService) {}
 
   getOverview() {
-    return this.base.get(`${this.apiUrl}/overview`).pipe(
-      map((res: ApiResponse) => ({
-        raw: res,
-        overview: (res?.body ?? null) as DashboardOverview | null,
-      })),
-    );
+    return this.base.get(`${this.apiUrl}/overview`);
   }
 }

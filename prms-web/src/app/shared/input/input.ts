@@ -1,4 +1,5 @@
 import {
+  AfterViewInit,
   Component,
   EventEmitter,
   HostBinding,
@@ -12,7 +13,7 @@ import {
   TemplateRef,
   ViewChild,
 } from '@angular/core';
-import { FormsModule, NgControl, Validators } from '@angular/forms';
+import { AbstractControl, FormsModule, NgControl, Validators } from '@angular/forms';
 import { BooleanInput } from 'ng-zorro-antd/core/types';
 import { BehaviorSubject, catchError, debounceTime, map, Observable, of, Subscription, switchMap } from 'rxjs';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -67,7 +68,7 @@ import {
   templateUrl: './input.html',
   styleUrl: './input.scss',
 })
-export class InputCommon implements OnInit, OnDestroy {
+export class InputCommon implements OnInit, AfterViewInit, OnDestroy {
   static nextId = 0;
   @HostBinding()
   id: string = `nuclear-input-${InputCommon.nextId++}`;
@@ -80,12 +81,14 @@ export class InputCommon implements OnInit, OnDestroy {
       this.inputElement = content;
       const validators = this.ngControl?.control?.validator;
       this.inputElement?.control?.setValidators(validators ? validators : null);
+      this.syncInnerModelErrorsFromHostControl();
+      this.updateErrorText();
     }
   }
 
   @Input() size: 'small' | 'default' | 'large' = 'default';
   @Input() isDisabled: boolean = false;
-  @Input() hasFeedback: boolean = false;
+  @Input() hasFeedback: boolean = true;
   @Input() labelSpan: number = null;
   @Input() inputSpan: number = null;
   @Input() errorText: string = '';
@@ -178,8 +181,7 @@ export class InputCommon implements OnInit, OnDestroy {
       this.valueChange.emit(val);
     }
     this.onTouched();
-    const errors = this.ngControl?.control?.errors;
-    this.inputElement?.control?.setErrors(errors ? errors : null);
+    this.syncInnerModelErrorsFromHostControl();
   }
 
   onChange: any = () => {};
@@ -246,8 +248,7 @@ export class InputCommon implements OnInit, OnDestroy {
     const c = this.control?.control;
     if (c) {
       this.statusSub = c.statusChanges.subscribe(() => {
-        this.inputElement?.control?.markAsDirty();
-        this.updateErrorText();
+        this.onHostControlStatusChanged(c);
       });
       this.updateErrorText();
     }
@@ -273,6 +274,31 @@ export class InputCommon implements OnInit, OnDestroy {
     this.statusSub?.unsubscribe();
   }
 
+  ngAfterViewInit(): void {
+    this.syncInnerModelErrorsFromHostControl();
+    this.updateErrorText();
+  }
+
+  /** Đồng bộ lỗi từ FormControl (formControlName) sang control nội bộ #inputElements="ngModel" — NZ form dựa vào control trong template. */
+  private syncInnerModelErrorsFromHostControl(): void {
+    const inner = this.inputElement?.control;
+    if (!inner) {
+      return;
+    }
+    const errors = this.ngControl?.control?.errors ?? null;
+    inner.setErrors(errors);
+  }
+
+  private onHostControlStatusChanged(c: AbstractControl): void {
+    this.syncInnerModelErrorsFromHostControl();
+    if (c.errors?.[SERVER_FORM_ERROR_KEY]) {
+      c.markAsDirty({ onlySelf: true });
+      c.markAsTouched({ onlySelf: true });
+    }
+    this.inputElement?.control?.markAsDirty();
+    this.updateErrorText();
+  }
+
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['errorText']) {
       this.errorText = changes['errorText'].currentValue ?? this.errorText ?? '';
@@ -281,8 +307,7 @@ export class InputCommon implements OnInit, OnDestroy {
     this.placeHolder = changes['placeHolder']?.currentValue ? changes['placeHolder']?.currentValue : this.placeHolder;
     this.warningText = changes['warningText']?.currentValue ? changes['warningText']?.currentValue : this.warningText;
     this.hint = changes['hint']?.currentValue ? changes['hint']?.currentValue : this.hint;
-    const errors = this.ngControl?.control?.errors;
-    this.inputElement?.control?.setErrors(errors ? errors : null);
+    this.syncInnerModelErrorsFromHostControl();
   }
 
   /** API trả về mảng trực tiếp trong body hoặc Page với content. */
