@@ -1,6 +1,9 @@
 ---
-alwaysApply: true
+description: PRMS backend (Spring/Java) và frontend Angular trong repo `prms` — dùng khi sửa API, service, entity, `prms-web`, Maven.
+globs: prms/**
+alwaysApply: false
 ---
+
 # PRMS Unified Pre-Read Rule
 
 Read and follow this file before analyzing, planning, or editing code in this repository.

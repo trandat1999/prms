@@ -158,7 +158,7 @@ public class AuthenticationServiceImpl extends BaseService implements Authentica
 
     @Override
     public BaseResponse refreshToken(String token) {
-        return null;
+        return generateNewToken(token);
     }
 
     @Override
